@@ -56,7 +56,7 @@ impl Complex {
 
 impl fmt::Debug for Complex {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} + {}i", self.a, self.b)
+        write!(f, "{} {} {}i", self.a, if self.b > 0.0 {'+'} else {'-'}, self.b.abs())
     }
 }
 //Complex

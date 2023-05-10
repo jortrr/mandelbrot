@@ -22,13 +22,14 @@ fn point_to_index(x: usize, y: usize, width: usize) -> usize {
 fn main() {
     // Window dimensions in pixels
     let width: usize = 800;
-    let height: usize = 800;
-    let aspect_ratio: f64 = width as f64 / height as f64;
+    let height: usize = 600;
+    let aspect_ratio_w_h: f64 = width as f64 / height as f64;
+    let aspect_ratio_h_w: f64 = height as f64 / width as f64;
     // Complex plane dimensions
     let min_x: f64 = -2.0;
     let max_x: f64 = 1.0 / 2.0;
     let length_x: f64 = max_x - min_x;
-    let min_y: f64 = -(length_x / 2.0 * aspect_ratio);
+    let min_y: f64 = -(length_x * aspect_ratio_h_w / 2.0);
     let max_y: f64 = -min_y;
     let length_y: f64 = max_y - min_y;
     // Complex plane increments
@@ -110,8 +111,9 @@ fn main() {
                 let index = point_to_index(x as usize, y as usize, width);
                 let iterations = buffer[index] & 0xFF;
                 let a = min_x + x as f64 * increment_x;
-                let b = min_y + y as f64 * increment_y;
-                println!("{a} + {b}i");
+                let b = -(min_y + y as f64 * increment_y);
+                let c = Complex::new(a,b);
+                println!("{:?}",c);
                 println!("iterations: {}",iterations);
                 println!();
                // buffer[screen_pos] = 0x00ffffff;
