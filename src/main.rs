@@ -1,7 +1,7 @@
 mod complex;
 
 use complex::Complex;
-use minifb::{Key, Window, WindowOptions};
+use minifb::{Key, Window, WindowOptions, MouseMode, MouseButton};
 
 /// Creates a 32-bit color. The encoding for each pixel is `0RGB`:
 /// The upper 8-bits are ignored, the next 8-bits are for the red channel, the next 8-bits
@@ -22,11 +22,11 @@ fn point_to_index(x: usize, y: usize, width: usize) -> usize {
 fn main() {
     // Window dimensions in pixels
     let width: usize = 800;
-    let height: usize = 600;
+    let height: usize = 800;
     let aspect_ratio: f64 = width as f64 / height as f64;
     // Complex plane dimensions
     let min_x: f64 = -2.0;
-    let max_x: f64 = 1.0 / 4.0;
+    let max_x: f64 = 1.0 / 2.0;
     let length_x: f64 = max_x - min_x;
     let min_y: f64 = -(length_x / 2.0 * aspect_ratio);
     let max_y: f64 = -min_y;
@@ -37,6 +37,8 @@ fn main() {
     // Mandelbrot set parameters
     let max_iterations = 100;
     let orbit_radius = 2.0; //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
+    // User interaction variables
+    let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
 
     println!("Complex plane: R ∈ [{min_x},{max_x}] and C ∈ [{min_y},{max_y}]");
 
@@ -58,7 +60,7 @@ fn main() {
         let point = index_to_point(i, width, height);
         //println!("Pixel: {:?}", point);
         let x = min_x + point.0 as f64 * increment_x;
-        let y = min_y + point.1 as f64 * increment_y;
+        let y = -(min_y + point.1 as f64 * increment_y); //Negate because math plane is bottom-top, and screen plane is top-bottom 
         let c = Complex::new(x,y);
         //println!("C: {:?}", c);
         let iterations = iterate(c, orbit_radius, max_iterations);
@@ -84,6 +86,7 @@ fn main() {
         window.update_with_buffer(&buffer, width, height).unwrap();
 
         // Handle any window events
+        //Handle any key events
         for key in window.get_keys_pressed(minifb::KeyRepeat::Yes) {
             println!("Key pressed: {:?}", key);
             match key {
@@ -98,6 +101,22 @@ fn main() {
             if vec![Key::Q, Key::A, Key::W, Key::S, Key::E, Key::D].contains(&key) {
                 println!("(r: {r:0>3}, g: {g:0>3}, b: {b:0>3})");
             }
+        }
+        //Handle any mouse events
+        if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
+            let mouse_down_now = window.get_mouse_down(MouseButton::Left);
+            if mouse_down_now && !mouse_down {
+                println!("({x},{y})");
+                let index = point_to_index(x as usize, y as usize, width);
+                let iterations = buffer[index] & 0xFF;
+                let a = min_x + x as f64 * increment_x;
+                let b = min_y + y as f64 * increment_y;
+                println!("{a} + {b}i");
+                println!("iterations: {}",iterations);
+                println!();
+               // buffer[screen_pos] = 0x00ffffff;
+            }
+            mouse_down = mouse_down_now;
         }
     }
 }
