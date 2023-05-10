@@ -1,7 +1,10 @@
+mod complex_plane;
 mod complex;
 
 use complex::Complex;
 use minifb::{Key, Window, WindowOptions, MouseMode, MouseButton};
+
+use crate::complex_plane::ComplexPlane;
 
 /// Creates a 32-bit color. The encoding for each pixel is `0RGB`:
 /// The upper 8-bits are ignored, the next 8-bits are for the red channel, the next 8-bits
@@ -11,10 +14,12 @@ fn from_u8_rgb(r: u8, g: u8, b: u8) -> u32 {
     (r << 16) | (g << 8) | b
 }
 
+/// Converts a buffer index to a screen coordinate
 fn index_to_point(index: usize, width: usize, height: usize) -> (usize, usize) {
     (index % width,  index / width)
 }
 
+/// Converts a screen coordinate to a buffer index
 fn point_to_index(x: usize, y: usize, width: usize) -> usize {
     y * width + x
 }
@@ -25,16 +30,8 @@ fn main() {
     let height: usize = 1200;
     let aspect_ratio_w_h: f64 = width as f64 / height as f64;
     let aspect_ratio_h_w: f64 = height as f64 / width as f64;
-    // Complex plane dimensions
-    let min_x: f64 = -2.0;
-    let max_x: f64 = 1.0 / 2.0;
-    let length_x: f64 = max_x - min_x;
-    let min_y: f64 = -(length_x * aspect_ratio_h_w / 2.0);
-    let max_y: f64 = -min_y;
-    let length_y: f64 = max_y - min_y;
-    // Complex plane increments
-    let increment_x: f64 = length_x / width as f64;
-    let increment_y: f64 = length_y / height as f64;
+    // Complex plane dimensions and increments
+    let c = ComplexPlane::new(width,height);
     // Mandelbrot set parameters
     let max_iterations = 100;
     let orbit_radius = 2.0; //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
@@ -43,7 +40,7 @@ fn main() {
 
     let gcd = num::integer::gcd(width,height); //Needed to compute the aspect ratio of the pixel plane
     println!("Pixel plane: size is {width}x{height} and aspect ratio is {}:{}",width/gcd,height/gcd);
-    println!("Complex plane: R ∈ [{min_x},{max_x}] and C ∈ [{min_y},{max_y}]");
+    println!("Complex plane: R ∈ [{},{}] and C ∈ [{},{}]", c.min_x, c.max_x, c.min_y, c.max_y);
 
     // Create a new window
     let mut window = Window::new(
@@ -63,11 +60,9 @@ fn main() {
         let point = index_to_point(i, width, height);
         //println!("i: {i}");
         //println!("Pixel: {:?}", point);
-        let x = min_x + point.0 as f64 * increment_x;
-        let y = -(min_y + point.1 as f64 * increment_y); //Negate because math plane is bottom-top, and screen plane is top-bottom 
-        let c = Complex::new(x,y);
+        let complex = c.complex_from_pixel_plane(point.0, point.1);
         //println!("C: {:?}", c);
-        let iterations = iterate(c, orbit_radius, max_iterations);
+        let iterations = iterate(complex, orbit_radius, max_iterations);
         //println!("iterations: {}", iterations);
         //println!();
         *pixel = from_u8_rgb(iterations, iterations, iterations);
@@ -113,10 +108,8 @@ fn main() {
                 println!("({x}, {y})");
                 let index = point_to_index(x as usize, y as usize, width);
                 let iterations = buffer[index] & 0xFF;
-                let a = min_x + x as f64 * increment_x;
-                let b = -(min_y + y as f64 * increment_y);
-                let c = Complex::new(a,b);
-                println!("{:?}",c);
+                let complex = c.complex_from_pixel_plane(x as usize, y as usize);
+                println!("{:?}",complex);
                 println!("iterations: {}",iterations);
                 println!();
                // buffer[screen_pos] = 0x00ffffff;
@@ -126,22 +119,8 @@ fn main() {
     }
 }
 
-///Compute an magnified M-frame (x_pixels x y_pixels) (Mandelbrot set frame) with its center at (x, y). mag(M-frame) -> for all c in M-frame: c=(a/mag, bi/mag)
-/*fn compute_m_frame(center: Complex, zoom: f64, width: u32, height: u32) {
-    let max_iterations = 100;
-    let orbit_radius = 2.0; //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
-
-    //The Mandelbrot set formula is z[n+1] = z[n]^2 + c, where z and c are complex numbers. c is a point in the complex frame. z iterates.
-    //If z is bounded (it does not go to infinity), then c is in the Mandelbrot set. If z goes to infinity, c is not in the mandelbrot set.
-    //The speed at which c tends to infinity (or not) determines its color in the drawing we will create.
-    for x in 0..width {
-        for y in 0..height {
-            let m = MandelbrotElement::new(Complex::new(x as f64, y as f64)); //TODO: scale x and y values into magnified Mandelbrot set
-            m.iterate(orbit_radius, max_iterations);
-        }
-    }
-}*/
-
+/// Run the Mandelbrot set algorithm for a single Complex number
+/// Returns the amount of iterations needed before Zn escapes to infinity
 fn iterate(c: Complex, orbit_radius: f64, max_iterations: u8) -> u8 {
     let mut z = Complex::new(0.0, 0.0);
     let mut iterations: u8 = 0;
