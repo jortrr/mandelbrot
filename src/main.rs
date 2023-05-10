@@ -21,8 +21,8 @@ fn point_to_index(x: usize, y: usize, width: usize) -> usize {
 
 fn main() {
     // Window dimensions in pixels
-    let width: usize = 800;
-    let height: usize = 600;
+    let width: usize = 1600;
+    let height: usize = 1200;
     let aspect_ratio_w_h: f64 = width as f64 / height as f64;
     let aspect_ratio_h_w: f64 = height as f64 / width as f64;
     // Complex plane dimensions
@@ -41,6 +41,8 @@ fn main() {
     // User interaction variables
     let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
 
+    let gcd = num::integer::gcd(width,height); //Needed to compute the aspect ratio of the pixel plane
+    println!("Pixel plane: size is {width}x{height} and aspect ratio is {}:{}",width/gcd,height/gcd);
     println!("Complex plane: R ∈ [{min_x},{max_x}] and C ∈ [{min_y},{max_y}]");
 
     // Create a new window
