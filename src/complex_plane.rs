@@ -11,6 +11,9 @@ pub struct ComplexPlane {
     // Complex plane increments
     pub increment_x: f64,
     pub increment_y: f64, 
+    //Complex plane translations
+    pub translate_x: f64,
+    pub translate_y: f64,
 }
 
 impl ComplexPlane {
@@ -28,7 +31,7 @@ impl ComplexPlane {
         // Complex plane increments
         let increment_x: f64 = length_x / width as f64;
         let increment_y: f64 = length_y / height as f64;
-        ComplexPlane { min_x, max_x, length_x, min_y, max_y, length_y, increment_x, increment_y}
+        ComplexPlane { min_x, max_x, length_x, min_y, max_y, length_y, increment_x, increment_y, translate_x: 0.0, translate_y: 0.0}
     }
 
     /// Translate the Complex plane by adding x to min_x and max_x, and y to min_y and max_y
@@ -37,6 +40,8 @@ impl ComplexPlane {
         self.max_x += x;
         self.min_y += y;
         self.max_y += y;
+        self.translate_x += x;
+        self.translate_y += y;
     }
 
     /// Convert the point (x,y) in the pixel plane to the complex number a+bi in the complex plane
@@ -45,5 +50,18 @@ impl ComplexPlane {
         let y = -(self.min_y + y as f64 * self.increment_y); //Negate because math plane is bottom-top, and screen plane is top-bottom 
         let c = Complex::new(x,y);
         c
+    }
+
+    /// Prints: "Complex plane: R ∈ [{},{}] and C ∈ [{},{}]",c.min_x, c.max_x, c.min_y, c.max_y
+    pub fn print(&self) {
+        println!("Complex plane: R ∈ [{},{}] and C ∈ [{},{}]",self.min_x, self.max_x, self.min_y, self.max_y);
+    }
+
+    /// Resets the total translation applied to the Complex plane by the translate() function
+    pub fn reset_translation(&mut self) {
+        self.min_x -= self.translate_x;
+        self.max_x -= self.translate_x;
+        self.min_y -= self.translate_y;
+        self.max_y -= self.translate_y;
     }
 }
