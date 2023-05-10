@@ -12,7 +12,7 @@ fn from_u8_rgb(r: u8, g: u8, b: u8) -> u32 {
 }
 
 fn index_to_point(index: usize, width: usize, height: usize) -> (usize, usize) {
-    (index % width, index / height)
+    (index % width,  index / width)
 }
 
 fn point_to_index(x: usize, y: usize, width: usize) -> usize {
@@ -59,6 +59,7 @@ fn main() {
 
     for (i, pixel) in buffer.iter_mut().enumerate() {
         let point = index_to_point(i, width, height);
+        //println!("i: {i}");
         //println!("Pixel: {:?}", point);
         let x = min_x + point.0 as f64 * increment_x;
         let y = -(min_y + point.1 as f64 * increment_y); //Negate because math plane is bottom-top, and screen plane is top-bottom 
@@ -107,7 +108,7 @@ fn main() {
         if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
             let mouse_down_now = window.get_mouse_down(MouseButton::Left);
             if mouse_down_now && !mouse_down {
-                println!("({x},{y})");
+                println!("({x}, {y})");
                 let index = point_to_index(x as usize, y as usize, width);
                 let iterations = buffer[index] & 0xFF;
                 let a = min_x + x as f64 * increment_x;
