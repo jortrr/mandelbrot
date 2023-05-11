@@ -44,10 +44,8 @@ fn iterations_from_hsv_pixel(pixel: u32, max_iterations: u16) -> u16 {
 
 fn main() {
     // Window dimensions in pixels
-    let width: usize = 1600;
-    let height: usize = 1200;
-    let aspect_ratio_w_h: f64 = width as f64 / height as f64;
-    let aspect_ratio_h_w: f64 = height as f64 / width as f64;
+    let width: usize = 1600/2;
+    let height: usize = 1200/2;
     // Complex plane dimensions and increments
     let mut c = ComplexPlane::new(width, height);
     // Mandelbrot set parameters
@@ -58,6 +56,8 @@ fn main() {
     let mut translation_amount: u8 = 1; //Variable determining the amount of rows and columns are translated by pressing the 4 arrow keys
     let mut scale_numerator: f64 = 9.0; //Variable denoting the user scaling speed; the lower this value, the more aggressive the zooming will become
     let scale_denominator: f64 = 10.0;
+    //Mandelbrot coloring variables
+    let mut hue_offset: f64 = 0.0;
 
     let gcd = num::integer::gcd(width, height); //Needed to compute the aspect ratio of the pixel plane
     println!("Pixel plane: size is {width}x{height} and aspect ratio is {}:{}",width / gcd,height / gcd);
@@ -79,35 +79,22 @@ fn main() {
     // Create a buffer to store pixel data
     let mut buffer: Vec<u32> = vec![0; width * height];
 
-    let mut r = 0;
-    let mut g = 0;
-    let mut b = 0;
-
     render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
 
     // Main loop
     while window.is_open() && !window.is_key_down(Key::Escape) {
         // Clear the buffer to black
         //buffer.iter_mut().for_each(|pixel| *pixel = from_u8_rgb(r, g, b));
-
-        // Draw a red pixel at (100, 100)
-        //let pixel_index = 100 + 100 * width;
-        //buffer[pixel_index] = 0xFF0000;
-
+        
         // Update the window with the new buffer
         window.update_with_buffer(&buffer, width, height).unwrap();
+        change_hue_of_buffer(&mut buffer, 10.0);
 
         // Handle any window events
         //Handle any key events
         for key in window.get_keys_pressed(minifb::KeyRepeat::Yes) {
             println!("Key pressed: {:?}", key);
             match key {
-                Key::Q => r = u8::wrapping_add(r, 1),
-                Key::A => r = u8::wrapping_sub(r, 1),
-                Key::W => g = u8::wrapping_add(g, 1),
-                Key::S => g = u8::wrapping_sub(g, 1),
-                Key::E => b = u8::wrapping_add(b, 1),
-                Key::D => b = u8::wrapping_sub(b, 1),
                 Key::Up => {c.translate(0.0, c.increment_y * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, -(translation_amount as i128), 0, orbit_radius, max_iterations)},
                 Key::Down => {c.translate(0.0, -c.increment_y  * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, translation_amount as i128, 0, orbit_radius, max_iterations)},
                 Key::Left => {c.translate(c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(translation_amount as i128), orbit_radius, max_iterations);},
@@ -120,10 +107,8 @@ fn main() {
                 Key::PageUp => if scale_numerator > 1.0 { scale_numerator -= 1.0;},
                 Key::PageDown => if scale_numerator < 9.0 {scale_numerator += 1.0;},
                 Key::C => println!("Center: {:?}", c.center()),
+                Key::S => println!("Scale: {:?}", c.get_scale()),
                 _ => (),
-            }
-            if vec![Key::Q, Key::A, Key::W, Key::S, Key::E, Key::D].contains(&key) {
-                println!("(r: {r:0>3}, g: {g:0>3}, b: {b:0>3})");
             }
             if vec![Key::Up, Key::Down, Key::Left, Key::Right, Key::R, Key::LeftBracket, Key::RightBracket].contains(&key) {
                //render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
@@ -215,7 +200,7 @@ fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &Comple
         //println!();
         let hue: f64 = 359.0 * (iterations as f64 / max_iterations as f64);
         let value: f64 = if iterations < max_iterations {1.0} else {0.0};
-        let hsv = Hsv::new(Deg(hue),1.0,value);
+        let hsv = Hsv::new(Deg(hue % 359.0),1.0,value);
         let rgb = Rgb::from_color(&hsv);
         //println!("rgb: {:?}", rgb);
         *pixel = from_u8_rgb((rgb.red() * 255.0) as u8, (rgb.green() * 255.0) as u8, (rgb.blue() * 255.0) as u8);
@@ -254,5 +239,20 @@ fn translate_and_render_complex_plane_buffer(buffer: &mut Vec<u32>, c: &ComplexP
         render_box_render_complex_plane_into_buffer(buffer, c, width, height, orbit_radius, max_iterations, 0, width, (max_y as i128 -rows.abs()) as usize, max_y);
     } else {
         println!("ERROR: translate_and_render_complex_plane_buffer() requires that rows == 0 || columns == 0");
+    }
+}
+
+fn change_hue_of_buffer(buffer: &mut Vec<u32>, hue_offset: f64) {
+    for pixel in buffer {
+        let r = (*pixel >> 16) & 0xFF;
+        let g = (*pixel >> 8) & 0xFF;
+        let b = *pixel & 0xFF;
+        let rgb = Rgb::new(r as f64 / 255.0, g as f64 / 255.0, b as f64 / 255.0);
+        let hsv: Hsv<f64, _> = Hsv::from_color(&rgb);
+        let hue: Deg<f64> = hsv.hue();
+        let hue = hue.0 + hue_offset;
+        let hsv = Hsv::new(Deg(hue % 359.0), hsv.saturation(), hsv.value());
+        let rgb = Rgb::from_color(&hsv);
+        *pixel = from_u8_rgb((rgb.red() * 255.0) as u8, (rgb.green() * 255.0) as u8, (rgb.blue() * 255.0) as u8);
     }
 }

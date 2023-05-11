@@ -60,6 +60,12 @@ impl ComplexPlane {
         *self = ComplexPlane::new(self.width, self.height);
     }
 
+    //Returns the total scale applied to the Complex plane
+    pub fn get_scale(&self) -> f64 {
+        let s = self.length_x / 2.5;
+        return  s;
+    }
+
     /// Scale the complex plane, by multiplying the complex plane dimensions and increments by factor.
     /// If factor > 1.0: zoom out
     /// If factor < 1.0: zoom in
