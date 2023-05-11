@@ -1,8 +1,10 @@
 mod complex;
 mod complex_plane;
 
+use angular_units::Deg;
 use complex::Complex;
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
+use prisma::{Hsv, Rgb, FromColor, channel::AngularChannel};
 
 use crate::complex_plane::ComplexPlane;
 
@@ -24,6 +26,18 @@ fn point_to_index(x: usize, y: usize, width: usize) -> usize {
     y * width + x
 }
 
+/// Get the amount of Mandelbrot iterations from a HSV colored pixel
+fn iterations_from_hsv_pixel(pixel: u32, max_iterations: u8) -> u8 {
+    let r = (pixel >> 16) & 0xFF;
+    let g = (pixel >> 8) & 0xFF;
+    let b = pixel & 0xFF;
+    let rgb = Rgb::new(r as f64 / 255.0, g as f64 / 255.0, b as f64 / 255.0);
+    let hsv: Hsv<f64, _> = Hsv::from_color(&rgb);
+    let hue: Deg<f64> = hsv.hue();
+    let iterations: u8 = (max_iterations as f64 * (hue.0 / 359.0) as f64) as u8; 
+    iterations
+}
+
 fn main() {
     // Window dimensions in pixels
     let width: usize = 1600;
@@ -33,7 +47,7 @@ fn main() {
     // Complex plane dimensions and increments
     let mut c = ComplexPlane::new(width, height);
     // Mandelbrot set parameters
-    let max_iterations = 100;
+    let max_iterations = 255;
     let orbit_radius = 2.0; //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
                             // User interaction variables
     let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
@@ -57,11 +71,11 @@ fn main() {
     // Create a buffer to store pixel data
     let mut buffer: Vec<u32> = vec![0; width * height];
 
-    render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
+    let mut r = 0;
+    let mut g = 0;
+    let mut b = 0;
 
-    let mut r: u8 = 0;
-    let mut g: u8 = 0;
-    let mut b: u8 = 0;
+    render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
 
     // Main loop
     while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -108,7 +122,8 @@ fn main() {
             if mouse_down_now && !mouse_down {
                 println!("({x}, {y})");
                 let index = point_to_index(x as usize, y as usize, width);
-                let iterations = buffer[index] & 0xFF;
+                let pixel = buffer[index];
+                let iterations = iterations_from_hsv_pixel(pixel, max_iterations);
                 let complex = c.complex_from_pixel_plane(x as usize, y as usize);
                 println!("{:?}", complex);
                 println!("iterations: {}", iterations);
@@ -168,7 +183,12 @@ fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &Comple
         let iterations = iterate(complex, orbit_radius, max_iterations);
         //println!("iterations: {}", iterations);
         //println!();
-        *pixel = from_u8_rgb(iterations, iterations, iterations);
+        let hue: f64 = 359.0 * (iterations as f64 / max_iterations as f64);
+        let value: f64 = if iterations < max_iterations {1.0} else {0.0};
+        let hsv = Hsv::new(Deg(hue),1.0,1.0);
+        let rgb = Rgb::from_color(&hsv);
+        //println!("rgb: {:?}", rgb);
+        *pixel = from_u8_rgb((rgb.red() * 255.0) as u8, (rgb.green() * 255.0) as u8, (rgb.blue() * 255.0) as u8);
     }
 }
 
