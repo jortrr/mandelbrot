@@ -100,16 +100,15 @@ impl ComplexPlane {
     /// Returns the center of the Complex plane bounded by min_x, min_y, max_x, max_y
     pub fn center(&self) -> Complex {
         let x = self.min_x + (self.max_x - self.min_x)/2.0;
-        let y = self.min_y + (self.max_y - self.min_y)/2.0;
+        let y = -(self.min_y + (self.max_y - self.min_y)/2.0); //Negate because math plane is bottom-top, and screen plane is top-bottom 
         Complex::new(x, y)
     }
 
     /// Translate min_x,max_x,min_y,max_y so that center becomes the center of the Complex plane
     pub fn set_center(&mut self, center: Complex) {
-        let mut center = center;
-        center.b = - center.b;
         let old = self.center();
-        let translation = center.subtract(&old);
+        let mut translation = center.subtract(&old);
+        translation.b=-translation.b; //Negate because the Complex plane and pixel plane are flipped
         println!("DEBUG set_center():");
         println!("\tcenter: {:?}", center);
         println!("\told: {:?}", old);
