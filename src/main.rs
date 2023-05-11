@@ -185,7 +185,7 @@ fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &Comple
         //println!();
         let hue: f64 = 359.0 * (iterations as f64 / max_iterations as f64);
         let value: f64 = if iterations < max_iterations {1.0} else {0.0};
-        let hsv = Hsv::new(Deg(hue),1.0,1.0);
+        let hsv = Hsv::new(Deg(hue),1.0,value);
         let rgb = Rgb::from_color(&hsv);
         //println!("rgb: {:?}", rgb);
         *pixel = from_u8_rgb((rgb.red() * 255.0) as u8, (rgb.green() * 255.0) as u8, (rgb.blue() * 255.0) as u8);
