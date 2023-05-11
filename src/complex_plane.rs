@@ -73,6 +73,7 @@ impl ComplexPlane {
     /// If factor > 1.0: zoom out
     /// If factor < 1.0: zoom in
     pub fn scale(&mut self, factor: f64) {
+        let center = self.center();
         self.min_x *= factor;
         self.max_x *= factor;
         self.min_y *= factor;
@@ -82,6 +83,7 @@ impl ComplexPlane {
         self.increment_x *= factor;
         self.increment_y *= factor;
         self.scale_factor *= factor;
+        self.set_center(center);
     }
 
     /// Resets the total sacling applied to the Complex plane by the scale() function

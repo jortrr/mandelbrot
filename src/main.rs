@@ -27,7 +27,7 @@ fn point_to_index(x: usize, y: usize, width: usize) -> usize {
 }
 
 /// Get the amount of Mandelbrot iterations from a HSV colored pixel
-fn iterations_from_hsv_pixel(pixel: u32, max_iterations: u8) -> u8 {
+fn iterations_from_hsv_pixel(pixel: u32, max_iterations: u16) -> u16 {
     let r = (pixel >> 16) & 0xFF;
     let g = (pixel >> 8) & 0xFF;
     let b = pixel & 0xFF;
@@ -38,7 +38,7 @@ fn iterations_from_hsv_pixel(pixel: u32, max_iterations: u8) -> u8 {
     if value == 0.0 { //If value == 0.0, the pixel is an element of the Mandelbrot set
         return max_iterations;
     }
-    let iterations: u8 = (max_iterations as f64 * (hue.0 / 359.0) as f64) as u8; 
+    let iterations: u16 = (max_iterations as f64 * (hue.0 / 359.0) as f64) as u16; 
     iterations
 }
 
@@ -51,7 +51,7 @@ fn main() {
     // Complex plane dimensions and increments
     let mut c = ComplexPlane::new(width, height);
     // Mandelbrot set parameters
-    let max_iterations = 255;
+    let max_iterations = 1000;
     let orbit_radius = 2.0; //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
     // User interaction variables
     let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
@@ -167,9 +167,9 @@ fn main() {
 
 /// Run the Mandelbrot set algorithm for a single Complex number
 /// Returns the amount of iterations needed before Zn escapes to infinity
-fn iterate(c: Complex, orbit_radius: f64, max_iterations: u8) -> u8 {
+fn iterate(c: Complex, orbit_radius: f64, max_iterations: u16) -> u16 {
     let mut z = Complex::new(0.0, 0.0);
-    let mut iterations: u8 = 0;
+    let mut iterations: u16 = 0;
     for _ in 0..max_iterations {
         z = z.squared().add(&c);
 
@@ -177,7 +177,7 @@ fn iterate(c: Complex, orbit_radius: f64, max_iterations: u8) -> u8 {
             break;
         }
         iterations += 1;
-        if iterations == u8::MAX {
+        if iterations == u16::MAX {
             break;
         }
     }
@@ -189,7 +189,7 @@ fn iterate(c: Complex, orbit_radius: f64, max_iterations: u8) -> u8 {
 /// orbit_radius determines when Zn is considered to have gone to infinity.
 /// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
-fn render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, width: usize, height: usize, orbit_radius: f64, max_iterations: u8) {
+fn render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, width: usize, height: usize, orbit_radius: f64, max_iterations: u16) {
     render_box_render_complex_plane_into_buffer(buffer, c, width, height, orbit_radius, max_iterations, 0, width, 0, height);
 }
 
@@ -199,7 +199,7 @@ fn render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, wid
 /// orbit_radius determines when Zn is considered to have gone to infinity.
 /// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
-fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, width: usize, height: usize, orbit_radius: f64, max_iterations: u8, render_min_x: usize, render_max_x: usize, render_min_y: usize, render_max_y: usize) {
+fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, width: usize, height: usize, orbit_radius: f64, max_iterations: u16, render_min_x: usize, render_max_x: usize, render_min_y: usize, render_max_y: usize) {
     println!("render_box: ({},{}) -> ({},{})",render_min_x,render_min_y,render_max_x,render_max_y);
     for (i, pixel) in buffer.iter_mut().enumerate() {
         let point = index_to_point(i, width, height);
@@ -243,7 +243,7 @@ fn translate_complex_plane_buffer(buffer: &mut Vec<u32>, width: usize, height: u
     }
 }
 
-fn translate_and_render_complex_plane_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, width: usize, height: usize, rows: i128, columns: i128, orbit_radius: f64, max_iterations: u8) {
+fn translate_and_render_complex_plane_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, width: usize, height: usize, rows: i128, columns: i128, orbit_radius: f64, max_iterations: u16) {
     let max_x: usize = if columns > 0 {columns as usize} else {width-1};
     let max_y: usize = if rows > 0 {rows as usize} else {height-1};
     translate_complex_plane_buffer(buffer, width, height, rows, columns);
