@@ -46,8 +46,8 @@ fn iterations_from_hsv_pixel(pixel: u32, max_iterations: u16) -> u16 {
 
 fn main() {
     // Window dimensions in pixels
-    let width: usize = 1600/2;
-    let height: usize = 1200/2;
+    let width: usize = 1600;
+    let height: usize = 1200;
     // Complex plane dimensions and increments
     let mut c = ComplexPlane::new(width, height);
     // Mandelbrot set parameters
@@ -90,7 +90,7 @@ fn main() {
         
         // Update the window with the new buffer
         window.update_with_buffer(&buffer, width, height).unwrap();
-        change_hue_of_buffer(&mut buffer, 1.0);
+        //change_hue_of_buffer(&mut buffer, 1.0);
 
         // Handle any window events
         //Handle any key events
@@ -249,7 +249,7 @@ fn translate_and_render_complex_plane_buffer(buffer: &mut Vec<u32>, c: &ComplexP
 }
 
 fn change_hue_of_buffer(buffer: &mut Vec<u32>, hue_offset: f64) {
-    let time = benchmark_start();
+    //let time = benchmark_start();
     for pixel in buffer {
         let r = (*pixel >> 16) & 0xFF;
         let g = (*pixel >> 8) & 0xFF;
@@ -262,7 +262,7 @@ fn change_hue_of_buffer(buffer: &mut Vec<u32>, hue_offset: f64) {
         let rgb = Rgb::from_color(&hsv);
         *pixel = from_u8_rgb((rgb.red() * 255.0) as u8, (rgb.green() * 255.0) as u8, (rgb.blue() * 255.0) as u8);
     }
-    benchmark(time);
+    //benchmark(time);
 }
 
 fn benchmark_start() -> Instant {
