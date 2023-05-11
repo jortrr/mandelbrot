@@ -202,5 +202,7 @@ fn translate_and_render_complex_plane_buffer(buffer: &mut Vec<u32>, c: &ComplexP
     }
     else if columns == 0 {
         render_box_render_complex_plane_into_buffer(buffer, c, width, height, orbit_radius, max_iterations, 0, width, (max_y as i128 -rows.abs()) as usize, max_y);
+    } else {
+        println!("ERROR: translate_and_render_complex_plane_buffer() requires that rows == 0 || columns == 0");
     }
 }

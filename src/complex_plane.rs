@@ -63,5 +63,7 @@ impl ComplexPlane {
         self.max_x -= self.translate_x;
         self.min_y -= self.translate_y;
         self.max_y -= self.translate_y;
+        self.translate_x = 0.0;
+        self.translate_y = 0.0;
     }
 }
