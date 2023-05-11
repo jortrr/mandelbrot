@@ -86,17 +86,17 @@ fn main() {
                 Key::S => g = u8::wrapping_sub(g, 1),
                 Key::E => b = u8::wrapping_add(b, 1),
                 Key::D => b = u8::wrapping_sub(b, 1),
-                Key::Up => {c.translate(0.0, c.increment_y); translate_y_complex_plane_buffer(&mut buffer, width, height, -1)},
-                Key::Down => {c.translate(0.0, -c.increment_y); translate_y_complex_plane_buffer(&mut buffer, width, height, 1)},
-                Key::Left => c.translate(c.increment_x, 0.0),
-                Key::Right => c.translate(-c.increment_x, 0.0),
+                Key::Up => {c.translate(0.0, c.increment_y); translate_complex_plane_buffer(&mut buffer, width, height, -1, 0)},
+                Key::Down => {c.translate(0.0, -c.increment_y); translate_complex_plane_buffer(&mut buffer, width, height, 1, 0)},
+                Key::Left => {c.translate(c.increment_x, 0.0); translate_complex_plane_buffer(&mut buffer, width, height, 0, -1);},
+                Key::Right => {c.translate(-c.increment_x, 0.0); translate_complex_plane_buffer(&mut buffer, width, height, 0, 1);},
                 Key::R => {c.reset_translation();render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);},
                 _ => (),
             }
             if vec![Key::Q, Key::A, Key::W, Key::S, Key::E, Key::D].contains(&key) {
                 println!("(r: {r:0>3}, g: {g:0>3}, b: {b:0>3})");
             }
-            if vec![Key::Up, Key::Down, Key::Left, Key::Right].contains(&key) {
+            if vec![Key::Up, Key::Down, Key::Left, Key::Right, Key::R].contains(&key) {
                //render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
                c.print();
             }
@@ -171,19 +171,19 @@ fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &Comple
     }
 }
 
-fn translate_x_complex_plane_buffer(buffer: &mut Vec<u32>, width: usize, height: usize, columns: i32) {
-
-}
-
-fn translate_y_complex_plane_buffer(buffer: &mut Vec<u32>, width: usize, height: usize, rows: i128) {
+fn translate_complex_plane_buffer(buffer: &mut Vec<u32>, width: usize, height: usize, rows: i128, columns: i128) {
     //Iterate over the correct y's in the correct order
-    let range : Vec<usize> = if rows > 0 {((rows as usize)..height).rev().into_iter().collect()} else {(0..((height as i128 + rows) as usize)).into_iter().collect()};
+    let y_range : Vec<usize> = if rows > 0 {((rows as usize)..height).rev().into_iter().collect()} else {(0..((height as i128 + rows) as usize)).into_iter().collect()};
+    //Iterate over the correct x's in the correct order
+    let x_range : Vec<usize> = if columns > 0 {((columns as usize)..width).rev().into_iter().collect()} else {(0..((width as i128 + columns) as usize)).into_iter().collect()};
 
-    for y in range {
+    for y in y_range {
         let other_y = (y as i128-rows) as usize;
-        println!("y: {y} and other_y: {other_y}");
-        for x in 0..width {
-            buffer[point_to_index(x, y, width)] = buffer[point_to_index(x, other_y, width)];
+        //println!("y: {y} and other_y: {other_y}");
+        for x in &x_range {
+            let other_x = (*x as i128 - columns) as usize;
+            //println!("x: {} and other_x: {other_x}",*x);
+            buffer[point_to_index(*x, y, width)] = buffer[point_to_index(other_x, other_y, width)];
         }
     }
 }
