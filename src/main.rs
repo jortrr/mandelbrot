@@ -110,6 +110,9 @@ fn main() {
                 Key::PageDown => if scale_numerator < 9.0 {scale_numerator += 1.0;},
                 Key::C => println!("Center: {:?}", c.center()),
                 Key::S => println!("Scale: {:?}", c.get_scale()),
+                Key::N => hue_offset += 10.0,
+                Key::M => hue_offset -= 10.0,
+                Key::K => change_hue_of_buffer(&mut buffer, hue_offset),
                 /*Key::N => {
                     let mut input_string = String::new();
                     io::stdin().read_line(&mut input_string).unwrap(); // Get the stdin from the user, and put it in read_string
@@ -125,6 +128,9 @@ fn main() {
             }
             if vec![Key::PageUp,Key::PageDown].contains(&key) {
                 println!("scale factor: {}/{}",scale_numerator,scale_denominator);
+            }
+            if vec![Key::N, Key::M].contains(&key) {
+                println!("hue offset: {}", hue_offset)
             }
             println!();
         }
@@ -258,7 +264,7 @@ fn change_hue_of_buffer(buffer: &mut Vec<u32>, hue_offset: f64) {
         let hsv: Hsv<f64, _> = Hsv::from_color(&rgb);
         let hue: Deg<f64> = hsv.hue();
         let hue = hue.0 + hue_offset;
-        let hsv = Hsv::new(Deg(hue % 359.0), hsv.saturation(), hsv.value());
+        let hsv = Hsv::new(Deg(hue.abs() % 359.0), hsv.saturation(), hsv.value());
         let rgb = Rgb::from_color(&hsv);
         *pixel = from_u8_rgb((rgb.red() * 255.0) as u8, (rgb.green() * 255.0) as u8, (rgb.blue() * 255.0) as u8);
     }
