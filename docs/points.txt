@@ -1,0 +1,6 @@
+1.
+Key pressed: C
+Center: -0.54375 + 0.4984375i
+
+Key pressed: S
+Scale: 0.25

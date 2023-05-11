@@ -1,6 +1,8 @@
 mod complex;
 mod complex_plane;
 
+use std::time::Instant;
+
 use angular_units::Deg;
 use complex::Complex;
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
@@ -88,7 +90,7 @@ fn main() {
         
         // Update the window with the new buffer
         window.update_with_buffer(&buffer, width, height).unwrap();
-        change_hue_of_buffer(&mut buffer, 10.0);
+        change_hue_of_buffer(&mut buffer, 1.0);
 
         // Handle any window events
         //Handle any key events
@@ -108,6 +110,10 @@ fn main() {
                 Key::PageDown => if scale_numerator < 9.0 {scale_numerator += 1.0;},
                 Key::C => println!("Center: {:?}", c.center()),
                 Key::S => println!("Scale: {:?}", c.get_scale()),
+                /*Key::N => {
+                    let mut input_string = String::new();
+                    io::stdin().read_line(&mut input_string).unwrap(); // Get the stdin from the user, and put it in read_string
+                }*/
                 _ => (),
             }
             if vec![Key::Up, Key::Down, Key::Left, Key::Right, Key::R, Key::LeftBracket, Key::RightBracket].contains(&key) {
@@ -243,6 +249,7 @@ fn translate_and_render_complex_plane_buffer(buffer: &mut Vec<u32>, c: &ComplexP
 }
 
 fn change_hue_of_buffer(buffer: &mut Vec<u32>, hue_offset: f64) {
+    let time = benchmark_start();
     for pixel in buffer {
         let r = (*pixel >> 16) & 0xFF;
         let g = (*pixel >> 8) & 0xFF;
@@ -255,4 +262,13 @@ fn change_hue_of_buffer(buffer: &mut Vec<u32>, hue_offset: f64) {
         let rgb = Rgb::from_color(&hsv);
         *pixel = from_u8_rgb((rgb.red() * 255.0) as u8, (rgb.green() * 255.0) as u8, (rgb.blue() * 255.0) as u8);
     }
+    benchmark(time);
+}
+
+fn benchmark_start() -> Instant {
+    Instant::now()
+}
+
+fn benchmark(time: Instant) {
+    println!("Elapsed: {:.2?}", time.elapsed());
 }
