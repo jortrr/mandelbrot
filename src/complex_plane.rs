@@ -11,11 +11,9 @@ pub struct ComplexPlane {
     // Complex plane increments
     pub increment_x: f64,
     pub increment_y: f64, 
-    //Complex plane translations
-    pub translate_x: f64,
-    pub translate_y: f64,
-    //Complex plane scaling
-    pub scale_factor: f64,
+   // Pixel plane width and height
+   width: usize,
+   height: usize,
 }
 
 impl ComplexPlane {
@@ -33,7 +31,7 @@ impl ComplexPlane {
         // Complex plane increments
         let increment_x: f64 = length_x / width as f64;
         let increment_y: f64 = length_y / height as f64;
-        ComplexPlane { min_x, max_x, length_x, min_y, max_y, length_y, increment_x, increment_y, translate_x: 0.0, translate_y: 0.0, scale_factor: 1.0}
+        ComplexPlane { min_x, max_x, length_x, min_y, max_y, length_y, increment_x, increment_y, width, height}
     }
 
     /// Translate the Complex plane by adding x to min_x and max_x, and y to min_y and max_y
@@ -42,8 +40,6 @@ impl ComplexPlane {
         self.max_x += x;
         self.min_y += y;
         self.max_y += y;
-        self.translate_x += x;
-        self.translate_y += y;
     }
 
     /// Convert the point (x,y) in the pixel plane to the complex number a+bi in the complex plane
@@ -59,14 +55,9 @@ impl ComplexPlane {
         println!("Complex plane: R ∈ [{},{}] and C ∈ [{},{}]",self.min_x, self.max_x, self.min_y, self.max_y);
     }
 
-    /// Resets the total translation applied to the Complex plane by the translate() function
-    pub fn reset_translation(&mut self) {
-        self.min_x -= self.translate_x;
-        self.max_x -= self.translate_x;
-        self.min_y -= self.translate_y;
-        self.max_y -= self.translate_y;
-        self.translate_x = 0.0;
-        self.translate_y = 0.0;
+    /// Resets the total translation and scaling applied to the Complex plane by the translate() and scale() functions
+    pub fn reset(&mut self) {
+        *self = ComplexPlane::new(self.width, self.height);
     }
 
     /// Scale the complex plane, by multiplying the complex plane dimensions and increments by factor.
@@ -82,21 +73,7 @@ impl ComplexPlane {
         self.length_y *= factor;
         self.increment_x *= factor;
         self.increment_y *= factor;
-        self.scale_factor *= factor;
         self.set_center(center);
-    }
-
-    /// Resets the total sacling applied to the Complex plane by the scale() function
-    pub fn reset_scale(&mut self) {
-        self.min_x /= self.scale_factor;
-        self.max_x /= self.scale_factor;
-        self.min_y /= self.scale_factor;
-        self.max_y /= self.scale_factor;
-        self.length_x /= self.scale_factor;
-        self.length_y /= self.scale_factor;
-        self.increment_x /= self.scale_factor;
-        self.increment_y /= self.scale_factor;
-        self.scale_factor = 1.0;
     }
 
     /// Returns the center of the Complex plane bounded by min_x, min_y, max_x, max_y
@@ -111,10 +88,10 @@ impl ComplexPlane {
         let old = self.center();
         let mut translation = center.subtract(&old);
         translation.b=-translation.b; //Negate because the Complex plane and pixel plane are flipped
-        println!("DEBUG set_center():");
+        /*println!("DEBUG set_center():");
         println!("\tcenter: {:?}", center);
         println!("\told: {:?}", old);
-        println!("\ttranslation: {:?}", translation);
+        println!("\ttranslation: {:?}", translation);*/
         self.translate(translation.a, translation.b);
     }
 }

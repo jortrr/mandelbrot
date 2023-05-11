@@ -112,7 +112,7 @@ fn main() {
                 Key::Down => {c.translate(0.0, -c.increment_y  * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, translation_amount as i128, 0, orbit_radius, max_iterations)},
                 Key::Left => {c.translate(c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(translation_amount as i128), orbit_radius, max_iterations);},
                 Key::Right => {c.translate(-c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, translation_amount as i128, orbit_radius, max_iterations);},
-                Key::R => {c.reset_scale();c.reset_translation();render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);},
+                Key::R => {c.reset();render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);},
                 Key::NumPadPlus => if translation_amount < u8::MAX { translation_amount += 1;},
                 Key::NumPadMinus => if translation_amount > 1 { translation_amount -= 1; },
                 Key::LeftBracket => {c.scale(scale_numerator/scale_denominator);render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);},
