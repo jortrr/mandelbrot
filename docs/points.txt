@@ -4,3 +4,17 @@ Center: -0.54375 + 0.4984375i
 
 Key pressed: S
 Scale: 0.25
+
+2.
+Key pressed: C
+Center: -0.6067187499999996 + 0.4503125000000001i
+
+Key pressed: S
+Scale: 0.05
+
+3.
+Key pressed: S
+Scale: 0.05184000000000002
+
+Key pressed: C
+Center: -0.36314999999999986 + 0.63965i
