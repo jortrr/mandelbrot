@@ -34,6 +34,10 @@ fn iterations_from_hsv_pixel(pixel: u32, max_iterations: u8) -> u8 {
     let rgb = Rgb::new(r as f64 / 255.0, g as f64 / 255.0, b as f64 / 255.0);
     let hsv: Hsv<f64, _> = Hsv::from_color(&rgb);
     let hue: Deg<f64> = hsv.hue();
+    let value = hsv.value();
+    if value == 0.0 { //If value == 0.0, the pixel is an element of the Mandelbrot set
+        return max_iterations;
+    }
     let iterations: u8 = (max_iterations as f64 * (hue.0 / 359.0) as f64) as u8; 
     iterations
 }
