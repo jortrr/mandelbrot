@@ -53,8 +53,9 @@ fn main() {
     // Mandelbrot set parameters
     let max_iterations = 255;
     let orbit_radius = 2.0; //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
-                            // User interaction variables
+    // User interaction variables
     let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
+    let mut translation_amount: u8 = 1; //Variable determining the amount of rows and columns are translated by pressing the 4 arrow keys
 
     let gcd = num::integer::gcd(width, height); //Needed to compute the aspect ratio of the pixel plane
     println!("Pixel plane: size is {width}x{height} and aspect ratio is {}:{}",width / gcd,height / gcd);
@@ -105,11 +106,13 @@ fn main() {
                 Key::S => g = u8::wrapping_sub(g, 1),
                 Key::E => b = u8::wrapping_add(b, 1),
                 Key::D => b = u8::wrapping_sub(b, 1),
-                Key::Up => {c.translate(0.0, c.increment_y); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, -1, 0, orbit_radius, max_iterations)},
-                Key::Down => {c.translate(0.0, -c.increment_y); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 1, 0, orbit_radius, max_iterations)},
-                Key::Left => {c.translate(c.increment_x, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -1, orbit_radius, max_iterations);},
-                Key::Right => {c.translate(-c.increment_x, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, 1, orbit_radius, max_iterations);},
+                Key::Up => {c.translate(0.0, c.increment_y * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, -(translation_amount as i128), 0, orbit_radius, max_iterations)},
+                Key::Down => {c.translate(0.0, -c.increment_y  * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, translation_amount as i128, 0, orbit_radius, max_iterations)},
+                Key::Left => {c.translate(c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(translation_amount as i128), orbit_radius, max_iterations);},
+                Key::Right => {c.translate(-c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, translation_amount as i128, orbit_radius, max_iterations);},
                 Key::R => {c.reset_translation();render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);},
+                Key::NumPadPlus => if translation_amount < u8::MAX { translation_amount += 1;},
+                Key::NumPadMinus => if translation_amount > 1 { translation_amount -= 1; },
                 _ => (),
             }
             if vec![Key::Q, Key::A, Key::W, Key::S, Key::E, Key::D].contains(&key) {
@@ -118,6 +121,9 @@ fn main() {
             if vec![Key::Up, Key::Down, Key::Left, Key::Right, Key::R].contains(&key) {
                //render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
                c.print();
+            }
+            if vec![Key::NumPadPlus, Key::NumPadMinus].contains(&key) {
+                println!("translation_amount: {}", translation_amount);
             }
             println!();
         }
