@@ -96,4 +96,24 @@ impl ComplexPlane {
         self.increment_y /= self.scale_factor;
         self.scale_factor = 1.0;
     }
+
+    /// Returns the center of the Complex plane bounded by min_x, min_y, max_x, max_y
+    pub fn center(&self) -> Complex {
+        let x = self.min_x + (self.max_x - self.min_x)/2.0;
+        let y = self.min_y + (self.max_y - self.min_y)/2.0;
+        Complex::new(x, y)
+    }
+
+    /// Translate min_x,max_x,min_y,max_y so that center becomes the center of the Complex plane
+    pub fn set_center(&mut self, center: Complex) {
+        let mut center = center;
+        center.b = - center.b;
+        let old = self.center();
+        let translation = center.subtract(&old);
+        println!("DEBUG set_center():");
+        println!("\tcenter: {:?}", center);
+        println!("\told: {:?}", old);
+        println!("\ttranslation: {:?}", translation);
+        self.translate(translation.a, translation.b);
+    }
 }

@@ -4,9 +4,9 @@ use std::fmt;
 ///Complex number (a + bi), i^2 = -1: https://en.wikipedia.org/wiki/Complex_number
 pub struct Complex {
     /// Real part
-    a: f64,
+    pub a: f64,
     /// Imaginary part
-    b: f64,
+    pub b: f64,
 }
 
 impl Complex {

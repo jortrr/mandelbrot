@@ -57,7 +57,7 @@ fn main() {
     let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
     let mut translation_amount: u8 = 1; //Variable determining the amount of rows and columns are translated by pressing the 4 arrow keys
     let mut scale_numerator: f64 = 9.0; //Variable denoting the user scaling speed; the lower this value, the more aggressive the zooming will become
-    let mut scale_denominator: f64 = 10.0;
+    let scale_denominator: f64 = 10.0;
 
     let gcd = num::integer::gcd(width, height); //Needed to compute the aspect ratio of the pixel plane
     println!("Pixel plane: size is {width}x{height} and aspect ratio is {}:{}",width / gcd,height / gcd);
@@ -119,6 +119,7 @@ fn main() {
                 Key::RightBracket => {c.scale(scale_denominator/scale_numerator);render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);},
                 Key::PageUp => if scale_numerator > 1.0 { scale_numerator -= 1.0;},
                 Key::PageDown => if scale_numerator < 9.0 {scale_numerator += 1.0;},
+                Key::C => println!("Center: {:?}", c.center()),
                 _ => (),
             }
             if vec![Key::Q, Key::A, Key::W, Key::S, Key::E, Key::D].contains(&key) {
@@ -149,6 +150,15 @@ fn main() {
                 println!("iterations: {}", iterations);
                 println!();
                 // buffer[screen_pos] = 0x00ffffff;
+            }
+            if window.get_mouse_down(MouseButton::Right) {
+                println!("({x}, {y})");
+                let complex = c.complex_from_pixel_plane(x as usize, y as usize);
+                println!("{:?}", complex);
+                c.set_center(complex);
+                println!("Center: {:?}", c.center());
+                render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
+                c.print();
             }
             mouse_down = mouse_down_now;
         }
