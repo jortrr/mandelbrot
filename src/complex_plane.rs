@@ -14,6 +14,8 @@ pub struct ComplexPlane {
     //Complex plane translations
     pub translate_x: f64,
     pub translate_y: f64,
+    //Complex plane scaling
+    pub scale_factor: f64,
 }
 
 impl ComplexPlane {
@@ -31,7 +33,7 @@ impl ComplexPlane {
         // Complex plane increments
         let increment_x: f64 = length_x / width as f64;
         let increment_y: f64 = length_y / height as f64;
-        ComplexPlane { min_x, max_x, length_x, min_y, max_y, length_y, increment_x, increment_y, translate_x: 0.0, translate_y: 0.0}
+        ComplexPlane { min_x, max_x, length_x, min_y, max_y, length_y, increment_x, increment_y, translate_x: 0.0, translate_y: 0.0, scale_factor: 1.0}
     }
 
     /// Translate the Complex plane by adding x to min_x and max_x, and y to min_y and max_y
@@ -65,5 +67,33 @@ impl ComplexPlane {
         self.max_y -= self.translate_y;
         self.translate_x = 0.0;
         self.translate_y = 0.0;
+    }
+
+    /// Scale the complex plane, by multiplying the complex plane dimensions and increments by factor.
+    /// If factor > 1.0: zoom out
+    /// If factor < 1.0: zoom in
+    pub fn scale(&mut self, factor: f64) {
+        self.min_x *= factor;
+        self.max_x *= factor;
+        self.min_y *= factor;
+        self.max_y *= factor;
+        self.length_x *= factor;
+        self.length_y *= factor;
+        self.increment_x *= factor;
+        self.increment_y *= factor;
+        self.scale_factor *= factor;
+    }
+
+    /// Resets the total sacling applied to the Complex plane by the scale() function
+    pub fn reset_scale(&mut self) {
+        self.min_x /= self.scale_factor;
+        self.max_x /= self.scale_factor;
+        self.min_y /= self.scale_factor;
+        self.max_y /= self.scale_factor;
+        self.length_x /= self.scale_factor;
+        self.length_y /= self.scale_factor;
+        self.increment_x /= self.scale_factor;
+        self.increment_y /= self.scale_factor;
+        self.scale_factor = 1.0;
     }
 }

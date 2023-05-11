@@ -56,6 +56,8 @@ fn main() {
     // User interaction variables
     let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
     let mut translation_amount: u8 = 1; //Variable determining the amount of rows and columns are translated by pressing the 4 arrow keys
+    let mut scale_numerator: f64 = 9.0; //Variable denoting the user scaling speed; the lower this value, the more aggressive the zooming will become
+    let mut scale_denominator: f64 = 10.0;
 
     let gcd = num::integer::gcd(width, height); //Needed to compute the aspect ratio of the pixel plane
     println!("Pixel plane: size is {width}x{height} and aspect ratio is {}:{}",width / gcd,height / gcd);
@@ -110,20 +112,27 @@ fn main() {
                 Key::Down => {c.translate(0.0, -c.increment_y  * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, translation_amount as i128, 0, orbit_radius, max_iterations)},
                 Key::Left => {c.translate(c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(translation_amount as i128), orbit_radius, max_iterations);},
                 Key::Right => {c.translate(-c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, translation_amount as i128, orbit_radius, max_iterations);},
-                Key::R => {c.reset_translation();render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);},
+                Key::R => {c.reset_scale();c.reset_translation();render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);},
                 Key::NumPadPlus => if translation_amount < u8::MAX { translation_amount += 1;},
                 Key::NumPadMinus => if translation_amount > 1 { translation_amount -= 1; },
+                Key::LeftBracket => {c.scale(scale_numerator/scale_denominator);render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);},
+                Key::RightBracket => {c.scale(scale_denominator/scale_numerator);render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);},
+                Key::PageUp => if scale_numerator > 1.0 { scale_numerator -= 1.0;},
+                Key::PageDown => if scale_numerator < 9.0 {scale_numerator += 1.0;},
                 _ => (),
             }
             if vec![Key::Q, Key::A, Key::W, Key::S, Key::E, Key::D].contains(&key) {
                 println!("(r: {r:0>3}, g: {g:0>3}, b: {b:0>3})");
             }
-            if vec![Key::Up, Key::Down, Key::Left, Key::Right, Key::R].contains(&key) {
+            if vec![Key::Up, Key::Down, Key::Left, Key::Right, Key::R, Key::LeftBracket, Key::RightBracket].contains(&key) {
                //render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
                c.print();
             }
             if vec![Key::NumPadPlus, Key::NumPadMinus].contains(&key) {
                 println!("translation_amount: {}", translation_amount);
+            }
+            if vec![Key::PageUp,Key::PageDown].contains(&key) {
+                println!("scale factor: {}/{}",scale_numerator,scale_denominator);
             }
             println!();
         }
