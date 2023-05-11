@@ -171,6 +171,10 @@ fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &Comple
     }
 }
 
+/// Translate the complex plane in the `buffer` `rows` to the right and `columns` up.
+/// This operation is significantly less expensive than the render_box_render_complex_plane_into_buffer() function, as it does not rerender anything in the complex plane, it simply
+/// get rids of `rows.abs()` rows and `columns.abs()` columns, and moves the image rows to the right and columns up.
+/// Note: The removed rows and columns should be rerendered by the render_box_render_complex_plane_into_buffer() function.
 fn translate_complex_plane_buffer(buffer: &mut Vec<u32>, width: usize, height: usize, rows: i128, columns: i128) {
     //Iterate over the correct y's in the correct order
     let y_range : Vec<usize> = if rows > 0 {((rows as usize)..height).rev().into_iter().collect()} else {(0..((height as i128 + rows) as usize)).into_iter().collect()};
