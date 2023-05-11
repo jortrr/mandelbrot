@@ -86,18 +86,18 @@ fn main() {
                 Key::S => g = u8::wrapping_sub(g, 1),
                 Key::E => b = u8::wrapping_add(b, 1),
                 Key::D => b = u8::wrapping_sub(b, 1),
-                Key::Up => c.translate(0.0, c.increment_y),
-                Key::Down => c.translate(0.0, -c.increment_y),
+                Key::Up => {c.translate(0.0, c.increment_y); translate_y_complex_plane_buffer(&mut buffer, width, height, -1)},
+                Key::Down => {c.translate(0.0, -c.increment_y); translate_y_complex_plane_buffer(&mut buffer, width, height, 1)},
                 Key::Left => c.translate(c.increment_x, 0.0),
                 Key::Right => c.translate(-c.increment_x, 0.0),
-                Key::R => c.reset_translation(),
+                Key::R => {c.reset_translation();render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);},
                 _ => (),
             }
             if vec![Key::Q, Key::A, Key::W, Key::S, Key::E, Key::D].contains(&key) {
                 println!("(r: {r:0>3}, g: {g:0>3}, b: {b:0>3})");
             }
-            if vec![Key::Up, Key::Down, Key::Left, Key::Right, Key::R].contains(&key) {
-               render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
+            if vec![Key::Up, Key::Down, Key::Left, Key::Right].contains(&key) {
+               //render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
                c.print();
             }
             println!();
@@ -143,9 +143,23 @@ fn iterate(c: Complex, orbit_radius: f64, max_iterations: u8) -> u8 {
 /// The buffer should have a size of width*height.
 /// orbit_radius determines when Zn is considered to have gone to infinity.
 /// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
+/// Note: This function is computationally intensive, and should not be used for translations
 fn render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, width: usize, height: usize, orbit_radius: f64, max_iterations: u8) {
+    render_box_render_complex_plane_into_buffer(buffer, c, width, height, orbit_radius, max_iterations, 0, width, 0, height);
+}
+
+/// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
+/// The buffer should have a size of width*height.
+/// Only renders Pixels inside the render box denoted by render_min_x, render_max_x, render_min_y, render_max_y
+/// orbit_radius determines when Zn is considered to have gone to infinity.
+/// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
+/// Note: This function is computationally intensive, and should not be used for translations
+fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, width: usize, height: usize, orbit_radius: f64, max_iterations: u8, render_min_x: usize, render_max_x: usize, render_min_y: usize, render_max_y: usize) {
     for (i, pixel) in buffer.iter_mut().enumerate() {
         let point = index_to_point(i, width, height);
+        if point.0 < render_min_x || point.0 > render_max_x || point.1 < render_min_y || point.1 > render_max_y {
+            continue; //Do not render Pixel points outside of the render box
+        }
         //println!("i: {i}");
         //println!("Pixel: {:?}", point);
         let complex = c.complex_from_pixel_plane(point.0, point.1);
@@ -154,5 +168,22 @@ fn render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, wid
         //println!("iterations: {}", iterations);
         //println!();
         *pixel = from_u8_rgb(iterations, iterations, iterations);
+    }
+}
+
+fn translate_x_complex_plane_buffer(buffer: &mut Vec<u32>, width: usize, height: usize, columns: i32) {
+
+}
+
+fn translate_y_complex_plane_buffer(buffer: &mut Vec<u32>, width: usize, height: usize, rows: i128) {
+    //Iterate over the correct y's in the correct order
+    let range : Vec<usize> = if rows > 0 {((rows as usize)..height).rev().into_iter().collect()} else {(0..((height as i128 + rows) as usize)).into_iter().collect()};
+
+    for y in range {
+        let other_y = (y as i128-rows) as usize;
+        println!("y: {y} and other_y: {other_y}");
+        for x in 0..width {
+            buffer[point_to_index(x, y, width)] = buffer[point_to_index(x, other_y, width)];
+        }
     }
 }
