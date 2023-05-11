@@ -59,6 +59,7 @@ fn main() {
     let gcd = num::integer::gcd(width, height); //Needed to compute the aspect ratio of the pixel plane
     println!("Pixel plane: size is {width}x{height} and aspect ratio is {}:{}",width / gcd,height / gcd);
     c.print();
+    println!("Mandelbrot set parameters: max. iterations is {} and orbit radius is {}", max_iterations, orbit_radius);
     println!();
 
     // Create a new window
