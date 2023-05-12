@@ -1,7 +1,7 @@
 mod complex;
 mod complex_plane;
 
-use std::time::Instant;
+use std::{time::Instant, slice::Chunks, thread};
 
 use angular_units::Deg;
 use complex::Complex;
@@ -214,27 +214,55 @@ fn render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, wid
 /// orbit_radius determines when Zn is considered to have gone to infinity.
 /// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
+/// Note: This function is multithreaded
 fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, width: usize, height: usize, orbit_radius: f64, max_iterations: u16, render_min_x: usize, render_max_x: usize, render_min_y: usize, render_max_y: usize) {
     let time = benchmark_start();
     println!("render_box: ({},{}) -> ({},{}) {{{} pixels}}",render_min_x,render_min_y,render_max_x,render_max_y ,(render_max_x-render_min_x)*(render_max_y-render_min_y));
-    for (i, pixel) in buffer.iter_mut().enumerate() {
-        let point = index_to_point(i, width, height);
-        if point.0 < render_min_x || point.0 > render_max_x || point.1 < render_min_y || point.1 > render_max_y {
-            continue; //Do not render Pixel points outside of the render box
+    let amount_of_threads = 16; //Amount of CPU threads to use
+    let chunk_size = buffer.len()/amount_of_threads;
+    let chunks: Vec<Vec<u32>> = buffer.chunks(chunk_size).map(|c| c.to_owned()).collect();
+    println!("chunks.len(): {}", chunks.len());
+    let mut handles = Vec::new();
+    let mut current_chunk = 0;
+
+    for mut chunk in chunks {
+        let plane = (*c).clone();
+        let chunk_start = chunk_size * current_chunk;
+        let handle = thread::spawn(move || {
+            //println!("Spawned thread");
+            for (i, pixel) in chunk.iter_mut().enumerate() {
+                let point = index_to_point(i + chunk_start, width, height);
+                if point.0 < render_min_x || point.0 > render_max_x || point.1 < render_min_y || point.1 > render_max_y {
+                    continue; //Do not render Pixel points outside of the render box
+                }
+                //println!("i: {i}");
+                //println!("Pixel: {:?}", point);
+                //let complex = Complex::new(0.0,0.0);//
+                let complex = plane.complex_from_pixel_plane(point.0, point.1);
+                //println!("C: {:?}", c);
+                let iterations = iterate(complex, orbit_radius, max_iterations);
+                //println!("iterations: {}", iterations);
+                //println!();
+                let hue: f64 = 359.0 * (iterations as f64 / max_iterations as f64);
+                let value: f64 = if iterations < max_iterations {1.0} else {0.0};
+                let hsv = Hsv::new(Deg(hue % 359.0),1.0,value);
+                let rgb = Rgb::from_color(&hsv);
+                //println!("rgb: {:?}", rgb);
+                *pixel = from_u8_rgb((rgb.red() * 255.0) as u8, (rgb.green() * 255.0) as u8, (rgb.blue() * 255.0) as u8);
+            }
+            chunk
+        });
+        handles.push(handle);
+        current_chunk += 1;
+    }
+
+    let mut index = 0;
+    for handle in handles {
+        let chunk = handle.join().unwrap();
+        for pixel in chunk {
+            buffer[index] = pixel;
+            index+=1;
         }
-        //println!("i: {i}");
-        //println!("Pixel: {:?}", point);
-        let complex = c.complex_from_pixel_plane(point.0, point.1);
-        //println!("C: {:?}", c);
-        let iterations = iterate(complex, orbit_radius, max_iterations);
-        //println!("iterations: {}", iterations);
-        //println!();
-        let hue: f64 = 359.0 * (iterations as f64 / max_iterations as f64);
-        let value: f64 = if iterations < max_iterations {1.0} else {0.0};
-        let hsv = Hsv::new(Deg(hue % 359.0),1.0,value);
-        let rgb = Rgb::from_color(&hsv);
-        //println!("rgb: {:?}", rgb);
-        *pixel = from_u8_rgb((rgb.red() * 255.0) as u8, (rgb.green() * 255.0) as u8, (rgb.blue() * 255.0) as u8);
     }
     benchmark("render_box_render_complex_plane_into_buffer()", time);
 }
