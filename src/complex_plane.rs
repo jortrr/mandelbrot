@@ -52,7 +52,9 @@ impl ComplexPlane {
 
     /// Prints: "Complex plane: R ∈ [{},{}] and C ∈ [{},{}]",c.min_x, c.max_x, c.min_y, c.max_y
     pub fn print(&self) {
-        println!("Complex plane: R ∈ [{},{}] and C ∈ [{},{}]",self.min_x, self.max_x, self.min_y, self.max_y);
+        println!("Complex plane:\tR ∈ [{},{}]",self.min_x, self.max_x);
+        println!("\t\tC ∈ [{},{}]",self.min_y, self.max_y);
+        println!("\t\tCenter is {:?} and scale is {}", self.center(), self.get_scale());
     }
 
     /// Resets the total translation and scaling applied to the Complex plane by the translate() and scale() functions

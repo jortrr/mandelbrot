@@ -122,7 +122,7 @@ fn main() {
                 }*/
                 _ => (),
             }
-            if vec![Key::Up, Key::Down, Key::Left, Key::Right, Key::R].contains(&key) {
+            if vec![Key::Up, Key::Down, Key::Left, Key::Right].contains(&key) {
                //render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
                c.print();
             }
@@ -137,9 +137,11 @@ fn main() {
             }
             if vec![Key::R,Key::Key1, Key::Key2, Key::Key3, Key::Key4].contains(&key) {
                 render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
+                c.print();
             }
             if vec![Key::LeftBracket, Key::RightBracket].contains(&key) {
                 render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
+                c.print();
             }
             println!();
         }
