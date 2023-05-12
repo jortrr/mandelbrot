@@ -51,7 +51,7 @@ fn main() {
     // Complex plane dimensions and increments
     let mut c = ComplexPlane::new(width, height);
     // Mandelbrot set parameters
-    let max_iterations = 1000;
+    let max_iterations = 10000;
     let orbit_radius = 2.0; //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
     // User interaction variables
     let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
@@ -112,6 +112,7 @@ fn main() {
                 Key::Key2 => c.set_view(-1.0591666666666668, 0.2629166666666668, 0.01),
                 Key::Key3 => c.set_view(-0.4624999999999999, 0.55, 0.1),
                 Key::Key4 => c.set_view(-0.46395833333333325, 0.5531250000000001, 0.03),
+                Key::Key5 => c.set_view(-0.4375218333333333, 0.5632133750000003, 0.00002000000000000002),
                 /*Key::N => {
                     let mut input_string = String::new();
                     io::stdin().read_line(&mut input_string).unwrap(); // Get the stdin from the user, and put it in read_string
@@ -127,7 +128,7 @@ fn main() {
             if vec![Key::N, Key::M].contains(&key) {
                 println!("hue offset: {}", hue_offset)
             }
-            if vec![Key::R,Key::Key1, Key::Key2, Key::Key3, Key::Key4].contains(&key) {
+            if vec![Key::R,Key::Key1, Key::Key2, Key::Key3, Key::Key4, Key::Key5].contains(&key) {
                 render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
                 c.print();
             }
