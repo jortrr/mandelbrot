@@ -65,7 +65,6 @@ fn main() {
     println!("Pixel plane: size is {width}x{height} and aspect ratio is {}:{}",width / gcd,height / gcd);
     c.print();
     println!("Mandelbrot set parameters: max. iterations is {} and orbit radius is {}", max_iterations, orbit_radius);
-    println!();
 
     // Create a new window
     let mut window = Window::new(
@@ -82,6 +81,7 @@ fn main() {
     let mut buffer: Vec<u32> = vec![0; width * height];
 
     render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
+    println!();
 
     // Main loop
     while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -93,14 +93,10 @@ fn main() {
         //change_hue_of_buffer(&mut buffer, 1.0);
 
         // Handle any window events
-        // Handle any key events
+        // Handle any non-repeating key events
         for key in window.get_keys_pressed(minifb::KeyRepeat::No) {
             println!("Key pressed: {:?}", key);
             match key {
-                Key::Up => {c.translate(0.0, -c.increment_y * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, translation_amount as i128, 0, orbit_radius, max_iterations)},
-                Key::Down => {c.translate(0.0, c.increment_y  * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, -(translation_amount as i128), 0, orbit_radius, max_iterations)},
-                Key::Left => {c.translate(-c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, translation_amount as i128, orbit_radius, max_iterations);},
-                Key::Right => {c.translate(c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(translation_amount as i128), orbit_radius, max_iterations);},
                 Key::R => c.reset(),
                 Key::NumPadPlus => if translation_amount < u8::MAX { translation_amount += 1;},
                 Key::NumPadMinus => if translation_amount > 1 { translation_amount -= 1; },
@@ -111,7 +107,7 @@ fn main() {
                 Key::C => println!("Center: {:?}, scale: {:?}", c.center(), c.get_scale()),
                 Key::N => hue_offset += 10.0,
                 Key::M => hue_offset -= 10.0,
-                Key::K => change_hue_of_buffer(&mut buffer, hue_offset),
+                Key::H => change_hue_of_buffer(&mut buffer, hue_offset),
                 Key::Key1 => c.set_view(-0.6604166666666667, 0.4437500000000001, 0.1),
                 Key::Key2 => c.set_view(-1.0591666666666668, 0.2629166666666668, 0.01),
                 Key::Key3 => c.set_view(-0.4624999999999999, 0.55, 0.1),
@@ -121,10 +117,6 @@ fn main() {
                     io::stdin().read_line(&mut input_string).unwrap(); // Get the stdin from the user, and put it in read_string
                 }*/
                 _ => (),
-            }
-            if vec![Key::Up, Key::Down, Key::Left, Key::Right].contains(&key) {
-               //render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
-               c.print();
             }
             if vec![Key::NumPadPlus, Key::NumPadMinus].contains(&key) {
                 println!("translation_amount: {}", translation_amount);
@@ -144,6 +136,19 @@ fn main() {
                 c.print();
             }
             println!();
+        }
+        // Handle any repeating key events
+        for key in window.get_keys_pressed(minifb::KeyRepeat::Yes) {
+            match key {
+                Key::Up => {c.translate(0.0, -c.increment_y * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, translation_amount as i128, 0, orbit_radius, max_iterations)},
+                Key::Down => {c.translate(0.0, c.increment_y  * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, -(translation_amount as i128), 0, orbit_radius, max_iterations)},
+                Key::Left => {c.translate(-c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, translation_amount as i128, orbit_radius, max_iterations);},
+                Key::Right => {c.translate(c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(translation_amount as i128), orbit_radius, max_iterations);},
+                _ => (),
+            }
+            if vec![Key::Up, Key::Down, Key::Left, Key::Right].contains(&key) {
+                c.print();
+             }
         }
         //Handle any mouse events
         if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
