@@ -90,7 +90,8 @@ impl ComplexPlane {
     }
 
     /// Translate min_x,max_x,min_y,max_y so that center becomes the center of the Complex plane
-    pub fn set_center(&mut self, center: Complex) {
+    /// Returns the translation
+    pub fn set_center(&mut self, center: Complex) -> Complex {
         let old = self.center();
         let mut translation = center.subtract(&old);
         translation.b=-translation.b; //Negate because the Complex plane and pixel plane are flipped
@@ -99,5 +100,13 @@ impl ComplexPlane {
         println!("\told: {:?}", old);
         println!("\ttranslation: {:?}", translation);*/
         self.translate(translation.a, translation.b);
+        translation
+    }
+
+    /// Set the Complex plane at Center (x,y) at the given scale, where scale == 1 => max_x-min_x=2.5
+    pub fn set_view(&mut self, x: f64, y: f64, scale: f64) {
+        self.reset();
+        self.set_center(Complex::new(x, y));
+        self.scale(scale);
     }
 }

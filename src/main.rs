@@ -46,8 +46,8 @@ fn iterations_from_hsv_pixel(pixel: u32, max_iterations: u16) -> u16 {
 
 fn main() {
     // Window dimensions in pixels
-    let width: usize = 1600;
-    let height: usize = 1200;
+    let width: usize = 1200;
+    let height: usize = 900;
     // Complex plane dimensions and increments
     let mut c = ComplexPlane::new(width, height);
     // Mandelbrot set parameters
@@ -93,44 +93,53 @@ fn main() {
         //change_hue_of_buffer(&mut buffer, 1.0);
 
         // Handle any window events
-        //Handle any key events
-        for key in window.get_keys_pressed(minifb::KeyRepeat::Yes) {
+        // Handle any key events
+        for key in window.get_keys_pressed(minifb::KeyRepeat::No) {
             println!("Key pressed: {:?}", key);
             match key {
-                Key::Up => {c.translate(0.0, c.increment_y * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, -(translation_amount as i128), 0, orbit_radius, max_iterations)},
-                Key::Down => {c.translate(0.0, -c.increment_y  * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, translation_amount as i128, 0, orbit_radius, max_iterations)},
-                Key::Left => {c.translate(c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(translation_amount as i128), orbit_radius, max_iterations);},
-                Key::Right => {c.translate(-c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, translation_amount as i128, orbit_radius, max_iterations);},
-                Key::R => {c.reset();render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);},
+                Key::Up => {c.translate(0.0, -c.increment_y * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, translation_amount as i128, 0, orbit_radius, max_iterations)},
+                Key::Down => {c.translate(0.0, c.increment_y  * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, -(translation_amount as i128), 0, orbit_radius, max_iterations)},
+                Key::Left => {c.translate(-c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, translation_amount as i128, orbit_radius, max_iterations);},
+                Key::Right => {c.translate(c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(translation_amount as i128), orbit_radius, max_iterations);},
+                Key::R => c.reset(),
                 Key::NumPadPlus => if translation_amount < u8::MAX { translation_amount += 1;},
                 Key::NumPadMinus => if translation_amount > 1 { translation_amount -= 1; },
-                Key::LeftBracket => {c.scale(scale_numerator/scale_denominator);render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);},
-                Key::RightBracket => {c.scale(scale_denominator/scale_numerator);render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);},
-                Key::PageUp => if scale_numerator > 1.0 { scale_numerator -= 1.0;},
-                Key::PageDown => if scale_numerator < 9.0 {scale_numerator += 1.0;},
-                Key::C => println!("Center: {:?}", c.center()),
-                Key::S => println!("Scale: {:?}", c.get_scale()),
+                Key::NumPadSlash => if scale_numerator > 1.0 { scale_numerator -= 1.0;},
+                Key::NumPadAsterisk => if scale_numerator < 9.0 {scale_numerator += 1.0;},
+                Key::LeftBracket => c.scale(scale_numerator/scale_denominator),
+                Key::RightBracket => c.scale(scale_denominator/scale_numerator),
+                Key::C => println!("Center: {:?}, scale: {:?}", c.center(), c.get_scale()),
                 Key::N => hue_offset += 10.0,
                 Key::M => hue_offset -= 10.0,
                 Key::K => change_hue_of_buffer(&mut buffer, hue_offset),
+                Key::Key1 => c.set_view(-0.6604166666666667, 0.4437500000000001, 0.1),
+                Key::Key2 => c.set_view(-1.0591666666666668, 0.2629166666666668, 0.01),
+                Key::Key3 => c.set_view(-0.4624999999999999, 0.55, 0.1),
+                Key::Key4 => c.set_view(-0.46395833333333325, 0.5531250000000001, 0.03),
                 /*Key::N => {
                     let mut input_string = String::new();
                     io::stdin().read_line(&mut input_string).unwrap(); // Get the stdin from the user, and put it in read_string
                 }*/
                 _ => (),
             }
-            if vec![Key::Up, Key::Down, Key::Left, Key::Right, Key::R, Key::LeftBracket, Key::RightBracket].contains(&key) {
+            if vec![Key::Up, Key::Down, Key::Left, Key::Right, Key::R].contains(&key) {
                //render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
                c.print();
             }
             if vec![Key::NumPadPlus, Key::NumPadMinus].contains(&key) {
                 println!("translation_amount: {}", translation_amount);
             }
-            if vec![Key::PageUp,Key::PageDown].contains(&key) {
+            if vec![Key::NumPadSlash,Key::NumPadAsterisk].contains(&key) {
                 println!("scale factor: {}/{}",scale_numerator,scale_denominator);
             }
             if vec![Key::N, Key::M].contains(&key) {
                 println!("hue offset: {}", hue_offset)
+            }
+            if vec![Key::R,Key::Key1, Key::Key2, Key::Key3, Key::Key4].contains(&key) {
+                render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
+            }
+            if vec![Key::LeftBracket, Key::RightBracket].contains(&key) {
+                render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
             }
             println!();
         }
@@ -146,7 +155,6 @@ fn main() {
                 println!("{:?}", complex);
                 println!("iterations: {}", iterations);
                 println!();
-                // buffer[screen_pos] = 0x00ffffff;
             }
             if window.get_mouse_down(MouseButton::Right) {
                 println!("({x}, {y})");
@@ -154,8 +162,11 @@ fn main() {
                 println!("{:?}", complex);
                 c.set_center(complex);
                 println!("Center: {:?}", c.center());
+                //translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(t.a/c.increment_x) as i128, orbit_radius, max_iterations);
+                //translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, -(t.b/c.increment_y) as i128, 0, orbit_radius, max_iterations);
                 render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
                 c.print();
+                println!();
             }
             mouse_down = mouse_down_now;
         }
@@ -197,7 +208,8 @@ fn render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, wid
 /// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
 fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, width: usize, height: usize, orbit_radius: f64, max_iterations: u16, render_min_x: usize, render_max_x: usize, render_min_y: usize, render_max_y: usize) {
-    println!("render_box: ({},{}) -> ({},{})",render_min_x,render_min_y,render_max_x,render_max_y);
+    let time = benchmark_start();
+    println!("render_box: ({},{}) -> ({},{}) {{{} pixels}}",render_min_x,render_min_y,render_max_x,render_max_y ,(render_max_x-render_min_x)*(render_max_y-render_min_y));
     for (i, pixel) in buffer.iter_mut().enumerate() {
         let point = index_to_point(i, width, height);
         if point.0 < render_min_x || point.0 > render_max_x || point.1 < render_min_y || point.1 > render_max_y {
@@ -217,6 +229,7 @@ fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &Comple
         //println!("rgb: {:?}", rgb);
         *pixel = from_u8_rgb((rgb.red() * 255.0) as u8, (rgb.green() * 255.0) as u8, (rgb.blue() * 255.0) as u8);
     }
+    benchmark("render_box_render_complex_plane_into_buffer()", time);
 }
 
 /// Translate the complex plane in the `buffer` `rows` to the right and `columns` up.
@@ -241,6 +254,7 @@ fn translate_complex_plane_buffer(buffer: &mut Vec<u32>, width: usize, height: u
 }
 
 fn translate_and_render_complex_plane_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, width: usize, height: usize, rows: i128, columns: i128, orbit_radius: f64, max_iterations: u16) {
+    println!("rows: {}, columns: {}",rows, columns);
     let max_x: usize = if columns > 0 {columns as usize} else {width-1};
     let max_y: usize = if rows > 0 {rows as usize} else {height-1};
     translate_complex_plane_buffer(buffer, width, height, rows, columns);
@@ -255,7 +269,7 @@ fn translate_and_render_complex_plane_buffer(buffer: &mut Vec<u32>, c: &ComplexP
 }
 
 fn change_hue_of_buffer(buffer: &mut Vec<u32>, hue_offset: f64) {
-    //let time = benchmark_start();
+    let time = benchmark_start();
     for pixel in buffer {
         let r = (*pixel >> 16) & 0xFF;
         let g = (*pixel >> 8) & 0xFF;
@@ -268,13 +282,13 @@ fn change_hue_of_buffer(buffer: &mut Vec<u32>, hue_offset: f64) {
         let rgb = Rgb::from_color(&hsv);
         *pixel = from_u8_rgb((rgb.red() * 255.0) as u8, (rgb.green() * 255.0) as u8, (rgb.blue() * 255.0) as u8);
     }
-    //benchmark(time);
+    benchmark("change_hue_of_buffer()",time);
 }
 
 fn benchmark_start() -> Instant {
     Instant::now()
 }
 
-fn benchmark(time: Instant) {
-    println!("Elapsed: {:.2?}", time.elapsed());
+fn benchmark(function: &str,time: Instant) {
+    println!("[Benchmark] {}: {:.2?}",function, time.elapsed());
 }
