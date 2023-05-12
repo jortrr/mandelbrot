@@ -46,12 +46,12 @@ fn iterations_from_hsv_pixel(pixel: u32, max_iterations: u16) -> u16 {
 
 fn main() {
     // Window dimensions in pixels
-    let width: usize = 1200;
-    let height: usize = 900;
+    let width: usize = 1200*2;
+    let height: usize = 900*2;
     // Complex plane dimensions and increments
     let mut c = ComplexPlane::new(width, height);
     // Mandelbrot set parameters
-    let max_iterations = 10000;
+    let max_iterations = 50000;
     let orbit_radius = 2.0; //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
     // User interaction variables
     let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
@@ -93,10 +93,14 @@ fn main() {
         //change_hue_of_buffer(&mut buffer, 1.0);
 
         // Handle any window events
-        // Handle any non-repeating key events
+        // Handle any key events
         for key in window.get_keys_pressed(minifb::KeyRepeat::No) {
             println!("Key pressed: {:?}", key);
             match key {
+                Key::Up => {c.translate(0.0, -c.increment_y * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, translation_amount as i128, 0, orbit_radius, max_iterations)},
+                Key::Down => {c.translate(0.0, c.increment_y  * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, -(translation_amount as i128), 0, orbit_radius, max_iterations)},
+                Key::Left => {c.translate(-c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, translation_amount as i128, orbit_radius, max_iterations);},
+                Key::Right => {c.translate(c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(translation_amount as i128), orbit_radius, max_iterations);},
                 Key::R => c.reset(),
                 Key::NumPadPlus => if translation_amount < u8::MAX { translation_amount += 1;},
                 Key::NumPadMinus => if translation_amount > 1 { translation_amount -= 1; },
@@ -113,6 +117,7 @@ fn main() {
                 Key::Key3 => c.set_view(-0.4624999999999999, 0.55, 0.1),
                 Key::Key4 => c.set_view(-0.46395833333333325, 0.5531250000000001, 0.03),
                 Key::Key5 => c.set_view(-0.4375218333333333, 0.5632133750000003, 0.00002000000000000002),
+                Key::Key6 => c.set_view(-0.7498100000000001, -0.020300000000000054, 0.00006400000000000002),
                 /*Key::N => {
                     let mut input_string = String::new();
                     io::stdin().read_line(&mut input_string).unwrap(); // Get the stdin from the user, and put it in read_string
@@ -128,7 +133,7 @@ fn main() {
             if vec![Key::N, Key::M].contains(&key) {
                 println!("hue offset: {}", hue_offset)
             }
-            if vec![Key::R,Key::Key1, Key::Key2, Key::Key3, Key::Key4, Key::Key5].contains(&key) {
+            if vec![Key::R,Key::Key1, Key::Key2, Key::Key3, Key::Key4, Key::Key5, Key::Key6].contains(&key) {
                 render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
                 c.print();
             }
@@ -136,20 +141,10 @@ fn main() {
                 render_complex_plane_into_buffer(&mut buffer, &c, width, height, orbit_radius, max_iterations);
                 c.print();
             }
-            println!();
-        }
-        // Handle any repeating key events
-        for key in window.get_keys_pressed(minifb::KeyRepeat::Yes) {
-            match key {
-                Key::Up => {c.translate(0.0, -c.increment_y * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, translation_amount as i128, 0, orbit_radius, max_iterations)},
-                Key::Down => {c.translate(0.0, c.increment_y  * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, -(translation_amount as i128), 0, orbit_radius, max_iterations)},
-                Key::Left => {c.translate(-c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, translation_amount as i128, orbit_radius, max_iterations);},
-                Key::Right => {c.translate(c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(translation_amount as i128), orbit_radius, max_iterations);},
-                _ => (),
-            }
             if vec![Key::Up, Key::Down, Key::Left, Key::Right].contains(&key) {
                 c.print();
              }
+            println!();
         }
         //Handle any mouse events
         if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
@@ -186,16 +181,14 @@ fn main() {
 fn iterate(c: Complex, orbit_radius: f64, max_iterations: u16) -> u16 {
     let mut z = Complex::new(0.0, 0.0);
     let mut iterations: u16 = 0;
+    let orbit_radius_squared = orbit_radius*orbit_radius;
     for _ in 0..max_iterations {
         z = z.squared().add(&c);
 
-        if z.abs() > orbit_radius {
+        if (z.a * z.a) + (z.b * z.b) > orbit_radius_squared { //Optimization: square both sides of the Mandelbrot set function, saves us taking the square root
             break;
         }
         iterations += 1;
-        if iterations == u16::MAX {
-            break;
-        }
     }
     iterations
 }
