@@ -1,5 +1,6 @@
 use crate::complex::Complex;
 
+#[derive(Clone)]
 pub struct ComplexPlane {
     // Complex plane dimensions
     pub min_x: f64,
