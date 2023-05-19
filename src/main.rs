@@ -1,7 +1,7 @@
 mod complex;
 mod complex_plane;
 
-use std::{time::Instant, slice::Chunks, thread};
+use std::{time::Instant, slice::Chunks, thread, sync::{Mutex, Arc}};
 
 use angular_units::Deg;
 use complex::Complex;
@@ -46,12 +46,12 @@ fn iterations_from_hsv_pixel(pixel: u32, max_iterations: u16) -> u16 {
 
 fn main() {
     // Window dimensions in pixels
-    let width: usize = 1200*2;
-    let height: usize = 900*2;
+    let width: usize = 1600;
+    let height: usize = 1200;
     // Complex plane dimensions and increments
     let mut c = ComplexPlane::new(width, height);
     // Mandelbrot set parameters
-    let max_iterations = 50000;
+    let max_iterations = 1000;
     let orbit_radius = 2.0; //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
     // User interaction variables
     let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
@@ -212,50 +212,72 @@ fn render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, wid
 fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, width: usize, height: usize, orbit_radius: f64, max_iterations: u16, render_min_x: usize, render_max_x: usize, render_min_y: usize, render_max_y: usize) {
     let time = benchmark_start();
     println!("render_box: ({},{}) -> ({},{}) {{{} pixels}}",render_min_x,render_min_y,render_max_x,render_max_y ,(render_max_x-render_min_x)*(render_max_y-render_min_y));
-    let amount_of_threads = 16; //Amount of CPU threads to use
-    let chunk_size = buffer.len()/amount_of_threads;
+    let amount_of_threads = 8; //Amount of CPU threads to use
+    let chunk_size = buffer.len()/height;
     let chunks: Vec<Vec<u32>> = buffer.chunks(chunk_size).map(|c| c.to_owned()).collect();
+    let chunks_len = chunks.len();
     println!("chunks.len(): {}", chunks.len());
     let mut handles = Vec::new();
-    let mut current_chunk = 0;
 
-    for mut chunk in chunks {
+    let global_mutex = Arc::new(Mutex::new(0));
+
+    for i in 0..amount_of_threads {
         let plane = (*c).clone();
-        let chunk_start = chunk_size * current_chunk;
+        let buf = chunks.clone();
+        let thread_mutex = Arc::clone(&global_mutex);
+
         let handle = thread::spawn(move || {
-            //println!("Spawned thread");
-            for (i, pixel) in chunk.iter_mut().enumerate() {
-                let point = index_to_point(i + chunk_start, width, height);
-                if point.0 < render_min_x || point.0 > render_max_x || point.1 < render_min_y || point.1 > render_max_y {
-                    continue; //Do not render Pixel points outside of the render box
+            let thread_id = i;
+            let mut thread_chunks = Vec::new();
+
+            loop {
+                let mut data = thread_mutex.lock().unwrap();
+                let current_chunk = *data;
+                *data+=1;
+                drop(data);
+                if current_chunk >= chunks_len {
+                    return thread_chunks;
                 }
-                //println!("i: {i}");
-                //println!("Pixel: {:?}", point);
-                //let complex = Complex::new(0.0,0.0);//
-                let complex = plane.complex_from_pixel_plane(point.0, point.1);
-                //println!("C: {:?}", c);
-                let iterations = iterate(complex, orbit_radius, max_iterations);
-                //println!("iterations: {}", iterations);
-                //println!();
-                let hue: f64 = 359.0 * (iterations as f64 / max_iterations as f64);
-                let value: f64 = if iterations < max_iterations {1.0} else {0.0};
-                let hsv = Hsv::new(Deg(hue % 359.0),1.0,value);
-                let rgb = Rgb::from_color(&hsv);
-                //println!("rgb: {:?}", rgb);
-                *pixel = from_u8_rgb((rgb.red() * 255.0) as u8, (rgb.green() * 255.0) as u8, (rgb.blue() * 255.0) as u8);
+                //println!("Thread[{}] takes chunk[{}]", thread_id, current_chunk);
+            
+                let chunk_start = chunk_size * current_chunk;
+                let mut chunk = buf[current_chunk].clone();
+
+                
+                for (i, pixel) in chunk.iter_mut().enumerate() {
+                    let point = index_to_point(i + chunk_start, width, height);
+                    if point.0 < render_min_x || point.0 > render_max_x || point.1 < render_min_y || point.1 > render_max_y {
+                        continue; //Do not render Pixel points outside of the render box
+                    }
+                    //println!("i: {i}");
+                    //println!("Pixel: {:?}", point);
+                    //let complex = Complex::new(0.0,0.0);//
+                    let complex = plane.complex_from_pixel_plane(point.0, point.1);
+                    //println!("C: {:?}", c);
+                    let iterations = iterate(complex, orbit_radius, max_iterations);
+                    //println!("iterations: {}", iterations);
+                    //println!();
+                    let hue: f64 = 359.0 * (iterations as f64 / max_iterations as f64);
+                    let value: f64 = if iterations < max_iterations {1.0} else {0.0};
+                    let hsv = Hsv::new(Deg(hue % 359.0),1.0,value);
+                    let rgb = Rgb::from_color(&hsv);
+                    //println!("rgb: {:?}", rgb);
+                    *pixel = from_u8_rgb((rgb.red() * 255.0) as u8, (rgb.green() * 255.0) as u8, (rgb.blue() * 255.0) as u8);
+                }
+                thread_chunks.push((current_chunk, chunk.clone()));
             }
-            chunk
         });
         handles.push(handle);
-        current_chunk += 1;
     }
 
-    let mut index = 0;
     for handle in handles {
-        let chunk = handle.join().unwrap();
-        for pixel in chunk {
-            buffer[index] = pixel;
-            index+=1;
+        let thread_chunks = handle.join().unwrap();
+        for (i, chunk) in thread_chunks{
+            let mut index = i*width;
+            for pixel in chunk {
+                buffer[index] = pixel;
+                index+=1;
+            }
         }
     }
     benchmark("render_box_render_complex_plane_into_buffer()", time);
