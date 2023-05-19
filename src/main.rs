@@ -51,7 +51,7 @@ fn main() {
     // Complex plane dimensions and increments
     let mut c = ComplexPlane::new(width, height);
     // Mandelbrot set parameters
-    let max_iterations = 1000;
+    let max_iterations = 10000;
     let orbit_radius = 2.0; //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
     // User interaction variables
     let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
@@ -221,13 +221,12 @@ fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &Comple
 
     let global_mutex = Arc::new(Mutex::new(0));
 
-    for i in 0..amount_of_threads {
+    for thread_id in 0..amount_of_threads {
         let plane = (*c).clone();
         let buf = chunks.clone();
         let thread_mutex = Arc::clone(&global_mutex);
 
         let handle = thread::spawn(move || {
-            let thread_id = i;
             let mut thread_chunks = Vec::new();
 
             loop {
@@ -238,7 +237,7 @@ fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &Comple
                 if current_chunk >= chunks_len {
                     return thread_chunks;
                 }
-                //println!("Thread[{}] takes chunk[{}]", thread_id, current_chunk);
+                println!("Thread[{}] takes chunk[{}]", thread_id, current_chunk);
             
                 let chunk_start = chunk_size * current_chunk;
                 let mut chunk = buf[current_chunk].clone();
