@@ -7,6 +7,7 @@ use angular_units::Deg;
 use complex::Complex;
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 use prisma::{Hsv, Rgb, FromColor, channel::AngularChannel};
+use num_cpus;
 
 use crate::complex_plane::ComplexPlane;
 
@@ -51,7 +52,7 @@ fn main() {
     // Complex plane dimensions and increments
     let mut c = ComplexPlane::new(width, height);
     // Mandelbrot set parameters
-    let max_iterations = 10000;
+    let max_iterations = 1000;
     let orbit_radius = 2.0; //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
     // User interaction variables
     let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
@@ -60,11 +61,14 @@ fn main() {
     let scale_denominator: f64 = 10.0;
     //Mandelbrot coloring variables
     let mut hue_offset: f64 = 0.0;
+    //Multithreading variables
+    let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use
 
     let gcd = num::integer::gcd(width, height); //Needed to compute the aspect ratio of the pixel plane
     println!("Pixel plane: size is {width}x{height} and aspect ratio is {}:{}",width / gcd,height / gcd);
     c.print();
     println!("Mandelbrot set parameters: max. iterations is {} and orbit radius is {}", max_iterations, orbit_radius);
+    println!("Amount of CPU threads that will be used for rendering: {}", amount_of_threads);
 
     // Create a new window
     let mut window = Window::new(
@@ -212,13 +216,12 @@ fn render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, wid
 fn render_box_render_complex_plane_into_buffer(buffer: &mut Vec<u32>, c: &ComplexPlane, width: usize, height: usize, orbit_radius: f64, max_iterations: u16, render_min_x: usize, render_max_x: usize, render_min_y: usize, render_max_y: usize) {
     let time = benchmark_start();
     println!("render_box: ({},{}) -> ({},{}) {{{} pixels}}",render_min_x,render_min_y,render_max_x,render_max_y ,(render_max_x-render_min_x)*(render_max_y-render_min_y));
-    let amount_of_threads = 8; //Amount of CPU threads to use
     let chunk_size = buffer.len()/height;
     let chunks: Vec<Vec<u32>> = buffer.chunks(chunk_size).map(|c| c.to_owned()).collect();
     let chunks_len = chunks.len();
     println!("chunks.len(): {}", chunks.len());
     let mut handles = Vec::new();
-
+    let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use
     let global_mutex = Arc::new(Mutex::new(0));
 
     for thread_id in 0..amount_of_threads {
