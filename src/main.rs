@@ -13,7 +13,7 @@ use prisma::{Hsv, Rgb, FromColor, channel::AngularChannel};
 use num_cpus;
 
 use crate::complex_plane::ComplexPlane;
-use mandelbrot;
+use mandelbrot::{self, Config};
 
 /// Creates a 32-bit color. The encoding for each pixel is `0RGB`:
 /// The upper 8-bits are ignored, the next 8-bits are for the red channel, the next 8-bits
@@ -50,7 +50,7 @@ fn iterations_from_hsv_pixel(pixel: u32, max_iterations: u16) -> u16 {
 }
 
 fn main() {
-    let config = mandelbrot::parse_config(env::args()).unwrap_or_else(|err| {
+    let config = Config::build(env::args()).unwrap_or_else(|err| {
         eprintln!("Problem parsing arguments: {}", err);
         process::exit(1);
     });
