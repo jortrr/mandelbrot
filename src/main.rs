@@ -2,6 +2,9 @@ mod complex;
 mod complex_plane;
 
 use std::{time::Instant, slice::Chunks, thread, sync::{Mutex, Arc}};
+use std::env;
+use std::process;
+
 
 use angular_units::Deg;
 use complex::Complex;
@@ -10,6 +13,7 @@ use prisma::{Hsv, Rgb, FromColor, channel::AngularChannel};
 use num_cpus;
 
 use crate::complex_plane::ComplexPlane;
+use mandelbrot;
 
 /// Creates a 32-bit color. The encoding for each pixel is `0RGB`:
 /// The upper 8-bits are ignored, the next 8-bits are for the red channel, the next 8-bits
@@ -46,13 +50,18 @@ fn iterations_from_hsv_pixel(pixel: u32, max_iterations: u16) -> u16 {
 }
 
 fn main() {
+    let config = mandelbrot::parse_config(env::args()).unwrap_or_else(|err| {
+        eprintln!("Problem parsing arguments: {}", err);
+        process::exit(1);
+    });
+
     // Window dimensions in pixels
-    let width: usize = 1600;
-    let height: usize = 1200;
+    let width: usize = 1200*2;
+    let height: usize = 800*2;
     // Complex plane dimensions and increments
     let mut c = ComplexPlane::new(width, height);
     // Mandelbrot set parameters
-    let max_iterations = 1000;
+    let max_iterations = 10000;
     let orbit_radius = 2.0; //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
     // User interaction variables
     let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
