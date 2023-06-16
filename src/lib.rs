@@ -207,7 +207,7 @@ fn iterate(c: Complex, orbit_radius: f64, max_iterations: u32) -> u32 {
     for _ in 0..max_iterations {
         z = z.squared().add(&c);
 
-        if (z.a * z.a) + (z.b * z.b) > orbit_radius_squared { //Optimization: square both sides of the Mandelbrot set function, saves us taking the square root
+        if (z.x * z.x) + (z.y * z.y) > orbit_radius_squared { //Optimization: square both sides of the Mandelbrot set function, saves us taking the square root
             break;
         }
         iterations += 1;
