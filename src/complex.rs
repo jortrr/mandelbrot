@@ -1,24 +1,23 @@
 use std::fmt;
 
-
-///Complex number (a + bi), i^2 = -1: https://en.wikipedia.org/wiki/Complex_number
+///Complex number (x + bi), i^2 = -1: https://en.wikipedia.org/wiki/Complex_number
 pub struct Complex {
     /// Real part
-    pub a: f64,
+    pub x: f64,
     /// Imaginary part
-    pub b: f64,
+    pub y: f64,
 }
 
 impl Complex {
-    pub fn new(a: f64, b: f64) -> Complex {
-        Complex { a, b }
+    pub fn new(x: f64, y: f64) -> Complex {
+        Complex { x, y }
     }
 
     ///Addition
     pub fn add(&self, c: &Complex) -> Complex {
-        let new_a = self.a + c.a;
-        let new_b = self.b + c.b;
-        Complex { a: new_a, b: new_b }
+        let new_x = self.x + c.x;
+        let new_y = self.y + c.y;
+        Complex { x: new_x, y: new_y }
     }
 
     ///Subtraction, add the negative of c
@@ -29,34 +28,40 @@ impl Complex {
 
     ///Multiply with a real
     pub fn multiply_real(&self, r: f64) -> Complex {
-        let new_a = r * self.a;
-        let new_b = r * self.b;
-        Complex { a: new_a, b: new_b }
+        let new_x = r * self.x;
+        let new_y = r * self.y;
+        Complex { x: new_x, y: new_y }
     }
 
     ///Multiply with a complex
     pub fn multiply(&self, c: &Complex) -> Complex {
-        let new_a = self.a * c.a - self.b * c.b;
-        let new_b = self.a * c.b + self.b * c.a;
-        Complex { a: new_a, b: new_b }
+        let new_x = self.x * c.x - self.y * c.y;
+        let new_y = self.x * c.y + self.y * c.x;
+        Complex { x: new_x, y: new_y }
     }
 
     ///Square the complex
     pub fn squared(&self) -> Complex {
-        let new_a = self.a * self.a - self.b * self.b;
-        let new_b = 2.0 * self.a * self.b;
-        Complex { a: new_a, b: new_b }
+        let new_x = self.x * self.x - self.y * self.y;
+        let new_y = 2.0 * self.x * self.y;
+        Complex { x: new_x, y: new_y }
     }
 
-    ///Calculate the absolute value of the complex (Pythagorean length of the complex, seen as a vector in the complex plane)
+    ///Calculate the absolute value of the complex (Pythagorean length of the complex, seen as x vector in the complex plane)
     pub fn abs(&self) -> f64 {
-        f64::sqrt(self.a * self.a + self.b * self.b)
+        f64::sqrt(self.x * self.x + self.y * self.y)
     }
 }
 
 impl fmt::Debug for Complex {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {} {}i", self.a, if self.b > 0.0 {'+'} else {'-'}, self.b.abs())
+        write!(
+            f,
+            "{} {} {}i",
+            self.x,
+            if self.y > 0.0 { '+' } else { '-' },
+            self.y.abs()
+        )
     }
 }
 //Complex
