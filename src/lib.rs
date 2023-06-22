@@ -4,6 +4,7 @@ use std::{time::Instant, thread, sync::{Mutex, Arc}};
 
 use angular_units::Deg;
 use complex::Complex;
+use mandelbrot_set::MandelbrotSet;
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 use prisma::{Hsv, Rgb, FromColor};
 use num_cpus;
@@ -15,6 +16,7 @@ use crate::pixel_buffer::pixel_plane::PixelPlane;
 mod complex_plane;
 mod complex;
 mod pixel_buffer;
+mod mandelbrot_set;
 
 //Views
 static VIEW_1: View = View::new(-0.6604166666666667, 0.4437500000000001, 0.1);
@@ -126,25 +128,25 @@ impl Default for InteractionVariables{
     }
 }
 
-pub fn translate_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, config: &Config, rows_up: i16, columns_right: i16) {
+pub fn translate_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, rows_up: i16, columns_right: i16) {
     if rows_up != 0 && columns_right != 0 {
         panic!("translate_and_render_efficiently: rows_up should be 0 or columns_right should be 0!")
     }
     let row_sign: f64 = if rows_up > 0 {-1.0} else {1.0};
     let column_sign: f64 = if columns_right > 0 {1.0} else {-1.0};
     c.translate(column_sign*c.pixels_to_real(columns_right.abs() as u8), row_sign*c.pixels_to_imaginary(rows_up.abs() as u8)); 
-    translate_and_render_complex_plane_buffer(p, c, rows_up.into(), (-columns_right).into(), config.orbit_radius, config.max_iterations);
+    translate_and_render_complex_plane_buffer(p, c, m, rows_up.into(), (-columns_right).into());
 }
 
 // Handle any key events
-fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, config: &Config, vars: &mut InteractionVariables) {
+fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, vars: &mut InteractionVariables) {
     for key in window.get_keys_pressed(minifb::KeyRepeat::No) {
         println!("\nKey pressed: {:?}", key);
         match key {
-            Key::Up => translate_and_render_efficiently(c, p, config, vars.translation_amount.into(), 0),
-            Key::Down => translate_and_render_efficiently(c, p, config, -(vars.translation_amount as i16), 0),
-            Key::Left => translate_and_render_efficiently(c, p, config, 0, -(vars.translation_amount as i16)),
-            Key::Right => translate_and_render_efficiently(c, p, config, 0, vars.translation_amount.into()),
+            Key::Up => translate_and_render_efficiently(c, p, m, vars.translation_amount.into(), 0),
+            Key::Down => translate_and_render_efficiently(c, p, m, -(vars.translation_amount as i16), 0),
+            Key::Left => translate_and_render_efficiently(c, p, m, 0, -(vars.translation_amount as i16)),
+            Key::Right => translate_and_render_efficiently(c, p, m, 0, vars.translation_amount.into()),
             Key::R => c.reset(),
             Key::NumPadPlus => vars.increment_translation_amount(),
             Key::NumPadMinus => vars.decrement_translation_amount(),
@@ -166,7 +168,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}",vars.scale_numerator,vars.scale_denominator),
             Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
             Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::LeftBracket | Key::RightBracket => {
-                render_complex_plane_into_buffer(p, &c, config.orbit_radius, config.max_iterations);
+                render_complex_plane_into_buffer(p, c, m);
                 c.print();
             },
             _ => (),
@@ -174,7 +176,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
     }
 }
 
-fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, config: &Config) {
+fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet) {
     static LEFT_MOUSE_DOWN_PREVIOUSLY: AtomicBool = AtomicBool::new(false); //Static variable with interior mutability to toggle mouse clicks; without such a variable, clicking the screen once would result in multiple actions
     static RIGHT_MOUSE_DOWN_PREVIOUSLY: AtomicBool = AtomicBool::new(false); 
 
@@ -189,7 +191,7 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
         //Left mouse actions
         if left_mouse_clicked {
             println!("({x}, {y})");
-            let iterations = p.iterations_at_point(x, y, config.max_iterations);
+            let iterations = p.iterations_at_point(x, y, m.max_iterations);
             let complex = c.complex_from_pixel_plane(x, y);
             println!("{:?}", complex);
             println!("iterations: {}", iterations);
@@ -209,7 +211,7 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
             println!("Center: {:?}", c.center());
             //translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(t.a/c.increment_x) as i128, orbit_radius, max_iterations);
             //translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, -(t.b/c.increment_y) as i128, 0, orbit_radius, max_iterations);
-            render_complex_plane_into_buffer(p, c, config.orbit_radius, config.max_iterations);
+            render_complex_plane_into_buffer(p, c, m);
             c.print();
             println!();
         }
@@ -229,10 +231,10 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let mut p = PixelBuffer::new(PixelPlane::new(config.width, config.height));
     // User interaction variables
     let mut vars = InteractionVariables::default();
-    //Mandelbrot coloring variables
-    //let mut hue_offset: f64 = 0.0;
-    //Multithreading variables
+    // Multithreading variables
     let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use
+    // Mandelbrot set iterator
+    let m: MandelbrotSet = MandelbrotSet::new(config.max_iterations, config.orbit_radius);
 
 
     p.pixel_plane.print();
@@ -251,7 +253,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         panic!("{}", e);
     });
 
-    render_complex_plane_into_buffer(&mut p, &c, config.orbit_radius, config.max_iterations);
+    render_complex_plane_into_buffer(&mut p, &c, &m);
     println!();
 
     // Main loop
@@ -262,31 +264,13 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         //change_hue_of_buffer(&mut buffer, 1.0);
 
         // Handle any window events
-        handle_key_events(&window, &mut c, &mut p, &config, &mut vars);
+        handle_key_events(&window, &mut c, &mut p, &m, &mut vars);
 
         //Handle any mouse events
-        handle_mouse_events(&window, &mut c, &mut p, &config);
+        handle_mouse_events(&window, &mut c, &mut p, &m);
     }
 
     Ok(())
-}
-
-
-/// Run the Mandelbrot set algorithm for a single Complex number
-/// Returns the amount of iterations needed before Zn escapes to infinity
-fn iterate(c: Complex, orbit_radius: f64, max_iterations: u32) -> u32 {
-    let mut z = Complex::new(0.0, 0.0);
-    let mut iterations: u32 = 0;
-    let orbit_radius_squared = orbit_radius*orbit_radius;
-    for _ in 0..max_iterations {
-        z = z.squared().add(&c);
-
-        if (z.x * z.x) + (z.y * z.y) > orbit_radius_squared { //Optimization: square both sides of the Mandelbrot set function, saves us taking the square root
-            break;
-        }
-        iterations += 1;
-    }
-    iterations
 }
 
 /// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
@@ -294,8 +278,8 @@ fn iterate(c: Complex, orbit_radius: f64, max_iterations: u32) -> u32 {
 /// orbit_radius determines when Zn is considered to have gone to infinity.
 /// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
-fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, orbit_radius: f64, max_iterations: u32) {
-    render_box_render_complex_plane_into_buffer(p, c, orbit_radius, max_iterations, 0, p.pixel_plane.width, 0, p.pixel_plane.height);
+fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet) {
+    render_box_render_complex_plane_into_buffer(p, c, m, 0, p.pixel_plane.width, 0, p.pixel_plane.height);
 }
 
 /// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
@@ -305,7 +289,7 @@ fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, orbit
 /// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
 /// Note: This function is multithreaded
-fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, orbit_radius: f64, max_iterations: u32, render_min_x: usize, render_max_x: usize, render_min_y: usize, render_max_y: usize) {
+fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, render_min_x: usize, render_max_x: usize, render_min_y: usize, render_max_y: usize) {
     let time = benchmark_start();
     println!("render_box: ({},{}) -> ({},{}) {{{} pixels}}",render_min_x,render_min_y,render_max_x,render_max_y ,(render_max_x-render_min_x)*(render_max_y-render_min_y));
     let chunk_size = p.buffer.len()/p.pixel_plane.height;
@@ -321,6 +305,7 @@ fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexP
         let buf = chunks.clone();
         let thread_mutex = Arc::clone(&global_mutex);
         let pixel_buffer = (*p).clone();
+        let ms = (*m).clone();
 
         let handle = thread::spawn(move || {
             let mut thread_chunks = Vec::new();
@@ -349,11 +334,11 @@ fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexP
                     //let complex = Complex::new(0.0,0.0);//
                     let complex = plane.complex_from_pixel_plane(point.0, point.1);
                     //println!("C: {:?}", c);
-                    let iterations = iterate(complex, orbit_radius, max_iterations);
+                    let iterations = ms.iterate(complex);
                     //println!("iterations: {}", iterations);
                     //println!();
-                    let hue: f64 = 359.0 * (iterations as f64 / max_iterations as f64);
-                    let value: f64 = if iterations < max_iterations {1.0} else {0.0};
+                    let hue: f64 = 359.0 * (iterations as f64 / ms.max_iterations as f64);
+                    let value: f64 = if iterations < ms.max_iterations {1.0} else {0.0};
                     let hsv = Hsv::new(Deg(hue % 359.0),1.0,value);
                     let rgb = Rgb::from_color(&hsv);
                     //println!("rgb: {:?}", rgb);
@@ -378,16 +363,16 @@ fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexP
     benchmark("render_box_render_complex_plane_into_buffer()", time);
 }
 
-fn translate_and_render_complex_plane_buffer(p: &mut PixelBuffer, c: &ComplexPlane, rows: i128, columns: i128, orbit_radius: f64, max_iterations: u32) {
+fn translate_and_render_complex_plane_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, rows: i128, columns: i128) {
     println!("rows: {}, columns: {}",rows, columns);
     let max_x: usize = if columns > 0 {columns as usize} else {p.pixel_plane.width-1};
     let max_y: usize = if rows > 0 {rows as usize} else {p.pixel_plane.height-1};
     p.translate_buffer(rows, columns);
     if rows == 0 {
-        render_box_render_complex_plane_into_buffer(p, c, orbit_radius, max_iterations, (max_x as i128-columns.abs()) as usize, max_x, 0, p.pixel_plane.height);
+        render_box_render_complex_plane_into_buffer(p, c, m, (max_x as i128-columns.abs()) as usize, max_x, 0, p.pixel_plane.height);
     }
     else if columns == 0 {
-        render_box_render_complex_plane_into_buffer(p, c, orbit_radius, max_iterations, 0, p.pixel_plane.width, (max_y as i128 -rows.abs()) as usize, max_y);
+        render_box_render_complex_plane_into_buffer(p, c, m, 0, p.pixel_plane.width, (max_y as i128 -rows.abs()) as usize, max_y);
     } else {
         println!("ERROR: translate_and_render_complex_plane_buffer() requires that rows == 0 || columns == 0");
     }
