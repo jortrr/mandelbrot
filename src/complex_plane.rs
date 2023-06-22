@@ -133,11 +133,11 @@ impl ComplexPlane {
         let old = self.center();
         let mut translation = center.subtract(&old);
         translation.y = -translation.y; //Negate because the Complex plane and pixel plane are flipped
-                                        /*println!("DEBUG set_center():");
-                                        println!("\tcenter: {:?}", center);
-                                        println!("\told: {:?}", old);
-                                        println!("\ttranslation: {:?}", translation);*/
-        self.translate(translation.x, translation.x);
+        println!("DEBUG set_center():");
+        println!("\tcenter: {:?}", center);
+        println!("\told: {:?}", old);
+        println!("\ttranslation: {:?}", translation);
+        self.translate(translation.x, translation.y);
         translation
     }
 

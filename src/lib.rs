@@ -250,7 +250,7 @@ fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexP
                 if current_chunk >= chunks_len {
                     return thread_chunks;
                 }
-                println!("Thread[{}] takes chunk[{}]", thread_id, current_chunk);
+                //println!("Thread[{}] takes chunk[{}]", thread_id, current_chunk);
             
                 let chunk_start = chunk_size * current_chunk;
                 let mut chunk = buf[current_chunk].clone();
