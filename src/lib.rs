@@ -67,6 +67,54 @@ impl Config {
     }
 }
 
+pub struct InteractionVariables{
+    pub translation_amount: u8 = 10, //Variable determining the amount of rows and columns are translated by pressing the 4 arrow keys
+    pub scale_numerator: f64 = 9.0, //Variable denoting the user scaling speed; the lower this value, the more aggressive the zooming will become
+    pub scale_denominator: f64 = 10.0,
+}
+
+// Handle any key events
+fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, config: &Config, vars: &mut InteractionVariables) {
+    for key in window.get_keys_pressed(minifb::KeyRepeat::No) {
+        println!("\nKey pressed: {:?}", key);
+        match key {
+            Key::Up => {c.translate(0.0, -c.increment_y * vars.translation_amount as f64); translate_and_render_complex_plane_buffer(&mut p, &c, translation_amount as i128, 0, config.orbit_radius, config.max_iterations)},
+            Key::Down => {c.translate(0.0, c.increment_y  * vars.translation_amount as f64); translate_and_render_complex_plane_buffer(&mut p, &c,  -(translation_amount as i128), 0, config.orbit_radius, config.max_iterations)},
+            Key::Left => {c.translate(-c.increment_x  * vars.translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut p, &c,  0, translation_amount as i128, config.orbit_radius, config.max_iterations);},
+            Key::Right => {c.translate(c.increment_x  * vars.translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut p, &c,  0, -(translation_amount as i128), config.orbit_radius, config.max_iterations);},
+            Key::R => c.reset(),
+            Key::NumPadPlus => if vars.translation_amount < u8::MAX { vars.translation_amount += 1;},
+            Key::NumPadMinus => if vars.translation_amount > 1 { vars.translation_amount -= 1; },
+            Key::NumPadSlash => if vars.scale_numerator > 1.0 { vars.scale_numerator -= 1.0;},
+            Key::NumPadAsterisk => if vars.scale_numerator < 9.0 {vars.scale_numerator += 1.0;},
+            Key::LeftBracket => c.scale(vars.scale_numerator/vars.scale_denominator),
+            Key::RightBracket => c.scale(vars.scale_denominator/vars.scale_numerator),
+            Key::C => println!("Center: {:?}, scale: {:?}", c.center(), c.get_scale()),
+            Key::Key1 => c.set_view(&view_1),
+            Key::Key2 => c.set_view(&view_2),
+            Key::Key3 => c.set_view(&view_3),
+            Key::Key4 => c.set_view(&view_4),
+            Key::Key5 => c.set_view(&view_5),
+            Key::Key6 => c.set_view(&view_6),
+            _ => (),
+        }
+        match key {
+            Key::NumPadPlus | Key::NumPadMinus => println!("translation_amount: {}", vars.translation_amount),
+            Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}",vars.scale_numerator,vars.scale_denominator),
+            Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
+            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::LeftBracket | Key::RightBracket => {
+                render_complex_plane_into_buffer(&mut p, &c, config.orbit_radius, config.max_iterations);
+                c.print();
+            },
+            _ => (),
+        }
+    }
+}
+
+fn handle_mouse_events (/*TODO */) {
+    //TODO
+}
+
 ///Holds all the logic currently in the main function that isn't involved with setting up configuration or handling errors, to make `main` concise and
 ///easy to verify by inspection
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
@@ -83,7 +131,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     //let mut hue_offset: f64 = 0.0;
     //Multithreading variables
     let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use
-    //Views
+    //Views //TODO: Make static in filescope?
     let view_1: View = View::new(-0.6604166666666667, 0.4437500000000001, 0.1);
     let view_2: View = View::new(-1.0591666666666668, 0.2629166666666668, 0.01);
     let view_3: View = View::new(-0.4624999999999999, 0.55, 0.1);
@@ -121,49 +169,8 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         //change_hue_of_buffer(&mut buffer, 1.0);
 
         // Handle any window events
-        // Handle any key events
-        for key in window.get_keys_pressed(minifb::KeyRepeat::No) {
-            println!("Key pressed: {:?}", key);
-            match key {
-                Key::Up => {c.translate(0.0, -c.increment_y * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut p, &c, translation_amount as i128, 0, config.orbit_radius, config.max_iterations)},
-                Key::Down => {c.translate(0.0, c.increment_y  * translation_amount as f64); translate_and_render_complex_plane_buffer(&mut p, &c,  -(translation_amount as i128), 0, config.orbit_radius, config.max_iterations)},
-                Key::Left => {c.translate(-c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut p, &c,  0, translation_amount as i128, config.orbit_radius, config.max_iterations);},
-                Key::Right => {c.translate(c.increment_x  * translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut p, &c,  0, -(translation_amount as i128), config.orbit_radius, config.max_iterations);},
-                Key::R => c.reset(),
-                Key::NumPadPlus => if translation_amount < u8::MAX { translation_amount += 1;},
-                Key::NumPadMinus => if translation_amount > 1 { translation_amount -= 1; },
-                Key::NumPadSlash => if scale_numerator > 1.0 { scale_numerator -= 1.0;},
-                Key::NumPadAsterisk => if scale_numerator < 9.0 {scale_numerator += 1.0;},
-                Key::LeftBracket => c.scale(scale_numerator/scale_denominator),
-                Key::RightBracket => c.scale(scale_denominator/scale_numerator),
-                Key::C => println!("Center: {:?}, scale: {:?}", c.center(), c.get_scale()),
-                Key::Key1 => c.set_view(&view_1),
-                Key::Key2 => c.set_view(&view_2),
-                Key::Key3 => c.set_view(&view_3),
-                Key::Key4 => c.set_view(&view_4),
-                Key::Key5 => c.set_view(&view_5),
-                Key::Key6 => c.set_view(&view_6),
-                _ => (),
-            }
-            if vec![Key::NumPadPlus, Key::NumPadMinus].contains(&key) {
-                println!("translation_amount: {}", translation_amount);
-            }
-            if vec![Key::NumPadSlash,Key::NumPadAsterisk].contains(&key) {
-                println!("scale factor: {}/{}",scale_numerator,scale_denominator);
-            }
-            if vec![Key::R,Key::Key1, Key::Key2, Key::Key3, Key::Key4, Key::Key5, Key::Key6].contains(&key) {
-                render_complex_plane_into_buffer(&mut p, &c, config.orbit_radius, config.max_iterations);
-                c.print();
-            }
-            if vec![Key::LeftBracket, Key::RightBracket].contains(&key) {
-                render_complex_plane_into_buffer(&mut p, &c, config.orbit_radius, config.max_iterations);
-                c.print();
-            }
-            if vec![Key::Up, Key::Down, Key::Left, Key::Right].contains(&key) {
-                c.print();
-             }
-            println!();
-        }
+        handle_key_events(&window, &mut c, &mut p, &config, &mut vars);
+
         //Handle any mouse events
         if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
             let x: usize = x as usize;
