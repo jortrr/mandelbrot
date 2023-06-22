@@ -32,4 +32,27 @@ impl PixelBuffer {
         let iterations = crate::iterations_from_hsv_pixel(pixel, max_iterations);
         iterations
     } 
+
+    /// Translate the complex plane in the `buffer` `rows` up and `columns` to the right.
+    /// This operation is significantly less expensive than the render_box_render_complex_plane_into_buffer() function, as it does not rerender anything in the complex plane, it simply
+    /// get rids of `rows.abs()` rows and `columns.abs()` columns, and moves the image rows to the right and columns up.
+    /// Note: The removed rows and columns should be rerendered by the render_box_render_complex_plane_into_buffer() function.
+    pub fn translate_buffer(&mut self, rows_up: i128, columns_right: i128) {
+        //Iterate over the correct y's in the correct order
+        let y_range : Vec<usize> = if rows_up > 0 {((rows_up as usize)..self.pixel_plane.height).rev().into_iter().collect()} else {(0..((self.pixel_plane.height as i128 + rows_up) as usize)).into_iter().collect()};
+        //Iterate over the correct x's in the correct order
+        let x_range : Vec<usize> = if columns_right > 0 {((columns_right as usize)..self.pixel_plane.width).rev().into_iter().collect()} else {(0..((self.pixel_plane.width as i128 + columns_right) as usize)).into_iter().collect()};
+
+        for y in y_range {
+            let other_y = (y as i128-rows_up) as usize;
+            //println!("y: {y} and other_y: {other_y}");
+            for x in &x_range {
+                let other_x = (*x as i128 - columns_right) as usize;
+                //println!("x: {} and other_x: {other_x}",*x);
+                let index = self.point_to_index(*x, y);
+                let other_index = self.point_to_index(other_x, other_y);
+                self.buffer[index] = self.buffer[other_index];
+            }
+        }
+    }
 }
