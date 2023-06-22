@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::{time::Instant, thread, sync::{Mutex, Arc}};
 
 use angular_units::Deg;
@@ -90,6 +91,10 @@ impl InteractionVariables{
         self.scale_numerator / self.scale_denominator
     }
 
+    pub fn inverse_scaling_factor(&self) -> f64 {
+        self.scale_denominator / self.scale_numerator
+    }
+
     pub fn increment_translation_amount(&mut self) {
         if self.translation_amount < u8::MAX {
             self.translation_amount+=1;
@@ -136,17 +141,17 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
     for key in window.get_keys_pressed(minifb::KeyRepeat::No) {
         println!("\nKey pressed: {:?}", key);
         match key {
-            Key::Up => translate_and_render_efficiently(c, p, config, vars.translation_amount.into(), 0), /*{c.translate(0.0, -c.pixels_to_imaginary(vars.translation_amount)); translate_and_render_complex_plane_buffer(p, &c, vars.translation_amount as i128, 0, config.orbit_radius, config.max_iterations)}*/
-            Key::Down => translate_and_render_efficiently(c, p, config, -(vars.translation_amount as i16), 0), //{c.translate(0.0, c.pixels_to_imaginary(vars.translation_amount)); translate_and_render_complex_plane_buffer(p, &c,  -(vars.translation_amount as i128), 0, config.orbit_radius, config.max_iterations)},
-            Key::Left => translate_and_render_efficiently(c, p, config, 0, vars.translation_amount.into()),//{c.translate(-c.pixels_to_real(vars.translation_amount), 0.0); translate_and_render_complex_plane_buffer(p, &c,  0, vars.translation_amount as i128, config.orbit_radius, config.max_iterations);},
-            Key::Right => translate_and_render_efficiently(c, p, config, 0, -(vars.translation_amount as i16)),//{c.translate(c.pixels_to_real(vars.translation_amount), 0.0); translate_and_render_complex_plane_buffer(p, &c,  0, -(vars.translation_amount as i128), config.orbit_radius, config.max_iterations);},
+            Key::Up => translate_and_render_efficiently(c, p, config, vars.translation_amount.into(), 0),
+            Key::Down => translate_and_render_efficiently(c, p, config, -(vars.translation_amount as i16), 0),
+            Key::Left => translate_and_render_efficiently(c, p, config, 0, vars.translation_amount.into()),
+            Key::Right => translate_and_render_efficiently(c, p, config, 0, -(vars.translation_amount as i16)),
             Key::R => c.reset(),
             Key::NumPadPlus => vars.increment_translation_amount(),
             Key::NumPadMinus => vars.decrement_translation_amount(),
             Key::NumPadAsterisk => vars.increment_scale_numerator(),
             Key::NumPadSlash => vars.decrement_scale_numerator(),
             Key::LeftBracket => c.scale(vars.scaling_factor()),
-            Key::RightBracket => c.scale(vars.scaling_factor()),
+            Key::RightBracket => c.scale(vars.inverse_scaling_factor()),
             Key::C => println!("Center: {:?}, scale: {:?}", c.center(), c.get_scale()),
             Key::Key1 => c.set_view(&VIEW_1),
             Key::Key2 => c.set_view(&VIEW_2),
@@ -169,8 +174,50 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
     }
 }
 
-fn handle_mouse_events (/*TODO */) {
-    //TODO
+fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, config: &Config) {
+    static LEFT_MOUSE_DOWN_PREVIOUSLY: AtomicBool = AtomicBool::new(false); //Static variable with interior mutability to toggle mouse clicks; without such a variable, clicking the screen once would result in multiple actions
+    static RIGHT_MOUSE_DOWN_PREVIOUSLY: AtomicBool = AtomicBool::new(false); 
+
+    if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
+        let x: usize = x as usize;
+        let y: usize = y as usize;
+
+        //Left mouse status
+        let left_mouse_down = window.get_mouse_down(MouseButton::Left);
+        let left_mouse_down_previously = LEFT_MOUSE_DOWN_PREVIOUSLY.load(Ordering::Relaxed);
+        let left_mouse_clicked = left_mouse_down && !left_mouse_down_previously;
+        //Left mouse actions
+        if left_mouse_clicked {
+            println!("({x}, {y})");
+            let iterations = p.iterations_at_point(x, y, config.max_iterations);
+            let complex = c.complex_from_pixel_plane(x, y);
+            println!("{:?}", complex);
+            println!("iterations: {}", iterations);
+            println!();
+        }
+
+        //Right mouse status
+        let right_mouse_down = window.get_mouse_down(MouseButton::Right);
+        let right_mouse_down_previously = RIGHT_MOUSE_DOWN_PREVIOUSLY.load(Ordering::Relaxed);
+        let right_mouse_clicked = right_mouse_down && !right_mouse_down_previously;
+        //Right mouse actions
+        if right_mouse_clicked {
+            println!("({x}, {y})");
+            let complex = c.complex_from_pixel_plane(x, y);
+            println!("{:?}", complex);
+            c.set_center(complex);
+            println!("Center: {:?}", c.center());
+            //translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(t.a/c.increment_x) as i128, orbit_radius, max_iterations);
+            //translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, -(t.b/c.increment_y) as i128, 0, orbit_radius, max_iterations);
+            render_complex_plane_into_buffer(p, c, config.orbit_radius, config.max_iterations);
+            c.print();
+            println!();
+        }
+
+        //Store the current mouse values, to allow for single-time mouse clicking
+        if left_mouse_down != left_mouse_down_previously {LEFT_MOUSE_DOWN_PREVIOUSLY.store(left_mouse_down, Ordering::Relaxed)};
+        if right_mouse_down != right_mouse_down_previously {RIGHT_MOUSE_DOWN_PREVIOUSLY.store(right_mouse_down, Ordering::Relaxed)};
+    }
 }
 
 ///Holds all the logic currently in the main function that isn't involved with setting up configuration or handling errors, to make `main` concise and
@@ -181,7 +228,6 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     // Pixel plane and buffer
     let mut p = PixelBuffer::new(PixelPlane::new(config.width, config.height));
     // User interaction variables
-    let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
     let mut vars = InteractionVariables::default();
     //Mandelbrot coloring variables
     //let mut hue_offset: f64 = 0.0;
@@ -210,8 +256,6 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
     // Main loop
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        // Clear the buffer to black
-        //buffer.iter_mut().for_each(|pixel| *pixel = from_u8_rgb(r, g, b));
         
         // Update the window with the new buffer
         window.update_with_buffer(&p.buffer, config.width, config.height).unwrap();
@@ -221,32 +265,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         handle_key_events(&window, &mut c, &mut p, &config, &mut vars);
 
         //Handle any mouse events
-        if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
-            let x: usize = x as usize;
-            let y: usize = y as usize;
-            let mouse_down_now = window.get_mouse_down(MouseButton::Left);
-            if mouse_down_now && !mouse_down {
-                println!("({x}, {y})");
-                let iterations = p.iterations_at_point(x, y, config.max_iterations);
-                let complex = c.complex_from_pixel_plane(x, y);
-                println!("{:?}", complex);
-                println!("iterations: {}", iterations);
-                println!();
-            }
-            if window.get_mouse_down(MouseButton::Right) {
-                println!("({x}, {y})");
-                let complex = c.complex_from_pixel_plane(x, y);
-                println!("{:?}", complex);
-                c.set_center(complex);
-                println!("Center: {:?}", c.center());
-                //translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(t.a/c.increment_x) as i128, orbit_radius, max_iterations);
-                //translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, -(t.b/c.increment_y) as i128, 0, orbit_radius, max_iterations);
-                render_complex_plane_into_buffer(&mut p, &c, config.orbit_radius, config.max_iterations);
-                c.print();
-                println!();
-            }
-            mouse_down = mouse_down_now;
-        }
+        handle_mouse_events(&window, &mut c, &mut p, &config);
     }
 
     Ok(())
