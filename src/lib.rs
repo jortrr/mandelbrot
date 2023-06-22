@@ -126,14 +126,14 @@ impl Default for InteractionVariables{
     }
 }
 
-pub fn translate_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, config: &Config, rows_up: i16, columns_left: i16) {
-    if rows_up != 0 && columns_left != 0 {
-        panic!("translate_and_render_efficiently: rows_up should be 0 or columns_left should be 0!")
+pub fn translate_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, config: &Config, rows_up: i16, columns_right: i16) {
+    if rows_up != 0 && columns_right != 0 {
+        panic!("translate_and_render_efficiently: rows_up should be 0 or columns_right should be 0!")
     }
     let row_sign: f64 = if rows_up > 0 {-1.0} else {1.0};
-    let column_sign: f64 = if columns_left > 0 {-1.0} else {1.0};
-    c.translate(column_sign*c.pixels_to_real(columns_left.abs() as u8), row_sign*c.pixels_to_imaginary(rows_up.abs() as u8)); 
-    translate_and_render_complex_plane_buffer(p, c, rows_up.into(), columns_left.into(), config.orbit_radius, config.max_iterations);
+    let column_sign: f64 = if columns_right > 0 {1.0} else {-1.0};
+    c.translate(column_sign*c.pixels_to_real(columns_right.abs() as u8), row_sign*c.pixels_to_imaginary(rows_up.abs() as u8)); 
+    translate_and_render_complex_plane_buffer(p, c, rows_up.into(), (-columns_right).into(), config.orbit_radius, config.max_iterations);
 }
 
 // Handle any key events
@@ -143,8 +143,8 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
         match key {
             Key::Up => translate_and_render_efficiently(c, p, config, vars.translation_amount.into(), 0),
             Key::Down => translate_and_render_efficiently(c, p, config, -(vars.translation_amount as i16), 0),
-            Key::Left => translate_and_render_efficiently(c, p, config, 0, vars.translation_amount.into()),
-            Key::Right => translate_and_render_efficiently(c, p, config, 0, -(vars.translation_amount as i16)),
+            Key::Left => translate_and_render_efficiently(c, p, config, 0, -(vars.translation_amount as i16)),
+            Key::Right => translate_and_render_efficiently(c, p, config, 0, vars.translation_amount.into()),
             Key::R => c.reset(),
             Key::NumPadPlus => vars.increment_translation_amount(),
             Key::NumPadMinus => vars.decrement_translation_amount(),
@@ -378,34 +378,11 @@ fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexP
     benchmark("render_box_render_complex_plane_into_buffer()", time);
 }
 
-/// Translate the complex plane in the `buffer` `rows` to the right and `columns` up.
-/// This operation is significantly less expensive than the render_box_render_complex_plane_into_buffer() function, as it does not rerender anything in the complex plane, it simply
-/// get rids of `rows.abs()` rows and `columns.abs()` columns, and moves the image rows to the right and columns up.
-/// Note: The removed rows and columns should be rerendered by the render_box_render_complex_plane_into_buffer() function.
-fn translate_complex_plane_buffer(p: &mut PixelBuffer, rows: i128, columns: i128) {
-    //Iterate over the correct y's in the correct order
-    let y_range : Vec<usize> = if rows > 0 {((rows as usize)..p.pixel_plane.height).rev().into_iter().collect()} else {(0..((p.pixel_plane.height as i128 + rows) as usize)).into_iter().collect()};
-    //Iterate over the correct x's in the correct order
-    let x_range : Vec<usize> = if columns > 0 {((columns as usize)..p.pixel_plane.width).rev().into_iter().collect()} else {(0..((p.pixel_plane.width as i128 + columns) as usize)).into_iter().collect()};
-
-    for y in y_range {
-        let other_y = (y as i128-rows) as usize;
-        //println!("y: {y} and other_y: {other_y}");
-        for x in &x_range {
-            let other_x = (*x as i128 - columns) as usize;
-            //println!("x: {} and other_x: {other_x}",*x);
-            let index = p.point_to_index(*x, y);
-            let other_index = p.point_to_index(other_x, other_y);
-            p.buffer[index] = p.buffer[other_index];
-        }
-    }
-}
-
 fn translate_and_render_complex_plane_buffer(p: &mut PixelBuffer, c: &ComplexPlane, rows: i128, columns: i128, orbit_radius: f64, max_iterations: u32) {
     println!("rows: {}, columns: {}",rows, columns);
     let max_x: usize = if columns > 0 {columns as usize} else {p.pixel_plane.width-1};
     let max_y: usize = if rows > 0 {rows as usize} else {p.pixel_plane.height-1};
-    translate_complex_plane_buffer(p, rows, columns);
+    p.translate_buffer(rows, columns);
     if rows == 0 {
         render_box_render_complex_plane_into_buffer(p, c, orbit_radius, max_iterations, (max_x as i128-columns.abs()) as usize, max_x, 0, p.pixel_plane.height);
     }
@@ -433,7 +410,7 @@ fn from_u8_rgb(r: u8, g: u8, b: u8) -> u32 {
     (r << 16) | (g << 8) | b
 }
 
-/// Get the amount of Mandelbrot iterations from a HSV colored pixel
+/// Get the amount of Mandelbrot iterations from a HSV colored pixel //TODO: This function is wonky, it should go
 fn iterations_from_hsv_pixel(pixel: u32, max_iterations: u32) -> u32 {
     let r = (pixel >> 16) & 0xFF;
     let g = (pixel >> 8) & 0xFF;
