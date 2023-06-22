@@ -223,7 +223,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     // User interaction variables
     let mut vars = InteractionVariables::default();
     // Multithreading variables
-    let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use
+    let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use, TODO: use this value in rendering functions
     // Mandelbrot set iterator
     let m: MandelbrotSet = MandelbrotSet::new(config.max_iterations, config.orbit_radius);
     // Create a new window
