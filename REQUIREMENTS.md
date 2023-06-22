@@ -6,3 +6,4 @@
 - [ ] Create a PixelPlane struct. This struct should contain a width and height in pixels, and an aspect ratio.
 - [ ] Create a MandelbrotSet struct. This struct should contain max_iterations, orbit radius, and an iterate function.
 - [ ] Create a logging function, with log levels DEBUG, INFO, ERROR, and a commandline argument specifying the level, default should be INFO
+- [ ] Create a struct to combine KEY, description, action, to make it easy to display what keys are doing in the future, self-documenting
