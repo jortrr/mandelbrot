@@ -153,6 +153,14 @@ impl ComplexPlane {
     {
         self.set_view_separated(view.x, view.y, view.scale);
     }
+
+    pub fn pixels_to_imaginary(&self, amount: u8) -> f64 {
+        amount as f64 * self.increment_y 
+    }
+
+    pub fn pixels_to_real(&self, amount: u8) -> f64 {
+        amount as f64 * self.increment_x
+    }
 }
 
 pub struct View {
