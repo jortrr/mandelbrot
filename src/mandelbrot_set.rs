@@ -3,7 +3,8 @@ use crate::complex::Complex;
 #[derive(Clone)]
 pub struct MandelbrotSet {
     pub max_iterations: u32,
-    pub orbit_radius: f64,      //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
+    ///If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
+    pub orbit_radius: f64,    
 }
 
 impl MandelbrotSet {
