@@ -15,6 +15,14 @@ mod complex_plane;
 mod complex;
 mod pixel_buffer;
 
+//Views
+static VIEW_1: View = View::new(-0.6604166666666667, 0.4437500000000001, 0.1);
+static VIEW_2: View = View::new(-1.0591666666666668, 0.2629166666666668, 0.01);
+static VIEW_3: View = View::new(-0.4624999999999999, 0.55, 0.1);
+static VIEW_4: View = View::new(-0.46395833333333325, 0.5531250000000001, 0.03);
+static VIEW_5: View = View::new(-0.4375218333333333, 0.5632133750000003, 0.00002000000000000002);
+static VIEW_6: View = View::new(-0.7498100000000001, -0.020300000000000054, 0.00006400000000000002);
+
 pub struct Config {
     // Window dimensions in pixels
     pub width: usize,
@@ -68,9 +76,49 @@ impl Config {
 }
 
 pub struct InteractionVariables{
-    pub translation_amount: u8 = 10, //Variable determining the amount of rows and columns are translated by pressing the 4 arrow keys
-    pub scale_numerator: f64 = 9.0, //Variable denoting the user scaling speed; the lower this value, the more aggressive the zooming will become
-    pub scale_denominator: f64 = 10.0,
+    pub translation_amount: u8, //Variable determining the amount of rows and columns are translated by pressing the 4 arrow keys
+    pub scale_numerator: f64, //Variable denoting the user scaling speed; the lower this value, the more aggressive the zooming will become
+    pub scale_denominator: f64,
+}
+
+impl InteractionVariables{
+    pub fn new(translation_amount: u8, scale_numerator: f64, scale_denominator: f64) -> InteractionVariables {
+        InteractionVariables { translation_amount, scale_numerator, scale_denominator }
+    }
+
+    pub fn scaling_factor(&self) -> f64 {
+        self.scale_numerator / self.scale_denominator
+    }
+
+    pub fn increment_translation_amount(&mut self) {
+        if self.translation_amount < u8::MAX {
+            self.translation_amount+=1;
+        }
+    }
+
+    pub fn decrement_translation_amount(&mut self) {
+        if self.translation_amount > 1 {
+            self.translation_amount -=1;
+        }
+    }
+
+    pub fn increment_scale_numerator(&mut self) {
+        if self.scale_numerator < 9.0 {
+            self.scale_numerator += 1.0;
+        }
+    }
+
+    pub fn decrement_scale_numerator(&mut self) {
+        if self.scale_numerator > 1.0 {
+            self.scale_numerator -= 1.0;
+        }
+    }
+}
+
+impl Default for InteractionVariables{
+    fn default() -> Self {
+        InteractionVariables { translation_amount:10, scale_numerator: 9.0, scale_denominator: 10.0 }
+    }
 }
 
 // Handle any key events
@@ -78,24 +126,24 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
     for key in window.get_keys_pressed(minifb::KeyRepeat::No) {
         println!("\nKey pressed: {:?}", key);
         match key {
-            Key::Up => {c.translate(0.0, -c.increment_y * vars.translation_amount as f64); translate_and_render_complex_plane_buffer(&mut p, &c, translation_amount as i128, 0, config.orbit_radius, config.max_iterations)},
-            Key::Down => {c.translate(0.0, c.increment_y  * vars.translation_amount as f64); translate_and_render_complex_plane_buffer(&mut p, &c,  -(translation_amount as i128), 0, config.orbit_radius, config.max_iterations)},
-            Key::Left => {c.translate(-c.increment_x  * vars.translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut p, &c,  0, translation_amount as i128, config.orbit_radius, config.max_iterations);},
-            Key::Right => {c.translate(c.increment_x  * vars.translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(&mut p, &c,  0, -(translation_amount as i128), config.orbit_radius, config.max_iterations);},
+            Key::Up => {c.translate(0.0, -c.increment_y * vars.translation_amount as f64); translate_and_render_complex_plane_buffer(p, &c, vars.translation_amount as i128, 0, config.orbit_radius, config.max_iterations)},
+            Key::Down => {c.translate(0.0, c.increment_y  * vars.translation_amount as f64); translate_and_render_complex_plane_buffer(p, &c,  -(vars.translation_amount as i128), 0, config.orbit_radius, config.max_iterations)},
+            Key::Left => {c.translate(-c.increment_x  * vars.translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(p, &c,  0, vars.translation_amount as i128, config.orbit_radius, config.max_iterations);},
+            Key::Right => {c.translate(c.increment_x  * vars.translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(p, &c,  0, -(vars.translation_amount as i128), config.orbit_radius, config.max_iterations);},
             Key::R => c.reset(),
-            Key::NumPadPlus => if vars.translation_amount < u8::MAX { vars.translation_amount += 1;},
-            Key::NumPadMinus => if vars.translation_amount > 1 { vars.translation_amount -= 1; },
-            Key::NumPadSlash => if vars.scale_numerator > 1.0 { vars.scale_numerator -= 1.0;},
-            Key::NumPadAsterisk => if vars.scale_numerator < 9.0 {vars.scale_numerator += 1.0;},
-            Key::LeftBracket => c.scale(vars.scale_numerator/vars.scale_denominator),
-            Key::RightBracket => c.scale(vars.scale_denominator/vars.scale_numerator),
+            Key::NumPadPlus => vars.increment_translation_amount(),
+            Key::NumPadMinus => vars.decrement_translation_amount(),
+            Key::NumPadAsterisk => vars.increment_scale_numerator(),
+            Key::NumPadSlash => vars.decrement_scale_numerator(),
+            Key::LeftBracket => c.scale(vars.scaling_factor()),
+            Key::RightBracket => c.scale(vars.scaling_factor()),
             Key::C => println!("Center: {:?}, scale: {:?}", c.center(), c.get_scale()),
-            Key::Key1 => c.set_view(&view_1),
-            Key::Key2 => c.set_view(&view_2),
-            Key::Key3 => c.set_view(&view_3),
-            Key::Key4 => c.set_view(&view_4),
-            Key::Key5 => c.set_view(&view_5),
-            Key::Key6 => c.set_view(&view_6),
+            Key::Key1 => c.set_view(&VIEW_1),
+            Key::Key2 => c.set_view(&VIEW_2),
+            Key::Key3 => c.set_view(&VIEW_3),
+            Key::Key4 => c.set_view(&VIEW_4),
+            Key::Key5 => c.set_view(&VIEW_5),
+            Key::Key6 => c.set_view(&VIEW_6),
             _ => (),
         }
         match key {
@@ -103,7 +151,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}",vars.scale_numerator,vars.scale_denominator),
             Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
             Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::LeftBracket | Key::RightBracket => {
-                render_complex_plane_into_buffer(&mut p, &c, config.orbit_radius, config.max_iterations);
+                render_complex_plane_into_buffer(p, &c, config.orbit_radius, config.max_iterations);
                 c.print();
             },
             _ => (),
@@ -124,20 +172,11 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let mut p = PixelBuffer::new(PixelPlane::new(config.width, config.height));
     // User interaction variables
     let mut mouse_down: bool = false; //Variable needed for mouse single-click behavior
-    let mut translation_amount: u8 = 10; //Variable determining the amount of rows and columns are translated by pressing the 4 arrow keys
-    let mut scale_numerator: f64 = 9.0; //Variable denoting the user scaling speed; the lower this value, the more aggressive the zooming will become
-    let scale_denominator: f64 = 10.0;
+    let mut vars = InteractionVariables::default();
     //Mandelbrot coloring variables
     //let mut hue_offset: f64 = 0.0;
     //Multithreading variables
     let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use
-    //Views //TODO: Make static in filescope?
-    let view_1: View = View::new(-0.6604166666666667, 0.4437500000000001, 0.1);
-    let view_2: View = View::new(-1.0591666666666668, 0.2629166666666668, 0.01);
-    let view_3: View = View::new(-0.4624999999999999, 0.55, 0.1);
-    let view_4: View = View::new(-0.46395833333333325, 0.5531250000000001, 0.03);
-    let view_5: View = View::new(-0.4375218333333333, 0.5632133750000003, 0.00002000000000000002);
-    let view_6: View = View::new(-0.7498100000000001, -0.020300000000000054, 0.00006400000000000002);
 
 
     p.pixel_plane.print();

@@ -162,7 +162,7 @@ pub struct View {
 }
 
 impl View {
-    pub fn new(x: f64, y: f64, scale: f64) -> View {
+    pub const fn new(x: f64, y: f64, scale: f64) -> View {
         View {x,y,scale}
     }
 }
