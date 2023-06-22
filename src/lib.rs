@@ -121,15 +121,25 @@ impl Default for InteractionVariables{
     }
 }
 
+pub fn translate_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, config: &Config, rows_up: i16, columns_left: i16) {
+    if rows_up != 0 && columns_left != 0 {
+        panic!("translate_and_render_efficiently: rows_up should be 0 or columns_left should be 0!")
+    }
+    let row_sign: f64 = if rows_up > 0 {-1.0} else {1.0};
+    let column_sign: f64 = if columns_left > 0 {-1.0} else {1.0};
+    c.translate(column_sign*c.pixels_to_real(columns_left.abs() as u8), row_sign*c.pixels_to_imaginary(rows_up.abs() as u8)); 
+    translate_and_render_complex_plane_buffer(p, c, rows_up.into(), columns_left.into(), config.orbit_radius, config.max_iterations);
+}
+
 // Handle any key events
 fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, config: &Config, vars: &mut InteractionVariables) {
     for key in window.get_keys_pressed(minifb::KeyRepeat::No) {
         println!("\nKey pressed: {:?}", key);
         match key {
-            Key::Up => {c.translate(0.0, -c.increment_y * vars.translation_amount as f64); translate_and_render_complex_plane_buffer(p, &c, vars.translation_amount as i128, 0, config.orbit_radius, config.max_iterations)},
-            Key::Down => {c.translate(0.0, c.increment_y  * vars.translation_amount as f64); translate_and_render_complex_plane_buffer(p, &c,  -(vars.translation_amount as i128), 0, config.orbit_radius, config.max_iterations)},
-            Key::Left => {c.translate(-c.increment_x  * vars.translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(p, &c,  0, vars.translation_amount as i128, config.orbit_radius, config.max_iterations);},
-            Key::Right => {c.translate(c.increment_x  * vars.translation_amount as f64, 0.0); translate_and_render_complex_plane_buffer(p, &c,  0, -(vars.translation_amount as i128), config.orbit_radius, config.max_iterations);},
+            Key::Up => translate_and_render_efficiently(c, p, config, vars.translation_amount.into(), 0), /*{c.translate(0.0, -c.pixels_to_imaginary(vars.translation_amount)); translate_and_render_complex_plane_buffer(p, &c, vars.translation_amount as i128, 0, config.orbit_radius, config.max_iterations)}*/
+            Key::Down => translate_and_render_efficiently(c, p, config, -(vars.translation_amount as i16), 0), //{c.translate(0.0, c.pixels_to_imaginary(vars.translation_amount)); translate_and_render_complex_plane_buffer(p, &c,  -(vars.translation_amount as i128), 0, config.orbit_radius, config.max_iterations)},
+            Key::Left => translate_and_render_efficiently(c, p, config, 0, vars.translation_amount.into()),//{c.translate(-c.pixels_to_real(vars.translation_amount), 0.0); translate_and_render_complex_plane_buffer(p, &c,  0, vars.translation_amount as i128, config.orbit_radius, config.max_iterations);},
+            Key::Right => translate_and_render_efficiently(c, p, config, 0, -(vars.translation_amount as i16)),//{c.translate(c.pixels_to_real(vars.translation_amount), 0.0); translate_and_render_complex_plane_buffer(p, &c,  0, -(vars.translation_amount as i128), config.orbit_radius, config.max_iterations);},
             Key::R => c.reset(),
             Key::NumPadPlus => vars.increment_translation_amount(),
             Key::NumPadMinus => vars.decrement_translation_amount(),
