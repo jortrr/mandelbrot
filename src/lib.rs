@@ -7,7 +7,7 @@ use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 use prisma::{Hsv, Rgb, FromColor};
 use num_cpus;
 
-use crate::complex_plane::ComplexPlane;
+use crate::complex_plane::{ComplexPlane, View};
 use crate::pixel_buffer::PixelBuffer;
 use crate::pixel_buffer::pixel_plane::PixelPlane;
 
@@ -83,6 +83,14 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     //let mut hue_offset: f64 = 0.0;
     //Multithreading variables
     let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use
+    //Views
+    let view_1: View = View::new(-0.6604166666666667, 0.4437500000000001, 0.1);
+    let view_2: View = View::new(-1.0591666666666668, 0.2629166666666668, 0.01);
+    let view_3: View = View::new(-0.4624999999999999, 0.55, 0.1);
+    let view_4: View = View::new(-0.46395833333333325, 0.5531250000000001, 0.03);
+    let view_5: View = View::new(-0.4375218333333333, 0.5632133750000003, 0.00002000000000000002);
+    let view_6: View = View::new(-0.7498100000000001, -0.020300000000000054, 0.00006400000000000002);
+
 
     p.pixel_plane.print();
     c.print();
@@ -129,12 +137,12 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
                 Key::LeftBracket => c.scale(scale_numerator/scale_denominator),
                 Key::RightBracket => c.scale(scale_denominator/scale_numerator),
                 Key::C => println!("Center: {:?}, scale: {:?}", c.center(), c.get_scale()),
-                Key::Key1 => c.set_view(-0.6604166666666667, 0.4437500000000001, 0.1),
-                Key::Key2 => c.set_view(-1.0591666666666668, 0.2629166666666668, 0.01),
-                Key::Key3 => c.set_view(-0.4624999999999999, 0.55, 0.1),
-                Key::Key4 => c.set_view(-0.46395833333333325, 0.5531250000000001, 0.03),
-                Key::Key5 => c.set_view(-0.4375218333333333, 0.5632133750000003, 0.00002000000000000002),
-                Key::Key6 => c.set_view(-0.7498100000000001, -0.020300000000000054, 0.00006400000000000002),
+                Key::Key1 => c.set_view(&view_1),
+                Key::Key2 => c.set_view(&view_2),
+                Key::Key3 => c.set_view(&view_3),
+                Key::Key4 => c.set_view(&view_4),
+                Key::Key5 => c.set_view(&view_5),
+                Key::Key6 => c.set_view(&view_6),
                 _ => (),
             }
             if vec![Key::NumPadPlus, Key::NumPadMinus].contains(&key) {
@@ -250,7 +258,7 @@ fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexP
                 if current_chunk >= chunks_len {
                     return thread_chunks;
                 }
-                //println!("Thread[{}] takes chunk[{}]", thread_id, current_chunk);
+                println!("Thread[{}] takes chunk[{}]", thread_id, current_chunk);
             
                 let chunk_start = chunk_size * current_chunk;
                 let mut chunk = buf[current_chunk].clone();

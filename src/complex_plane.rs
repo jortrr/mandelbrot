@@ -142,9 +142,27 @@ impl ComplexPlane {
     }
 
     /// Set the Complex plane at Center (x,y) at the given scale, where scale == 1 => max_x-min_x=2.5
-    pub fn set_view(&mut self, x: f64, y: f64, scale: f64) {
+    pub fn set_view_separated(&mut self, x: f64, y: f64, scale: f64) {
         self.reset();
         self.set_center(Complex::new(x, y));
         self.scale(scale);
+    }
+
+    /// Set the Complex plane at Center (x,y) at the given scale, where scale == 1 => max_x-min_x=2.5
+    pub fn set_view(&mut self, view: &View)
+    {
+        self.set_view_separated(view.x, view.y, view.scale);
+    }
+}
+
+pub struct View {
+    x: f64,
+    y: f64,
+    scale: f64
+}
+
+impl View {
+    pub fn new(x: f64, y: f64, scale: f64) -> View {
+        View {x,y,scale}
     }
 }
