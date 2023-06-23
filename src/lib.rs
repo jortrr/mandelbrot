@@ -19,6 +19,11 @@ mod mandelbrot_set;
 mod rendering;
 mod key_bindings;
 
+//Argument default values
+static WIDTH: usize = 1200;
+static HEIGHT: usize = 800;
+static MAX_ITERATIONS: u32 = 10000;
+
 //Views
 static VIEW_1: View = View::new(-0.6604166666666667, 0.4437500000000001, 0.1);
 static VIEW_2: View = View::new(-1.0591666666666668, 0.2629166666666668, 0.01);
@@ -26,7 +31,8 @@ static VIEW_3: View = View::new(-0.4624999999999999, 0.55, 0.1);
 static VIEW_4: View = View::new(-0.46395833333333325, 0.5531250000000001, 0.03);
 static VIEW_5: View = View::new(-0.4375218333333333, 0.5632133750000003, 0.00002000000000000002);
 static VIEW_6: View = View::new(-0.7498100000000001, -0.020300000000000054, 0.00006400000000000002);
-static VIEW_7: View = View::new(-1.7862712000000047, 0.000052399999999991516,  0.00001677721600000001);
+static VIEW_7: View = View::new(-1.7862712000000047, 0.000052399999999991516, 0.00001677721600000001); 
+static VIEW_8: View = View::new( -1.7862581627050718,  0.00005198056959995248, 0.000006039797760000003); 
 
 pub struct Config {
     // Window dimensions in pixels
@@ -46,34 +52,46 @@ impl Config {
     pub fn build(mut args: impl Iterator<Item = String>) -> Result<Config, String> {
         args.next(); //Skip the first argument as it is the name of the executable
 
+        //First argument
         let width = match args.next() {
-            Some(arg) => arg,
-            None => return Err(String::from("no width argument given")),
+            Some(arg) => {
+                match arg.parse::<usize>() {
+                    Ok(val) => val,
+                    Err(err) => return Err(err.to_string() + &String::from(" for width argument")),
+                }
+            },
+            None => {
+                println!("No width argument given, using default: {}", WIDTH);
+                WIDTH
+            },
         };
 
-        let width = match width.parse::<usize>() {
-            Ok(val) => val,
-            Err(err) => return Err(err.to_string() + &String::from(" for width")),
-        };
-
+        //Second argument
         let height = match args.next() {
-            Some(arg) => arg,
-            None => return Err(String::from("no height argument given")),
+            Some(arg) => {
+                match arg.parse::<usize>() {
+                    Ok(val) => val,
+                    Err(err) => return Err(err.to_string() + &String::from(" for height argument")),
+                }
+            },
+            None =>  {
+                println!("No height argument given, using default: {}", HEIGHT);
+                HEIGHT
+            }
         };
 
-        let height = match height.parse::<usize>() {
-            Ok(val) => val,
-            Err(err) => return Err(err.to_string() + &String::from(" for height")),
-        };
-
+        //Third argument
         let max_iterations = match args.next() {
-            Some(arg) => arg,
-            None => return Err(String::from("no max_iterations argument given")),
-        };
-
-        let max_iterations = match max_iterations.parse::<u32>() {
-            Ok(val) => val,
-            Err(err) => return Err(err.to_string() + &String::from(" for max_iterations")),
+            Some(arg) => {
+                match arg.parse::<u32>() {
+                    Ok(val) => val,
+                    Err(err) => return Err(err.to_string() + &String::from(" for max_iterations argument")),
+                }
+            },
+            None =>  {
+                println!("No max_iterations argument given, using default: {}", MAX_ITERATIONS);
+                MAX_ITERATIONS
+            }
         };
 
         Ok(Config {width, height, max_iterations, orbit_radius: 2.0})
@@ -157,6 +175,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::Key5 => c.set_view(&VIEW_5),
             Key::Key6 => c.set_view(&VIEW_6),
             Key::Key7 => c.set_view(&VIEW_7),
+            Key::Key8 => c.set_view(&VIEW_8),
             Key::K => k.print(),
             _ => (),
         }
@@ -164,7 +183,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::NumPadPlus | Key::NumPadMinus => println!("translation_amount: {}", vars.translation_amount),
             Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}",vars.scale_numerator,vars.scale_denominator),
             Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
-            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::LeftBracket | Key::RightBracket => {
+            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::LeftBracket | Key::RightBracket => {
                 rendering::render_complex_plane_into_buffer(p, c, m);
                 c.print();
             },
@@ -187,10 +206,10 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
         let left_mouse_clicked = left_mouse_down && !left_mouse_down_previously;
         //Left mouse actions
         if left_mouse_clicked {
-            println!("MouseButton::Left: ({x}, {y})");
+            println!("\nMouseButton::Left -> Info at ({x}, {y})");
             let iterations = p.iterations_at_point(x, y, m.max_iterations);
             let complex = c.complex_from_pixel_plane(x, y);
-            println!("{:?}", complex);
+            println!("Complex: {:?}", complex);
             println!("iterations: {}", iterations);
             println!();
         }
@@ -201,7 +220,7 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
         let right_mouse_clicked = right_mouse_down && !right_mouse_down_previously;
         //Right mouse actions
         if right_mouse_clicked {
-            println!("MouseButton::Right: ({x}, {y})");
+            println!("\nMouseButton::Right -> Move to ({x}, {y})");
             let new_center = c.complex_from_pixel_plane(x, y);
             println!("c.center: {:?}", c.center());
             println!("new_center: {:?}", new_center);
@@ -215,6 +234,28 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
         if left_mouse_down != left_mouse_down_previously {LEFT_MOUSE_DOWN_PREVIOUSLY.store(left_mouse_down, Ordering::Relaxed)};
         if right_mouse_down != right_mouse_down_previously {RIGHT_MOUSE_DOWN_PREVIOUSLY.store(right_mouse_down, Ordering::Relaxed)};
     }
+}
+
+///Prints Mandelbrot ASCII art :)
+fn print_banner()
+{
+//Made using: https://patorjk.com/software/taag/#p=display&f=Big&t=Mandelbrot
+let application_banner = r"
+__  __                 _      _ _               _   
+|  \/  |               | |    | | |             | |  
+| \  / | __ _ _ __   __| | ___| | |__  _ __ ___ | |_ 
+| |\/| |/ _` | '_ \ / _` |/ _ \ | '_ \| '__/ _ \| __|
+| |  | | (_| | | | | (_| |  __/ | |_) | | | (_) | |_ 
+|_|  |_|\__,_|_| |_|\__,_|\___|_|_.__/|_|  \___/ \__|";
+//Made using: https://patorjk.com/software/taag/#p=display&f=Small%20Slant&t=by%20Jort
+let author_banner = r"
+   __             __         __ 
+  / /  __ __  __ / /__  ____/ /_
+ / _ \/ // / / // / _ \/ __/ __/
+/_.__/\_, /  \___/\___/_/  \__/ 
+     /___/                      ";
+let version = "1.0";
+println!("{}{}v{}\n\n", application_banner, author_banner, version);
 }
 
 ///Holds all the logic currently in the main function that isn't involved with setting up configuration or handling errors, to make `main` concise and
@@ -240,6 +281,8 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     .unwrap_or_else(|e| {
         panic!("{}", e);
     });
+    //Print the banner
+    print_banner();
     //Initialize keybindings TODO: I want to have a vector of structs containing functions with different signatures, this is not easily possible. All functionality should be placed here, in the future, when 
     //I've figured out how to have closures with different signatures in the same struct field
     //For now, use empty_closure, to have a closure that does nothing as action
@@ -264,6 +307,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::Key5, "Renders VIEW_5", empty_closure);
     key_bindings.add(Key::Key6, "Renders VIEW_6", empty_closure);
     key_bindings.add(Key::Key7, "Renders VIEW_7", empty_closure);
+    key_bindings.add(Key::Key8, "Renders VIEW_8", empty_closure);
     key_bindings.add(Key::K, "Prints the keybindings", empty_closure);
     key_bindings.print();
 
