@@ -3,8 +3,9 @@ use std::{time::Instant, thread, sync::{Arc, Mutex, atomic::{AtomicU8, Ordering}
 
 use angular_units::Deg;
 use prisma::{Hsv, Rgb, FromColor};
+use rand::Rng;
 
-use crate::{pixel_buffer::PixelBuffer, complex_plane::ComplexPlane, mandelbrot_set::MandelbrotSet, complex::Complex};
+use crate::{pixel_buffer::PixelBuffer, complex_plane::ComplexPlane, mandelbrot_set::MandelbrotSet, complex::Complex, coloring::create_color_from_continuous_bernstein_polynomials};
 
 
 /// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
@@ -80,18 +81,39 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
                     //println!("i: {i}");
                     //println!("Pixel: {:?}", point);
                     //let complex = Complex::new(0.0,0.0);//
-                    let complex = plane.complex_from_pixel_plane(point.0, point.1);
-                    //println!("C: {:?}", c);
-                    let iterations = ms.iterate(complex);
-                    //println!("iterations: {}", iterations);
-                    //println!();
-                    //let hue: f64 = 359.0 * (iterations as f64 / ms.max_iterations as f64);
-                    let hue = 0.3 *iterations as f64;
-                    let value: f64 = if iterations < ms.max_iterations {1.0} else {0.0};
-                    let hsv = Hsv::new(Deg(hue % 359.0),0.8,value);
-                    let rgb = Rgb::from_color(&hsv);
-                    //println!("rgb: {:?}", rgb);
-                    *pixel = from_u8_rgb((rgb.red() * 255.0) as u8, (rgb.green() * 255.0) as u8, (rgb.blue() * 255.0) as u8);
+                    let original_x: f64 = point.0 as f64;
+                    let original_y: f64 = point.1 as f64;
+                    let mut rng = rand::thread_rng();
+                    let mut r = 0.0;
+                    let mut g = 0.0;
+                    let mut b = 0.0;
+                    //Supersampling
+                    let supersampling_amount = 5;
+                    for _ in 0..supersampling_amount {
+                        let x = original_x + rng.gen::<f64>();
+                        let y = original_y + rng.gen::<f64>();
+                        let complex = plane.complex_from_pixel_plane(x, y);
+                        //println!("C: {:?}", c);
+                        let iterations = ms.iterate(complex);
+                        /*if iterations == ms.max_iterations {
+                            break;
+                        }*/
+                        //println!("iterations: {}", iterations);
+                        //println!();
+                        //let hue: f64 = 359.0 * (iterations as f64 / ms.max_iterations as f64);
+                        let hue = 0.3*iterations as f64;
+                        let value: f64 = if iterations < ms.max_iterations {1.0} else {0.0};
+                        let hsv = Hsv::new(Deg(hue % 359.0),0.8,value);
+                        let rgb = Rgb::from_color(&hsv);
+                        //println!("rgb: {:?}", rgb);
+                        //let t = 10.0*iterations as f64 / ms.max_iterations as f64 % 1.0;
+                        //let true_color = create_color_from_continuous_bernstein_polynomials(t);
+                        //*pixel = from_u8_rgb(true_color.red, true_color.green, true_color.blue)
+                        r += rgb.red();
+                        g += rgb.green();
+                        b += rgb.blue();
+                    }
+                    *pixel = from_u8_rgb((r / supersampling_amount as f64 * 255.0) as u8, (g / supersampling_amount as f64 * 255.0) as u8, (b / supersampling_amount as f64 * 255.0) as u8);
                 }
                 thread_chunks.push((current_chunk, chunk.clone()));
             }

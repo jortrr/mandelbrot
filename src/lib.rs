@@ -1,6 +1,5 @@
 use std::error::Error;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::Duration;
 
 use angular_units::Deg;
 use mandelbrot_set::MandelbrotSet;
@@ -9,7 +8,7 @@ use prisma::{Hsv, Rgb, FromColor};
 use num_cpus;
 
 use crate::complex_plane::{ComplexPlane, View};
-use crate::key_bindings::{KeyBindings, KeyAction};
+use crate::key_bindings::{KeyBindings};
 use crate::pixel_buffer::PixelBuffer;
 use crate::pixel_buffer::pixel_plane::PixelPlane;
 
@@ -19,6 +18,7 @@ mod pixel_buffer;
 mod mandelbrot_set;
 mod rendering;
 mod key_bindings;
+mod coloring;
 
 //Argument default values
 static WIDTH: usize = 1200;
@@ -200,8 +200,6 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
     static RIGHT_MOUSE_DOWN_PREVIOUSLY: AtomicBool = AtomicBool::new(false); 
 
     if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
-        let x: usize = x as usize;
-        let y: usize = y as usize;
 
         //Left mouse status
         let left_mouse_down = window.get_mouse_down(MouseButton::Left);
@@ -210,8 +208,8 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
         //Left mouse actions
         if left_mouse_clicked {
             println!("\nMouseButton::Left -> Info at ({x}, {y})");
-            let iterations = p.iterations_at_point(x, y, m.max_iterations);
-            let complex = c.complex_from_pixel_plane(x, y);
+            let iterations = p.iterations_at_point(x as usize, y as usize, m.max_iterations);
+            let complex = c.complex_from_pixel_plane(x.into(), y.into());
             println!("Complex: {:?}", complex);
             println!("iterations: {}", iterations);
             println!();
@@ -224,7 +222,7 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
         //Right mouse actions
         if right_mouse_clicked {
             println!("\nMouseButton::Right -> Move to ({x}, {y})");
-            let new_center = c.complex_from_pixel_plane(x, y);
+            let new_center = c.complex_from_pixel_plane(x.into(), y.into());
             println!("c.center: {:?}", c.center());
             println!("new_center: {:?}", new_center);
 
