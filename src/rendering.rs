@@ -1,5 +1,5 @@
 //Temporary file to group together all rendering functionality
-use std::{time::Instant, thread, sync::{Arc, Mutex}};
+use std::{time::Instant, thread, sync::{Arc, Mutex}, io::{self, Write}};
 
 use angular_units::Deg;
 use prisma::{Hsv, Rgb, FromColor};
@@ -30,9 +30,11 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
     let chunks: Vec<Vec<u32>> = p.buffer.chunks(chunk_size).map(|c| c.to_owned()).collect();
     let chunks_len = chunks.len();
     println!("chunks.len(): {}", chunks.len());
+    print!("Progress: ");
     let mut handles = Vec::new();
     let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use
     let global_mutex = Arc::new(Mutex::new(0));
+    let chunks_len_over_10 = chunks_len / 10;
 
     for thread_id in 0..amount_of_threads {
         let plane = (*c).clone();
@@ -53,6 +55,10 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
                     return thread_chunks;
                 }
                 //println!("Thread[{}] takes chunk[{}]", thread_id, current_chunk);
+                if current_chunk % chunks_len_over_10 == 0 { //Simple progress bar printing, TODO: improve this
+                    print!(".");
+                    io::stdout().flush().unwrap();
+                }
             
                 let chunk_start = chunk_size * current_chunk;
                 let mut chunk = buf[current_chunk].clone();
@@ -94,6 +100,7 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
             }
         }
     }
+    println!();
     benchmark("render_box_render_complex_plane_into_buffer()", time);
 }
 
