@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
 
 use angular_units::Deg;
 use mandelbrot_set::MandelbrotSet;
@@ -32,7 +33,8 @@ static VIEW_4: View = View::new(-0.46395833333333325, 0.5531250000000001, 0.03);
 static VIEW_5: View = View::new(-0.4375218333333333, 0.5632133750000003, 0.00002000000000000002);
 static VIEW_6: View = View::new(-0.7498100000000001, -0.020300000000000054, 0.00006400000000000002);
 static VIEW_7: View = View::new(-1.7862712000000047, 0.000052399999999991516, 0.00001677721600000001); 
-static VIEW_8: View = View::new( -1.7862581627050718,  0.00005198056959995248, 0.000006039797760000003); 
+static VIEW_8: View = View::new(-1.7862581627050718, 0.00005198056959995248, 0.000006039797760000003); 
+static VIEW_9: View = View::new( -0.4687339999999999, 0.5425518958333333, 0.000010000000000000003); 
 
 pub struct Config {
     // Window dimensions in pixels
@@ -152,7 +154,7 @@ impl Default for InteractionVariables{
 
 // Handle any key events
 fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings) {
-    for key in window.get_keys_pressed(minifb::KeyRepeat::No) {
+    if let Some(key) = window.get_keys_pressed(minifb::KeyRepeat::No).first() {
         print!("\nKey pressed: ");
         k.print_key(&key);
         match key {
@@ -176,6 +178,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::Key6 => c.set_view(&VIEW_6),
             Key::Key7 => c.set_view(&VIEW_7),
             Key::Key8 => c.set_view(&VIEW_8),
+            Key::Key9 => c.set_view(&VIEW_9),
             Key::K => k.print(),
             _ => (),
         }
@@ -183,7 +186,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::NumPadPlus | Key::NumPadMinus => println!("translation_amount: {}", vars.translation_amount),
             Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}",vars.scale_numerator,vars.scale_denominator),
             Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
-            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::LeftBracket | Key::RightBracket => {
+            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::LeftBracket | Key::RightBracket => {
                 rendering::render_complex_plane_into_buffer(p, c, m);
                 c.print();
             },
@@ -309,10 +312,9 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::Key6, "Renders VIEW_6", empty_closure);
     key_bindings.add(Key::Key7, "Renders VIEW_7", empty_closure);
     key_bindings.add(Key::Key8, "Renders VIEW_8", empty_closure);
+    key_bindings.add(Key::Key9, "Renders VIEW_9", empty_closure);
     key_bindings.add(Key::K, "Prints the keybindings", empty_closure);
     key_bindings.print();
-
-
 
     p.pixel_plane.print();
     c.print();
