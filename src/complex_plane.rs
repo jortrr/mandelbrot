@@ -161,6 +161,14 @@ impl ComplexPlane {
     pub fn pixels_to_real(&self, amount: u8) -> f64 {
         amount as f64 * self.increment_x
     }
+
+    pub fn imaginary_to_pixels(&self, value: f64) -> i16 {
+        (value / self.increment_y) as i16
+    }
+
+    pub fn real_to_pixels(&self, value: f64) -> i16 {
+        (value / self.increment_x) as i16
+    }
 }
 
 pub struct View {
