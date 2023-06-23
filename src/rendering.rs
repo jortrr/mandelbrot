@@ -1,5 +1,5 @@
 //Temporary file to group together all rendering functionality
-use std::{time::Instant, thread, sync::{Arc, Mutex}, io::{self, Write}};
+use std::{time::Instant, thread, sync::{Arc, Mutex, atomic::{AtomicU8, Ordering}}, io::{self, Write}};
 
 use angular_units::Deg;
 use prisma::{Hsv, Rgb, FromColor};
@@ -30,11 +30,12 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
     let chunks: Vec<Vec<u32>> = p.buffer.chunks(chunk_size).map(|c| c.to_owned()).collect();
     let chunks_len = chunks.len();
     println!("chunks.len(): {}", chunks.len());
-    print!("Progress: ");
     let mut handles = Vec::new();
     let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use
     let global_mutex = Arc::new(Mutex::new(0));
-    let chunks_len_over_10 = chunks_len / 10;
+    let max_progress: u8 = 30;
+    let chunks_len_over_max_progress = chunks_len / max_progress as usize;
+    let current_progress_atomic: Arc<Mutex<AtomicU8>>= Arc::new(Mutex::new(AtomicU8::new(0)));
 
     for thread_id in 0..amount_of_threads {
         let plane = (*c).clone();
@@ -42,6 +43,7 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
         let thread_mutex = Arc::clone(&global_mutex);
         let pixel_buffer = (*p).clone();
         let ms = (*m).clone();
+        let atm = Arc::clone(&current_progress_atomic);
 
         let handle = thread::spawn(move || {
             let mut thread_chunks = Vec::new();
@@ -55,10 +57,16 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
                     return thread_chunks;
                 }
                 //println!("Thread[{}] takes chunk[{}]", thread_id, current_chunk);
-                if current_chunk % chunks_len_over_10 == 0 { //Simple progress bar printing, TODO: improve this
-                    print!(".");
-                    io::stdout().flush().unwrap();
+                if current_chunk % chunks_len_over_max_progress == 0 {
+                    let mutex = atm.lock().unwrap();
+                    let current_progress =   (*mutex).load(Ordering::Relaxed);
+                    print_progress_bar(current_progress, max_progress);
+                    if current_progress < u8::MAX
+                    {
+                        (*mutex).store(current_progress+1, Ordering::Relaxed);
+                    }
                 }
+
             
                 let chunk_start = chunk_size * current_chunk;
                 let mut chunk = buf[current_chunk].clone();
@@ -161,4 +169,14 @@ fn benchmark_start() -> Instant {
 
 fn benchmark(function: &str,time: Instant) {
     println!("[Benchmark] {}: {:.2?}",function, time.elapsed());
+}
+
+fn print_progress_bar(current_progress: u8, max_progress: u8) {
+    print!("\rProgress: ["); //Print a \r carriage return to return the cursor to the beginning of the line: https://stackoverflow.com/questions/59890270/how-do-i-overwrite-console-output
+    for i in 0..max_progress {
+        let symbol = if i <= current_progress {'+'} else {'.'};
+        print!("{}", symbol);
+    }
+    print!("]");
+    io::stdout().flush().unwrap();
 }
