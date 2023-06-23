@@ -61,6 +61,17 @@ impl KeyBindings {
     pub fn print(&self) {
         println!("{:?}",self);
     }
+
+    pub fn print_key(&self, key: &Key) {
+        for key_action in &self.key_actions {
+            if key_action.key == *key {
+                println!("{:?}", key_action);
+                return;
+            }
+        }
+        //KeyBindings does not contain a KeyAction x with x.key == key, unbound
+        println!("{:?}", key);
+    }
 }
 
 impl fmt::Debug for KeyBindings {
