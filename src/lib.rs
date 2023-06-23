@@ -8,6 +8,7 @@ use prisma::{Hsv, Rgb, FromColor};
 use num_cpus;
 
 use crate::complex_plane::{ComplexPlane, View};
+use crate::key_bindings::{KeyBindings, KeyAction};
 use crate::pixel_buffer::PixelBuffer;
 use crate::pixel_buffer::pixel_plane::PixelPlane;
 
@@ -16,6 +17,7 @@ mod complex;
 mod pixel_buffer;
 mod mandelbrot_set;
 mod rendering;
+mod key_bindings;
 
 //Views
 static VIEW_1: View = View::new(-0.6604166666666667, 0.4437500000000001, 0.1);
@@ -234,6 +236,15 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     .unwrap_or_else(|e| {
         panic!("{}", e);
     });
+    //Initialize keybindings
+    let mut key_bindings: KeyBindings = KeyBindings::new(Vec::new());
+    key_bindings.add_key(KeyAction::new(Key::A, "This is the A key", Box::new(|| println!("Action A"))));
+    key_bindings.add(Key::B, "This is the B key", || println!("Action B"));
+    dbg!(&key_bindings);
+    for key_action in key_bindings.key_actions() {
+        key_action.action();
+    }
+    dbg!(key_bindings);
 
 
     p.pixel_plane.print();

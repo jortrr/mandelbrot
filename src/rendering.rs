@@ -171,6 +171,7 @@ fn benchmark(function: &str,time: Instant) {
     println!("[Benchmark] {}: {:.2?}",function, time.elapsed());
 }
 
+///Prints a progress bar on the current line, will print over the contents of the cursor's current line, so make sure the function is given a newline to print over
 fn print_progress_bar(current_progress: u8, max_progress: u8) {
     print!("\rProgress: ["); //Print a \r carriage return to return the cursor to the beginning of the line: https://stackoverflow.com/questions/59890270/how-do-i-overwrite-console-output
     for i in 0..max_progress {
