@@ -236,6 +236,28 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
     }
 }
 
+///Prints Mandelbrot ASCII art :)
+fn print_banner()
+{
+//Made using: https://patorjk.com/software/taag/#p=display&f=Big&t=Mandelbrot
+let application_banner = r"
+__  __                 _      _ _               _   
+|  \/  |               | |    | | |             | |  
+| \  / | __ _ _ __   __| | ___| | |__  _ __ ___ | |_ 
+| |\/| |/ _` | '_ \ / _` |/ _ \ | '_ \| '__/ _ \| __|
+| |  | | (_| | | | | (_| |  __/ | |_) | | | (_) | |_ 
+|_|  |_|\__,_|_| |_|\__,_|\___|_|_.__/|_|  \___/ \__|";
+//Made using: https://patorjk.com/software/taag/#p=display&f=Small%20Slant&t=by%20Jort
+let author_banner = r"
+   __             __         __ 
+  / /  __ __  __ / /__  ____/ /_
+ / _ \/ // / / // / _ \/ __/ __/
+/_.__/\_, /  \___/\___/_/  \__/ 
+     /___/                      ";
+let version = "1.0";
+println!("{}{}v{}\n\n", application_banner, author_banner, version);
+}
+
 ///Holds all the logic currently in the main function that isn't involved with setting up configuration or handling errors, to make `main` concise and
 ///easy to verify by inspection
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
@@ -259,6 +281,8 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     .unwrap_or_else(|e| {
         panic!("{}", e);
     });
+    //Print the banner
+    print_banner();
     //Initialize keybindings TODO: I want to have a vector of structs containing functions with different signatures, this is not easily possible. All functionality should be placed here, in the future, when 
     //I've figured out how to have closures with different signatures in the same struct field
     //For now, use empty_closure, to have a closure that does nothing as action
