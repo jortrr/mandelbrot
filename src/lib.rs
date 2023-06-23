@@ -187,10 +187,10 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
         let left_mouse_clicked = left_mouse_down && !left_mouse_down_previously;
         //Left mouse actions
         if left_mouse_clicked {
-            println!("MouseButton::Left: ({x}, {y})");
+            println!("\nMouseButton::Left -> Info of ({x}, {y})");
             let iterations = p.iterations_at_point(x, y, m.max_iterations);
             let complex = c.complex_from_pixel_plane(x, y);
-            println!("{:?}", complex);
+            println!("Complex: {:?}", complex);
             println!("iterations: {}", iterations);
             println!();
         }
@@ -201,7 +201,7 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
         let right_mouse_clicked = right_mouse_down && !right_mouse_down_previously;
         //Right mouse actions
         if right_mouse_clicked {
-            println!("MouseButton::Right: ({x}, {y})");
+            println!("\nMouseButton::Right -> Move to ({x}, {y})");
             let new_center = c.complex_from_pixel_plane(x, y);
             println!("c.center: {:?}", c.center());
             println!("new_center: {:?}", new_center);
