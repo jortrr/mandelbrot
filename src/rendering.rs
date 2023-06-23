@@ -4,7 +4,7 @@ use std::{time::Instant, thread, sync::{Arc, Mutex}};
 use angular_units::Deg;
 use prisma::{Hsv, Rgb, FromColor};
 
-use crate::{pixel_buffer::PixelBuffer, complex_plane::ComplexPlane, mandelbrot_set::MandelbrotSet};
+use crate::{pixel_buffer::PixelBuffer, complex_plane::ComplexPlane, mandelbrot_set::MandelbrotSet, complex::Complex};
 
 
 /// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
@@ -52,7 +52,7 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
                 if current_chunk >= chunks_len {
                     return thread_chunks;
                 }
-                println!("Thread[{}] takes chunk[{}]", thread_id, current_chunk);
+                //println!("Thread[{}] takes chunk[{}]", thread_id, current_chunk);
             
                 let chunk_start = chunk_size * current_chunk;
                 let mut chunk = buf[current_chunk].clone();
@@ -120,6 +120,24 @@ pub fn translate_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffe
     let column_sign: f64 = if columns_right > 0 {1.0} else {-1.0};
     c.translate(column_sign*c.pixels_to_real(columns_right.abs() as u8), row_sign*c.pixels_to_imaginary(rows_up.abs() as u8)); 
     translate_and_render_complex_plane_buffer(p, c, m, rows_up.into(), (-columns_right).into());
+}
+
+pub fn translate_to_center_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, new_center: &Complex) {
+    let mut translation: Complex = new_center.subtract(&c.center());
+    //Mirror the y translation because the screen y is mirrored compared to the complex plane y axis
+    translation.y = -translation.y;
+
+    //Translate x, to the right
+    c.translate(translation.x, 0.0);
+    let columns_right = -c.real_to_pixels(translation.x);
+    dbg!(columns_right);
+    translate_and_render_complex_plane_buffer(p, c, m, 0, columns_right.into());
+
+    //Translate y, up
+    c.translate(0.0, translation.y);
+    let rows_up = -c.imaginary_to_pixels(translation.y);
+    dbg!(rows_up);
+    translate_and_render_complex_plane_buffer(p, c, m, rows_up.into(), 0);
 }
 
 /// Creates a 32-bit color. The encoding for each pixel is `0RGB`:
