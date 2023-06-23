@@ -196,13 +196,11 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
         //Right mouse actions
         if right_mouse_clicked {
             println!("({x}, {y})");
-            let complex = c.complex_from_pixel_plane(x, y);
-            println!("{:?}", complex);
-            c.set_center(complex);
-            println!("Center: {:?}", c.center());
-            //translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, 0, -(t.a/c.increment_x) as i128, orbit_radius, max_iterations);
-            //translate_and_render_complex_plane_buffer(&mut buffer, &c, width, height, -(t.b/c.increment_y) as i128, 0, orbit_radius, max_iterations);
-            rendering::render_complex_plane_into_buffer(p, c, m);
+            let new_center = c.complex_from_pixel_plane(x, y);
+            println!("c.center: {:?}", c.center());
+            println!("new_center: {:?}", new_center);
+
+            rendering::translate_to_center_and_render_efficiently(c, p, m, &new_center);
             c.print();
             println!();
         }
@@ -223,16 +221,9 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     // User interaction variables
     let mut vars = InteractionVariables::default();
     // Multithreading variables
-    let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use
+    let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use, TODO: use this value in rendering functions
     // Mandelbrot set iterator
     let m: MandelbrotSet = MandelbrotSet::new(config.max_iterations, config.orbit_radius);
-
-
-    p.pixel_plane.print();
-    c.print();
-    println!("Mandelbrot set parameters: max. iterations is {} and orbit radius is {}", config.max_iterations, config.orbit_radius);
-    println!("Amount of CPU threads that will be used for rendering: {}", amount_of_threads);
-
     // Create a new window
     let mut window = Window::new(
         "Mandelbrot set viewer",
@@ -244,15 +235,20 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         panic!("{}", e);
     });
 
-    rendering::render_complex_plane_into_buffer(&mut p, &c, &m);
+
+    p.pixel_plane.print();
+    c.print();
+    println!("Mandelbrot set parameters: max. iterations is {} and orbit radius is {}", config.max_iterations, config.orbit_radius);
+    println!("Amount of CPU threads that will be used for rendering: {}", amount_of_threads);
     println!();
+
+    rendering::render_complex_plane_into_buffer(&mut p, &c, &m);
 
     // Main loop
     while window.is_open() && !window.is_key_down(Key::Escape) {
         
         // Update the window with the new buffer
         window.update_with_buffer(&p.buffer, config.width, config.height).unwrap();
-        //change_hue_of_buffer(&mut buffer, 1.0);
 
         // Handle any window events
         handle_key_events(&window, &mut c, &mut p, &m, &mut vars);
