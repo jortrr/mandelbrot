@@ -132,7 +132,7 @@ impl Default for InteractionVariables{
 }
 
 // Handle any key events
-fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, vars: &mut InteractionVariables) {
+fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings) {
     for key in window.get_keys_pressed(minifb::KeyRepeat::No) {
         println!("\nKey pressed: {:?}", key);
         match key {
@@ -154,6 +154,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::Key4 => c.set_view(&VIEW_4),
             Key::Key5 => c.set_view(&VIEW_5),
             Key::Key6 => c.set_view(&VIEW_6),
+            Key::K => k.print(),
             _ => (),
         }
         match key {
@@ -236,15 +237,32 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     .unwrap_or_else(|e| {
         panic!("{}", e);
     });
-    //Initialize keybindings
+    //Initialize keybindings TODO: I want to have a vector of structs containing functions with different signatures, this is not easily possible. All functionality should be placed here, in the future, when 
+    //I've figured out how to have closures with different signatures in the same struct field
+    //For now, use empty_closure, to have a closure that does nothing as action
     let mut key_bindings: KeyBindings = KeyBindings::new(Vec::new());
-    key_bindings.add_key(KeyAction::new(Key::A, "This is the A key", Box::new(|| println!("Action A"))));
-    key_bindings.add(Key::B, "This is the B key", || println!("Action B"));
-    dbg!(&key_bindings);
-    for key_action in key_bindings.key_actions() {
-        key_action.action();
-    }
-    dbg!(key_bindings);
+    let empty_closure = || ();
+    key_bindings.add(Key::Up, "Move up translation_amount pixels", empty_closure);
+    key_bindings.add(Key::Down, "Move down translation_amount pixels", empty_closure);
+    key_bindings.add(Key::Left, "Move left translation_amount pixels", empty_closure);
+    key_bindings.add(Key::Right, "Move right translation_amount pixels", empty_closure);
+    key_bindings.add(Key::R, "Reset the Mandelbrot set view to the starting view", empty_closure);
+    key_bindings.add(Key::NumPadPlus, "Increment translation_amount", empty_closure);
+    key_bindings.add(Key::NumPadMinus, "Decrement translation amount", empty_closure);
+    key_bindings.add(Key::NumPadAsterisk, "Increment scale_numerator", empty_closure);
+    key_bindings.add(Key::NumPadSlash, "Decrement scale_numerator", empty_closure);
+    key_bindings.add(Key::LeftBracket, "Scale the view by scaling_factor, effectively zooming in",empty_closure);
+    key_bindings.add(Key::RightBracket, "Scale the view by inverse_scaling_factor, effectively zooming out", empty_closure);
+    key_bindings.add(Key::C, "Prints the current Mandelbrot set view; the center and scale", empty_closure);
+    key_bindings.add(Key::Key1, "Renders VIEW_1", empty_closure);
+    key_bindings.add(Key::Key2, "Renders VIEW_2", empty_closure);
+    key_bindings.add(Key::Key3, "Renders VIEW_3", empty_closure);
+    key_bindings.add(Key::Key4, "Renders VIEW_4", empty_closure);
+    key_bindings.add(Key::Key5, "Renders VIEW_5", empty_closure);
+    key_bindings.add(Key::Key6, "Renders VIEW_6", empty_closure);
+    key_bindings.add(Key::K, "Prints the keybindings", empty_closure);
+    key_bindings.print();
+
 
 
     p.pixel_plane.print();
@@ -262,7 +280,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         window.update_with_buffer(&p.buffer, config.width, config.height).unwrap();
 
         // Handle any window events
-        handle_key_events(&window, &mut c, &mut p, &m, &mut vars);
+        handle_key_events(&window, &mut c, &mut p, &m, &mut vars, &key_bindings);
 
         //Handle any mouse events
         handle_mouse_events(&window, &mut c, &mut p, &m);

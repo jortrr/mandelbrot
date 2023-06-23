@@ -19,8 +19,9 @@ impl KeyAction {
         }
     }
 
+    ///Run self.action
     pub fn action(&self) {
-        (self.action)();
+        (&self.action)();
     }
 }
 
@@ -55,6 +56,11 @@ impl KeyBindings {
     pub fn key_actions(&self) -> &Vec<KeyAction> {
         &self.key_actions
     }
+
+    /// Prints all KeyActions in these KeyBindings to stdout
+    pub fn print(&self) {
+        println!("{:?}",self);
+    }
 }
 
 impl fmt::Debug for KeyBindings {
@@ -71,11 +77,11 @@ impl fmt::Debug for KeyBindings {
 }
 
 impl Default for KeyBindings {
-    /// Create all your keybindings here
+    /// Define all your keybindings here
     fn default() -> KeyBindings {
         let mut key_bindings = KeyBindings::new(Vec::new());
-        key_bindings.add(Key::A, "This is the A key", ||());
-        key_bindings.add(Key::B, "This is the B key", ||());
+        key_bindings.add(Key::A, "This is the A key", ||println!("Action A"));
+        key_bindings.add(Key::B, "This is the B key", ||println!("Action B"));
         key_bindings
     }
 }
