@@ -19,6 +19,11 @@ mod mandelbrot_set;
 mod rendering;
 mod key_bindings;
 
+//Argument default values
+static WIDTH: usize = 1200;
+static HEIGHT: usize = 800;
+static MAX_ITERATIONS: u32 = 10000;
+
 //Views
 static VIEW_1: View = View::new(-0.6604166666666667, 0.4437500000000001, 0.1);
 static VIEW_2: View = View::new(-1.0591666666666668, 0.2629166666666668, 0.01);
@@ -47,34 +52,46 @@ impl Config {
     pub fn build(mut args: impl Iterator<Item = String>) -> Result<Config, String> {
         args.next(); //Skip the first argument as it is the name of the executable
 
+        //First argument
         let width = match args.next() {
-            Some(arg) => arg,
-            None => return Err(String::from("no width argument given")),
+            Some(arg) => {
+                match arg.parse::<usize>() {
+                    Ok(val) => val,
+                    Err(err) => return Err(err.to_string() + &String::from(" for width argument")),
+                }
+            },
+            None => {
+                println!("No width argument given, using default: {}", WIDTH);
+                WIDTH
+            },
         };
 
-        let width = match width.parse::<usize>() {
-            Ok(val) => val,
-            Err(err) => return Err(err.to_string() + &String::from(" for width")),
-        };
-
+        //Second argument
         let height = match args.next() {
-            Some(arg) => arg,
-            None => return Err(String::from("no height argument given")),
+            Some(arg) => {
+                match arg.parse::<usize>() {
+                    Ok(val) => val,
+                    Err(err) => return Err(err.to_string() + &String::from(" for height argument")),
+                }
+            },
+            None =>  {
+                println!("No height argument given, using default: {}", HEIGHT);
+                HEIGHT
+            }
         };
 
-        let height = match height.parse::<usize>() {
-            Ok(val) => val,
-            Err(err) => return Err(err.to_string() + &String::from(" for height")),
-        };
-
+        //Third argument
         let max_iterations = match args.next() {
-            Some(arg) => arg,
-            None => return Err(String::from("no max_iterations argument given")),
-        };
-
-        let max_iterations = match max_iterations.parse::<u32>() {
-            Ok(val) => val,
-            Err(err) => return Err(err.to_string() + &String::from(" for max_iterations")),
+            Some(arg) => {
+                match arg.parse::<u32>() {
+                    Ok(val) => val,
+                    Err(err) => return Err(err.to_string() + &String::from(" for max_iterations argument")),
+                }
+            },
+            None =>  {
+                println!("No max_iterations argument given, using default: {}", MAX_ITERATIONS);
+                MAX_ITERATIONS
+            }
         };
 
         Ok(Config {width, height, max_iterations, orbit_radius: 2.0})
