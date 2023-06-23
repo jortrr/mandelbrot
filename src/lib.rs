@@ -236,7 +236,8 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
     }
 }
 
-///Prints Mandelbrot ASCII art :)
+///Prints Mandelbrot ASCII art :) </br> 
+///Prints the application_banner, author_banner, and version
 fn print_banner()
 {
 //Made using: https://patorjk.com/software/taag/#p=display&f=Big&t=Mandelbrot
