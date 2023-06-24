@@ -266,6 +266,14 @@ let version = VERSION;
 println!("{}{}v{}\n\n", application_banner, author_banner, version);
 }
 
+///Prints a command info tip for the users benefit
+fn print_command_info() {
+    let tip = "Run Mandelbrot using:";
+    let command = "cargo run --release -- <width> <height> <max_iterations> <supersampling_amount>";
+    let command_info = "where <arg> means substitute with the value of arg\nuse '-' to use the default value of arg";
+    println!("{}\n\t{}\n{}\n",tip, command, command_info);
+}
+
 ///Holds all the logic currently in the main function that isn't involved with setting up configuration or handling errors, to make `main` concise and
 ///easy to verify by inspection
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
@@ -291,6 +299,8 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     });
     //Print the banner
     print_banner();
+    //Print command info
+    print_command_info();
     //Initialize keybindings TODO: I want to have a vector of structs containing functions with different signatures, this is not easily possible. All functionality should be placed here, in the future, when 
     //I've figured out how to have closures with different signatures in the same struct field
     //For now, use empty_closure, to have a closure that does nothing as action
