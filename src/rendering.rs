@@ -5,6 +5,34 @@ use rand::Rng;
 
 use crate::{pixel_buffer::PixelBuffer, complex_plane::ComplexPlane, mandelbrot_set::MandelbrotSet, complex::Complex, coloring::TrueColor};
 
+///A box representing the area to render by rendering functions
+#[derive(Clone,Copy)]
+pub struct RenderBox {
+    min_x: usize,
+    max_x: usize,
+    min_y: usize,
+    max_y: usize
+}
+
+impl RenderBox {
+    pub fn new(min_x: usize, max_x: usize, min_y: usize, max_y: usize) -> RenderBox { 
+        RenderBox { min_x, max_x, min_y, max_y } 
+    }
+
+    pub fn print(&self) {
+        println!("RenderBox: ({},{}) -> ({},{}) {{{} pixels}}",self.min_x,self.min_y,self.max_x,self.max_y, self.compute_pixel_count());
+    }
+
+    pub fn compute_pixel_count(&self) -> usize {
+        (self.max_x-self.min_x)*(self.max_y-self.min_y)
+    }
+
+    ///Returns whether the point (x,y) is inside the RenderBox
+    pub fn contains(&self, point: (usize, usize)) -> bool {
+        !(point.0 < self.min_x || point.0 > self.max_x || point.1 < self.min_y || point.1 > self.max_y)
+    }
+}
+
 
 /// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
 /// The buffer should have a size of width*height.
@@ -12,7 +40,8 @@ use crate::{pixel_buffer::PixelBuffer, complex_plane::ComplexPlane, mandelbrot_s
 /// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
 pub fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet) {
-    render_box_render_complex_plane_into_buffer(p, c, m, 0, p.pixel_plane.width, 0, p.pixel_plane.height);
+    let render_box = RenderBox::new(0, p.pixel_plane.width, 0, p.pixel_plane.height);
+    render_box_render_complex_plane_into_buffer(p, c, m, render_box);
 }
 
 /// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
@@ -22,9 +51,9 @@ pub fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m
 /// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
 /// Note: This function is multithreaded
-pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, render_min_x: usize, render_max_x: usize, render_min_y: usize, render_max_y: usize) {
+pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, render_box: RenderBox) {
     let time = benchmark_start();
-    println!("render_box: ({},{}) -> ({},{}) {{{} pixels}}",render_min_x,render_min_y,render_max_x,render_max_y ,(render_max_x-render_min_x)*(render_max_y-render_min_y));
+    render_box.print();
     let chunk_size = p.buffer.len()/p.pixel_plane.height;
     let chunks: Vec<Vec<u32>> = p.buffer.chunks(chunk_size).map(|c| c.to_owned()).collect();
     let chunks_len = chunks.len();
@@ -71,7 +100,8 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
                 
                 for (i, pixel) in chunk.iter_mut().enumerate() {
                     let point = pixel_buffer.index_to_point(i + chunk_start);
-                    if point.0 < render_min_x || point.0 > render_max_x || point.1 < render_min_y || point.1 > render_max_y {
+                    if !render_box.contains(point)
+                    {
                         continue; //Do not render Pixel points outside of the render box
                     }
                     let original_x: f64 = point.0 as f64;
@@ -116,10 +146,12 @@ pub fn translate_and_render_complex_plane_buffer(p: &mut PixelBuffer, c: &Comple
     let max_y: usize = if rows > 0 {rows as usize} else {p.pixel_plane.height-1};
     p.translate_buffer(rows, columns);
     if rows == 0 {
-        render_box_render_complex_plane_into_buffer(p, c, m, (max_x as i128-columns.abs()) as usize, max_x, 0, p.pixel_plane.height);
+        let render_box = RenderBox::new((max_x as i128-columns.abs()) as usize, max_x, 0, p.pixel_plane.height);
+        render_box_render_complex_plane_into_buffer(p, c, m, render_box);
     }
     else if columns == 0 {
-        render_box_render_complex_plane_into_buffer(p, c, m, 0, p.pixel_plane.width, (max_y as i128 -rows.abs()) as usize, max_y);
+        let render_box = RenderBox::new(0, p.pixel_plane.width, (max_y as i128 -rows.abs()) as usize, max_y);
+        render_box_render_complex_plane_into_buffer(p, c, m, render_box);
     } else {
         println!("ERROR: translate_and_render_complex_plane_buffer() requires that rows == 0 || columns == 0");
     }
