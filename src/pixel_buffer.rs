@@ -1,3 +1,7 @@
+use std::{path::Path, fs::File, io::BufWriter};
+
+use crate::{coloring::TrueColor, complex_plane::View, mandelbrot_set::MandelbrotSet};
+
 use self::pixel_plane::PixelPlane;
 
 pub mod pixel_plane;
@@ -5,14 +9,17 @@ pub mod pixel_plane;
 #[derive(Clone)]
 pub struct PixelBuffer {
     pub pixel_plane: PixelPlane,
-    pub buffer: Vec<u32>,
+    pub colors: Vec<TrueColor>,
+    pub pixels: Vec<u32>,
 }
 
 impl PixelBuffer {
     pub fn new(pixel_plane: PixelPlane) -> PixelBuffer {
-        // Create a buffer to store pixel data
-        let buffer: Vec<u32> = vec![0; pixel_plane.width * pixel_plane.height];
-        PixelBuffer { pixel_plane, buffer}
+        // Create a buffer to store pixel data in the form of TrueColor's
+        let black = TrueColor::new(0, 0, 0);
+        let colors: Vec<TrueColor> = vec![black; pixel_plane.width * pixel_plane.height];
+        let pixels: Vec<u32> = PixelBuffer::colors_to_pixels(&colors);
+        PixelBuffer { pixel_plane, colors, pixels}
     }
 
     /// Converts a buffer index to a screen coordinate
@@ -25,13 +32,23 @@ impl PixelBuffer {
         y * self.pixel_plane.width + x
     }
 
-    /// Returns the amount of Mandelbrot iterations at a given point inside the pixel plane
-    pub fn iterations_at_point(&self, x: usize, y: usize, max_iterations: u32) -> u32 {
+    ///Converts a TrueColors to minifb compatible u32 pixel values
+    pub fn colors_to_pixels(colors: &Vec<TrueColor>) -> Vec<u32> {
+        colors.iter().map(|x| x.to_32_bit()).collect()
+    }
+
+    ///Updates pixels from colors
+    pub fn update_pixels(&mut self) {
+        self.pixels = PixelBuffer::colors_to_pixels(&self.colors);
+    }
+
+    /// Returns the amount of Mandelbrot iterations at a given point inside the pixel plane //TODO: move this somewhere else
+    /*pub fn iterations_at_point(&self, x: usize, y: usize, max_iterations: u32) -> u32 {
         let index = self.point_to_index(x, y);
         let pixel = self.buffer[index];
         let iterations = crate::iterations_from_hsv_pixel(pixel, max_iterations);
         iterations
-    } 
+    }*/ 
 
     /// Translate the complex plane in the `buffer` `rows` up and `columns` to the right.
     /// This operation is significantly less expensive than the render_box_render_complex_plane_into_buffer() function, as it does not rerender anything in the complex plane, it simply
@@ -51,8 +68,43 @@ impl PixelBuffer {
                 //println!("x: {} and other_x: {other_x}",*x);
                 let index = self.point_to_index(*x, y);
                 let other_index = self.point_to_index(other_x, other_y);
-                self.buffer[index] = self.buffer[other_index];
+                self.colors[index] = self.colors[other_index];
+                self.pixels[index] = self.pixels[other_index];
             }
         }
+    }
+
+    ///Saves the PixelBuffer as an RGB png image to saved/{file_name_without_extension}.png </br>
+    ///Stores the current ComplexPlane View in the png's metadata under the view keyword </br>
+    ///Stores the supersampling_amount in the metadata </br>
+    ///Also stores author and application metadata
+    pub fn save_as_png(&self, file_name_without_extension: &str, view: &View, m: &MandelbrotSet, supersampling_amount: u8) {
+        let file_name = format!("saved/{}.png", file_name_without_extension);
+        match std::fs::create_dir_all("saved") { //Create the saved folder if it does not exist 
+            Ok(()) => (), //Currently not doing anything with the Result of trying to create the saved folder
+            Err(_) => (),
+        }
+        let path = Path::new(&file_name);
+        let file = File::create(path).unwrap();
+        let ref mut w = BufWriter::new(file);
+        let mut encoder = png::Encoder::new(w, self.pixel_plane.width as u32, self.pixel_plane.height as u32);
+        encoder.set_color(png::ColorType::Rgb);
+        encoder.set_depth(png::BitDepth::Eight);
+        let view_text = format!("{:?}", view);
+        encoder.add_text_chunk(String::from("view"), view_text).unwrap();
+        let mandelbrot_set_text = format!("{:?}", m);
+        encoder.add_text_chunk(String::from("mandelbrot_set"), mandelbrot_set_text).unwrap();
+        let supersampling_amount_text = format!("{}x", supersampling_amount);
+        encoder.add_text_chunk(String::from("supersampling_amount"), supersampling_amount_text).unwrap();
+        encoder.add_text_chunk(String::from("application"), String::from("Mandelbrot by Jort (https://github.com/jortrr/mandelbrot)")).unwrap();
+        encoder.add_text_chunk(String::from("author"), String::from("jortrr (https://github.com/jortrr/)")).unwrap();
+        let mut data: Vec<u8> = Vec::new();
+        for color in &self.colors {
+            data.push(color.red);
+            data.push(color.green);
+            data.push(color.blue);
+        }
+        let mut writer = encoder.write_header().unwrap();
+        writer.write_image_data(&data).unwrap();
     }
 }

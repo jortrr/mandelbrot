@@ -1,3 +1,5 @@
+use std::fmt::write;
+
 use crate::complex::Complex;
 
 #[derive(Clone)]
@@ -27,5 +29,11 @@ impl MandelbrotSet {
             iterations += 1;
         }
         iterations
+    }
+}
+
+impl std::fmt::Debug for MandelbrotSet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "max_iterations = {}, orbit_radius = {}", self.max_iterations, self.orbit_radius)
     }
 }

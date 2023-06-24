@@ -169,6 +169,12 @@ impl ComplexPlane {
     pub fn real_to_pixels(&self, value: f64) -> i16 {
         (value / self.increment_x) as i16
     }
+
+    pub fn get_view(&self) -> View {
+        let center = self.center();
+        let scale = self.get_scale();
+        View::new(center.x, center.y, scale)
+    }
 }
 
 pub struct View {
@@ -180,5 +186,11 @@ pub struct View {
 impl View {
     pub const fn new(x: f64, y: f64, scale: f64) -> View {
         View {x,y,scale}
+    }
+}
+
+impl std::fmt::Debug for View {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "z = {:?}, scale = {}", Complex::new(self.x, self.y), self.scale)
     }
 }

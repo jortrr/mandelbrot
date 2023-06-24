@@ -3,6 +3,7 @@ use std::string::ParseError;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use angular_units::Deg;
+use chrono::Utc;
 use mandelbrot_set::MandelbrotSet;
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 use prisma::{Hsv, Rgb, FromColor};
@@ -37,6 +38,7 @@ static VIEW_6: View = View::new(-0.7498100000000001, -0.020300000000000054, 0.00
 static VIEW_7: View = View::new(-1.7862712000000047, 0.000052399999999991516, 0.00001677721600000001); 
 static VIEW_8: View = View::new(-1.7862581627050718, 0.00005198056959995248, 0.000006039797760000003); 
 static VIEW_9: View = View::new( -0.4687339999999999, 0.5425518958333333, 0.000010000000000000003);
+static VIEW_0: View = View::new( -0.437520465811966, 0.5632133750000006, 0.000004000000000000004);
 
 //Banner values
 static VERSION: &str = "1.1";
@@ -185,14 +187,16 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::Key7 => c.set_view(&VIEW_7),
             Key::Key8 => c.set_view(&VIEW_8),
             Key::Key9 => c.set_view(&VIEW_9),
+            Key::Key0 => c.set_view(&VIEW_0),
             Key::K => k.print(),
+            Key::S => p.save_as_png(&chrono::Utc::now().to_string(), &c.get_view(), &m, supersampling_amount), //TODO: Remove chrono crate, implement own timestamp function
             _ => (),
         }
         match key {
             Key::NumPadPlus | Key::NumPadMinus => println!("translation_amount: {}", vars.translation_amount),
             Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}",vars.scale_numerator,vars.scale_denominator),
             Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
-            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::LeftBracket | Key::RightBracket => {
+            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::Key0 | Key::LeftBracket | Key::RightBracket => {
                 rendering::render_complex_plane_into_buffer(p, c, m, supersampling_amount);
                 c.print();
             },
@@ -214,10 +218,10 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
         //Left mouse actions
         if left_mouse_clicked {
             println!("\nMouseButton::Left -> Info at ({x}, {y})");
-            let iterations = p.iterations_at_point(x as usize, y as usize, m.max_iterations);
+            //let iterations = p.iterations_at_point(x as usize, y as usize, m.max_iterations); //TODO: fix this
             let complex = c.complex_from_pixel_plane(x.into(), y.into());
             println!("Complex: {:?}", complex);
-            println!("iterations: {}", iterations);
+            //println!("iterations: {}", iterations);
             println!();
         }
 
@@ -328,6 +332,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::Key8, "Renders VIEW_8", empty_closure);
     key_bindings.add(Key::Key9, "Renders VIEW_9", empty_closure);
     key_bindings.add(Key::K, "Prints the keybindings", empty_closure);
+    key_bindings.add(Key::S, "Saves the current Mandelbrot set view as an image in the saved folder", empty_closure);
     key_bindings.print();
 
     p.pixel_plane.print();
@@ -344,7 +349,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     while window.is_open() && !window.is_key_down(Key::Escape) {
         
         // Update the window with the new buffer
-        window.update_with_buffer(&p.buffer, config.width, config.height).unwrap();
+        window.update_with_buffer(&p.pixels, config.width, config.height).unwrap();
 
         // Handle any window events
         handle_key_events(&window, &mut c, &mut p, &m, &mut vars, &key_bindings, config.supersampling_amount);
@@ -354,20 +359,4 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     }
 
     Ok(())
-}
-
-/// Get the amount of Mandelbrot iterations from a HSV colored pixel //TODO: This function is wonky, it should go
-fn iterations_from_hsv_pixel(pixel: u32, max_iterations: u32) -> u32 {
-    let r = (pixel >> 16) & 0xFF;
-    let g = (pixel >> 8) & 0xFF;
-    let b = pixel & 0xFF;
-    let rgb = Rgb::new(r as f64 / 255.0, g as f64 / 255.0, b as f64 / 255.0);
-    let hsv: Hsv<f64, _> = Hsv::from_color(&rgb);
-    let hue: Deg<f64> = hsv.hue();
-    let value = hsv.value();
-    if value == 0.0 { //If value == 0.0, the pixel is an element of the Mandelbrot set
-        return max_iterations;
-    }
-    let iterations: u32 = (max_iterations as f64 * (hue.0 / 359.0) as f64) as u32; 
-    iterations
 }
