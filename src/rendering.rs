@@ -1,11 +1,9 @@
 //Temporary file to group together all rendering functionality
 use std::{time::Instant, thread, sync::{Arc, Mutex, atomic::{AtomicU8, Ordering}}, io::{self, Write}};
 
-use angular_units::Deg;
-use prisma::{Hsv, Rgb, FromColor};
 use rand::Rng;
 
-use crate::{pixel_buffer::PixelBuffer, complex_plane::ComplexPlane, mandelbrot_set::MandelbrotSet, complex::Complex, coloring::create_color_from_continuous_bernstein_polynomials};
+use crate::{pixel_buffer::PixelBuffer, complex_plane::ComplexPlane, mandelbrot_set::MandelbrotSet, complex::Complex, coloring::TrueColor};
 
 
 /// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
@@ -68,52 +66,29 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
                     }
                 }
 
-            
                 let chunk_start = chunk_size * current_chunk;
                 let mut chunk = buf[current_chunk].clone();
-
                 
                 for (i, pixel) in chunk.iter_mut().enumerate() {
                     let point = pixel_buffer.index_to_point(i + chunk_start);
                     if point.0 < render_min_x || point.0 > render_max_x || point.1 < render_min_y || point.1 > render_max_y {
                         continue; //Do not render Pixel points outside of the render box
                     }
-                    //println!("i: {i}");
-                    //println!("Pixel: {:?}", point);
-                    //let complex = Complex::new(0.0,0.0);//
                     let original_x: f64 = point.0 as f64;
                     let original_y: f64 = point.1 as f64;
-                    let mut rng = rand::thread_rng();
-                    let mut r = 0.0;
-                    let mut g = 0.0;
-                    let mut b = 0.0;
                     //Supersampling
-                    let supersampling_amount = 5;
+                    let supersampling_amount = 4;
+                    let mut colors: Vec<TrueColor> = Vec::new();
                     for _ in 0..supersampling_amount {
-                        let x = original_x + rng.gen::<f64>();
-                        let y = original_y + rng.gen::<f64>();
+                        let (random_x, random_y) = rand::thread_rng().gen::<(f64,f64)>();
+                        let (x, y) = (original_x+random_x, original_y+random_y);
                         let complex = plane.complex_from_pixel_plane(x, y);
-                        //println!("C: {:?}", c);
                         let iterations = ms.iterate(complex);
-                        /*if iterations == ms.max_iterations {
-                            break;
-                        }*/
-                        //println!("iterations: {}", iterations);
-                        //println!();
-                        //let hue: f64 = 359.0 * (iterations as f64 / ms.max_iterations as f64);
-                        let hue = 0.3*iterations as f64;
-                        let value: f64 = if iterations < ms.max_iterations {1.0} else {0.0};
-                        let hsv = Hsv::new(Deg(hue % 359.0),0.8,value);
-                        let rgb = Rgb::from_color(&hsv);
-                        //println!("rgb: {:?}", rgb);
-                        //let t = 10.0*iterations as f64 / ms.max_iterations as f64 % 1.0;
-                        //let true_color = create_color_from_continuous_bernstein_polynomials(t);
-                        //*pixel = from_u8_rgb(true_color.red, true_color.green, true_color.blue)
-                        r += rgb.red();
-                        g += rgb.green();
-                        b += rgb.blue();
+                        let color = TrueColor::new_from_hsv_colors(iterations, ms.max_iterations);
+                        colors.push(color);    
                     }
-                    *pixel = from_u8_rgb((r / supersampling_amount as f64 * 255.0) as u8, (g / supersampling_amount as f64 * 255.0) as u8, (b / supersampling_amount as f64 * 255.0) as u8);
+                    let supersampled_color = TrueColor::average(colors);
+                    *pixel = supersampled_color.to_32_bit();
                 }
                 thread_chunks.push((current_chunk, chunk.clone()));
             }
@@ -176,14 +151,6 @@ pub fn translate_to_center_and_render_efficiently(c: &mut ComplexPlane, p: &mut 
     let rows_up = -c.imaginary_to_pixels(translation.y);
     dbg!(rows_up);
     translate_and_render_complex_plane_buffer(p, c, m, rows_up.into(), 0);
-}
-
-/// Creates a 32-bit color. The encoding for each pixel is `0RGB`:
-/// The upper 8-bits are ignored, the next 8-bits are for the red channel, the next 8-bits
-/// afterwards for the green channel, and the lower 8-bits for the blue channel.
-fn from_u8_rgb(r: u8, g: u8, b: u8) -> u32 {
-    let (r, g, b) = (r as u32, g as u32, b as u32);
-    (r << 16) | (g << 8) | b
 }
 
 fn benchmark_start() -> Instant {
