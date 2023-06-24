@@ -77,11 +77,11 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
                     let original_x: f64 = point.0 as f64;
                     let original_y: f64 = point.1 as f64;
                     //Supersampling
-                    let supersampling_amount = 4;
+                    let supersampling_amount = 16;
                     let mut colors: Vec<TrueColor> = Vec::new();
                     for _ in 0..supersampling_amount {
-                        let (random_x, random_y) = rand::thread_rng().gen::<(f64,f64)>();
-                        let (x, y) = (original_x+random_x, original_y+random_y);
+                        let (random_x, random_y): (f64, f64) = rand::thread_rng().gen::<(f64,f64)>();
+                        let (x, y) : (f64, f64) = (original_x+random_x, original_y+random_y);
                         let complex = plane.complex_from_pixel_plane(x, y);
                         let iterations = ms.iterate(complex);
                         let color = TrueColor::new_from_hsv_colors(iterations, ms.max_iterations);
