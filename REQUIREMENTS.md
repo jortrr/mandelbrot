@@ -8,3 +8,4 @@
 - [ ] Create a logging function, with log levels DEBUG, INFO, ERROR, and a commandline argument specifying the level, default should be INFO
 - [ ] Create a struct to combine KEY, description, action, to make it easy to display what keys are doing in the future, self-documenting
 - [ ] Save the current Mandelbrot view with the 'S' key to a .png file, the name should be the view: x, y and scale
+- [ ] Allow the user to swap R, G and B colors in an image
