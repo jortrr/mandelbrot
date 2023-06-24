@@ -75,9 +75,9 @@ impl ComplexPlane {
     }
 
     /// Convert the point (x,y) in the pixel plane to the complex number a+bi in the complex plane
-    pub fn complex_from_pixel_plane(&self, x: usize, y: usize) -> Complex {
-        let x = self.min_x + x as f64 * self.increment_x;
-        let y = -(self.min_y + y as f64 * self.increment_y); //Negate because math plane is bottom-top, and screen plane is top-bottom
+    pub fn complex_from_pixel_plane(&self, x: f64, y: f64) -> Complex {
+        let x = self.min_x + x * self.increment_x;
+        let y = -(self.min_y + y * self.increment_y); //Negate because math plane is bottom-top, and screen plane is top-bottom
         let c = Complex::new(x, y);
         c
     }
