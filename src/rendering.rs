@@ -56,7 +56,7 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
     let supersampling_amount = supersampling_amount.max(1).min(32); //Supersampling_amount should be at least 1 and atmost 32
     render_box.print();
     let chunk_size = p.pixel_plane.width;
-    let chunks: Vec<Vec<u32>> = p.buffer.chunks(chunk_size).map(|c| c.to_owned()).collect();
+    let chunks: Vec<Vec<TrueColor>> = p.colors.chunks(chunk_size).map(|c| c.to_owned()).collect();
     let chunks_len = chunks.len();
     //println!("chunks.len(): {}", chunks.len());
     let mut handles = Vec::new();
@@ -118,7 +118,7 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
                         colors.push(color);    
                     }
                     let supersampled_color = TrueColor::average(colors);
-                    *pixel = supersampled_color.to_32_bit();
+                    *pixel = supersampled_color;
                 }
                 thread_chunks.push((current_chunk, chunk.clone()));
             }
@@ -130,12 +130,13 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
         let thread_chunks = handle.join().unwrap();
         for (i, chunk) in thread_chunks{
             let mut index = i*p.pixel_plane.width;
-            for pixel in chunk {
-                p.buffer[index] = pixel;
+            for color in chunk {
+                p.colors[index] = color;
                 index+=1;
             }
         }
     }
+    p.update_pixels();
     println!();
     benchmark("render_box_render_complex_plane_into_buffer()", time);
 }

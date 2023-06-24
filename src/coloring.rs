@@ -2,6 +2,7 @@ use angular_units::Deg;
 use num::traits::Pow;
 use prisma::{Hsv, Rgb, FromColor};
 
+#[derive(Clone, Copy)]
 pub struct TrueColor {
     pub red: u8,
     pub green: u8,
