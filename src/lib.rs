@@ -79,21 +79,30 @@ impl Config {
         Ok(Config {width, height, max_iterations, orbit_radius: ORBIT_RADIUS, supersampling_amount})
     }
 
-    ///Parses an argument to a T value if possible, returns an error if not. Returns default if argument is None
+    ///Parses an argument to a T value if possible, returns an error if not. Returns default if argument is None </br>
+    ///If Some(arg) == "-", return default
     pub fn parse_argument<T: std::str::FromStr + std::fmt::Display>(name: &str, argument: Option<String>, default: T) -> Result<T, String> 
     where <T as std::str::FromStr>::Err: std::fmt::Display{
         match argument {
             Some(arg) => {
+                if arg == "-" {
+                    Config::print_no_argument_given(name, &default);
+                    return Ok(default);
+                }
                 match arg.parse::<T>() {
                     Ok(val) => return Ok(val),
                     Err(err) => return Err(err.to_string() + &format!(" for {} argument", name)),
                 }
             },
             None =>  {
-                println!("No {} argument given, using default: {}", name, default);
+                Config::print_no_argument_given(name, &default);
                 Ok(default)
             }
         }
+    }
+
+    pub fn print_no_argument_given<T: std::fmt::Display>(name: &str, default: &T) {
+        println!("No {} argument given, using default: {}", name, default);
     }
 }
 
