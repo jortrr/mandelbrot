@@ -58,7 +58,7 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
     let chunk_size = p.pixel_plane.width;
     let chunks: Vec<Vec<u32>> = p.buffer.chunks(chunk_size).map(|c| c.to_owned()).collect();
     let chunks_len = chunks.len();
-    println!("chunks.len(): {}", chunks.len());
+    //println!("chunks.len(): {}", chunks.len());
     let mut handles = Vec::new();
     let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use
     let global_mutex = Arc::new(Mutex::new(0));
