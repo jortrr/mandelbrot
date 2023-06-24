@@ -34,7 +34,10 @@ static VIEW_5: View = View::new(-0.4375218333333333, 0.5632133750000003, 0.00002
 static VIEW_6: View = View::new(-0.7498100000000001, -0.020300000000000054, 0.00006400000000000002);
 static VIEW_7: View = View::new(-1.7862712000000047, 0.000052399999999991516, 0.00001677721600000001); 
 static VIEW_8: View = View::new(-1.7862581627050718, 0.00005198056959995248, 0.000006039797760000003); 
-static VIEW_9: View = View::new( -0.4687339999999999, 0.5425518958333333, 0.000010000000000000003); 
+static VIEW_9: View = View::new( -0.4687339999999999, 0.5425518958333333, 0.000010000000000000003);
+
+//Rendering values
+static SUPERSAMPLING_AMOUNT: u8 = 5;
 
 pub struct Config {
     // Window dimensions in pixels
@@ -158,10 +161,10 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
         print!("\nKey pressed: ");
         k.print_key(&key);
         match key {
-            Key::Up => rendering::translate_and_render_efficiently(c, p, m, vars.translation_amount.into(), 0),
-            Key::Down => rendering::translate_and_render_efficiently(c, p, m, -(vars.translation_amount as i16), 0),
-            Key::Left => rendering::translate_and_render_efficiently(c, p, m, 0, -(vars.translation_amount as i16)),
-            Key::Right => rendering::translate_and_render_efficiently(c, p, m, 0, vars.translation_amount.into()),
+            Key::Up => rendering::translate_and_render_efficiently(c, p, m, vars.translation_amount.into(), 0, SUPERSAMPLING_AMOUNT),
+            Key::Down => rendering::translate_and_render_efficiently(c, p, m, -(vars.translation_amount as i16), 0, SUPERSAMPLING_AMOUNT),
+            Key::Left => rendering::translate_and_render_efficiently(c, p, m, 0, -(vars.translation_amount as i16), SUPERSAMPLING_AMOUNT),
+            Key::Right => rendering::translate_and_render_efficiently(c, p, m, 0, vars.translation_amount.into(), SUPERSAMPLING_AMOUNT),
             Key::R => c.reset(),
             Key::NumPadPlus => vars.increment_translation_amount(),
             Key::NumPadMinus => vars.decrement_translation_amount(),
@@ -187,7 +190,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}",vars.scale_numerator,vars.scale_denominator),
             Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
             Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::LeftBracket | Key::RightBracket => {
-                rendering::render_complex_plane_into_buffer(p, c, m);
+                rendering::render_complex_plane_into_buffer(p, c, m, SUPERSAMPLING_AMOUNT);
                 c.print();
             },
             _ => (),
@@ -226,7 +229,7 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
             println!("c.center: {:?}", c.center());
             println!("new_center: {:?}", new_center);
 
-            rendering::translate_to_center_and_render_efficiently(c, p, m, &new_center);
+            rendering::translate_to_center_and_render_efficiently(c, p, m, &new_center, SUPERSAMPLING_AMOUNT);
             c.print();
             println!();
         }
@@ -318,9 +321,10 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     c.print();
     println!("Mandelbrot set parameters: max. iterations is {} and orbit radius is {}", config.max_iterations, config.orbit_radius);
     println!("Amount of CPU threads that will be used for rendering: {}", amount_of_threads);
+    println!("Supersampling amount used for rendering: {}x", SUPERSAMPLING_AMOUNT);
     println!();
 
-    rendering::render_complex_plane_into_buffer(&mut p, &c, &m);
+    rendering::render_complex_plane_into_buffer(&mut p, &c, &m, SUPERSAMPLING_AMOUNT);
 
     // Main loop
     while window.is_open() && !window.is_key_down(Key::Escape) {
