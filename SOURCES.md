@@ -8,3 +8,4 @@
 - [Efficiently generating the Mandelbrot and Julia sets](https://theses.liacs.nl/pdf/2018-2019-JonckheereLSde.pdf)
 - [Bernstein polynomial coloring](https://solarianprogrammer.com/2013/02/28/mandelbrot-set-cpp-11/)
 - [Fractals & Rendering Techniques](https://darkeclipz.github.io/fractals/paper/Fractals%20&%20Rendering%20Techniques.html)
+- [Supersampling](https://en.wikipedia.org/wiki/Supersampling)
