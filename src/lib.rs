@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::string::ParseError;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use angular_units::Deg;
@@ -8,7 +9,7 @@ use prisma::{Hsv, Rgb, FromColor};
 use num_cpus;
 
 use crate::complex_plane::{ComplexPlane, View};
-use crate::key_bindings::{KeyBindings, KeyAction};
+use crate::key_bindings::{KeyBindings};
 use crate::pixel_buffer::PixelBuffer;
 use crate::pixel_buffer::pixel_plane::PixelPlane;
 
@@ -18,11 +19,13 @@ mod pixel_buffer;
 mod mandelbrot_set;
 mod rendering;
 mod key_bindings;
+mod coloring;
 
 //Argument default values
 static WIDTH: usize = 1200;
 static HEIGHT: usize = 800;
 static MAX_ITERATIONS: u32 = 10000;
+static SUPERSAMPLING_AMOUNT: u8 = 5;
 
 //Views
 static VIEW_1: View = View::new(-0.6604166666666667, 0.4437500000000001, 0.1);
@@ -32,7 +35,14 @@ static VIEW_4: View = View::new(-0.46395833333333325, 0.5531250000000001, 0.03);
 static VIEW_5: View = View::new(-0.4375218333333333, 0.5632133750000003, 0.00002000000000000002);
 static VIEW_6: View = View::new(-0.7498100000000001, -0.020300000000000054, 0.00006400000000000002);
 static VIEW_7: View = View::new(-1.7862712000000047, 0.000052399999999991516, 0.00001677721600000001); 
-static VIEW_8: View = View::new( -1.7862581627050718,  0.00005198056959995248, 0.000006039797760000003); 
+static VIEW_8: View = View::new(-1.7862581627050718, 0.00005198056959995248, 0.000006039797760000003); 
+static VIEW_9: View = View::new( -0.4687339999999999, 0.5425518958333333, 0.000010000000000000003);
+
+//Banner values
+static VERSION: &str = "1.1";
+
+//Mandelbrot set values
+static ORBIT_RADIUS: f64 = 2.0;
 
 pub struct Config {
     // Window dimensions in pixels
@@ -41,6 +51,8 @@ pub struct Config {
     // Mandelbrot set parameters
     pub max_iterations: u32,
     pub orbit_radius: f64,      //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
+    // Rendering parameters
+    pub supersampling_amount: u8
 }
 
 
@@ -53,48 +65,44 @@ impl Config {
         args.next(); //Skip the first argument as it is the name of the executable
 
         //First argument
-        let width = match args.next() {
-            Some(arg) => {
-                match arg.parse::<usize>() {
-                    Ok(val) => val,
-                    Err(err) => return Err(err.to_string() + &String::from(" for width argument")),
-                }
-            },
-            None => {
-                println!("No width argument given, using default: {}", WIDTH);
-                WIDTH
-            },
-        };
+        let width = Config::parse_argument("width", args.next(), WIDTH).unwrap(); 
 
         //Second argument
-        let height = match args.next() {
-            Some(arg) => {
-                match arg.parse::<usize>() {
-                    Ok(val) => val,
-                    Err(err) => return Err(err.to_string() + &String::from(" for height argument")),
-                }
-            },
-            None =>  {
-                println!("No height argument given, using default: {}", HEIGHT);
-                HEIGHT
-            }
-        };
+        let height = Config::parse_argument("height", args.next(), HEIGHT).unwrap();
 
         //Third argument
-        let max_iterations = match args.next() {
+        let max_iterations = Config::parse_argument("max_iterations", args.next(), MAX_ITERATIONS).unwrap();
+
+        //Fourth argument
+        let supersampling_amount = Config::parse_argument("supersampling_amount", args.next(), SUPERSAMPLING_AMOUNT).unwrap();
+
+        Ok(Config {width, height, max_iterations, orbit_radius: ORBIT_RADIUS, supersampling_amount})
+    }
+
+    ///Parses an argument to a T value if possible, returns an error if not. Returns default if argument is None </br>
+    ///If Some(arg) == "-", return default
+    pub fn parse_argument<T: std::str::FromStr + std::fmt::Display>(name: &str, argument: Option<String>, default: T) -> Result<T, String> 
+    where <T as std::str::FromStr>::Err: std::fmt::Display{
+        match argument {
             Some(arg) => {
-                match arg.parse::<u32>() {
-                    Ok(val) => val,
-                    Err(err) => return Err(err.to_string() + &String::from(" for max_iterations argument")),
+                if arg == "-" {
+                    Config::print_no_argument_given(name, &default);
+                    return Ok(default);
+                }
+                match arg.parse::<T>() {
+                    Ok(val) => return Ok(val),
+                    Err(err) => return Err(err.to_string() + &format!(" for {} argument", name)),
                 }
             },
             None =>  {
-                println!("No max_iterations argument given, using default: {}", MAX_ITERATIONS);
-                MAX_ITERATIONS
+                Config::print_no_argument_given(name, &default);
+                Ok(default)
             }
-        };
+        }
+    }
 
-        Ok(Config {width, height, max_iterations, orbit_radius: 2.0})
+    pub fn print_no_argument_given<T: std::fmt::Display>(name: &str, default: &T) {
+        println!("No {} argument given, using default: {}", name, default);
     }
 }
 
@@ -151,15 +159,15 @@ impl Default for InteractionVariables{
 }
 
 // Handle any key events
-fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings) {
-    for key in window.get_keys_pressed(minifb::KeyRepeat::No) {
+fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: u8) {
+    if let Some(key) = window.get_keys_pressed(minifb::KeyRepeat::No).first() {
         print!("\nKey pressed: ");
         k.print_key(&key);
         match key {
-            Key::Up => rendering::translate_and_render_efficiently(c, p, m, vars.translation_amount.into(), 0),
-            Key::Down => rendering::translate_and_render_efficiently(c, p, m, -(vars.translation_amount as i16), 0),
-            Key::Left => rendering::translate_and_render_efficiently(c, p, m, 0, -(vars.translation_amount as i16)),
-            Key::Right => rendering::translate_and_render_efficiently(c, p, m, 0, vars.translation_amount.into()),
+            Key::Up => rendering::translate_and_render_efficiently(c, p, m, vars.translation_amount.into(), 0, supersampling_amount),
+            Key::Down => rendering::translate_and_render_efficiently(c, p, m, -(vars.translation_amount as i16), 0, supersampling_amount),
+            Key::Left => rendering::translate_and_render_efficiently(c, p, m, 0, -(vars.translation_amount as i16), supersampling_amount),
+            Key::Right => rendering::translate_and_render_efficiently(c, p, m, 0, vars.translation_amount.into(), supersampling_amount),
             Key::R => c.reset(),
             Key::NumPadPlus => vars.increment_translation_amount(),
             Key::NumPadMinus => vars.decrement_translation_amount(),
@@ -176,6 +184,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::Key6 => c.set_view(&VIEW_6),
             Key::Key7 => c.set_view(&VIEW_7),
             Key::Key8 => c.set_view(&VIEW_8),
+            Key::Key9 => c.set_view(&VIEW_9),
             Key::K => k.print(),
             _ => (),
         }
@@ -183,8 +192,8 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::NumPadPlus | Key::NumPadMinus => println!("translation_amount: {}", vars.translation_amount),
             Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}",vars.scale_numerator,vars.scale_denominator),
             Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
-            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::LeftBracket | Key::RightBracket => {
-                rendering::render_complex_plane_into_buffer(p, c, m);
+            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::LeftBracket | Key::RightBracket => {
+                rendering::render_complex_plane_into_buffer(p, c, m, supersampling_amount);
                 c.print();
             },
             _ => (),
@@ -192,13 +201,11 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
     }
 }
 
-fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet) {
+fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, supersampling_amount: u8) {
     static LEFT_MOUSE_DOWN_PREVIOUSLY: AtomicBool = AtomicBool::new(false); //Static variable with interior mutability to toggle mouse clicks; without such a variable, clicking the screen once would result in multiple actions
     static RIGHT_MOUSE_DOWN_PREVIOUSLY: AtomicBool = AtomicBool::new(false); 
 
     if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
-        let x: usize = x as usize;
-        let y: usize = y as usize;
 
         //Left mouse status
         let left_mouse_down = window.get_mouse_down(MouseButton::Left);
@@ -207,8 +214,8 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
         //Left mouse actions
         if left_mouse_clicked {
             println!("\nMouseButton::Left -> Info at ({x}, {y})");
-            let iterations = p.iterations_at_point(x, y, m.max_iterations);
-            let complex = c.complex_from_pixel_plane(x, y);
+            let iterations = p.iterations_at_point(x as usize, y as usize, m.max_iterations);
+            let complex = c.complex_from_pixel_plane(x.into(), y.into());
             println!("Complex: {:?}", complex);
             println!("iterations: {}", iterations);
             println!();
@@ -221,11 +228,11 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
         //Right mouse actions
         if right_mouse_clicked {
             println!("\nMouseButton::Right -> Move to ({x}, {y})");
-            let new_center = c.complex_from_pixel_plane(x, y);
+            let new_center = c.complex_from_pixel_plane(x.into(), y.into());
             println!("c.center: {:?}", c.center());
             println!("new_center: {:?}", new_center);
 
-            rendering::translate_to_center_and_render_efficiently(c, p, m, &new_center);
+            rendering::translate_to_center_and_render_efficiently(c, p, m, &new_center, supersampling_amount);
             c.print();
             println!();
         }
@@ -236,7 +243,8 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
     }
 }
 
-///Prints Mandelbrot ASCII art :)
+///Prints Mandelbrot ASCII art :) </br> 
+///Prints the application_banner, author_banner, and version
 fn print_banner()
 {
 //Made using: https://patorjk.com/software/taag/#p=display&f=Big&t=Mandelbrot
@@ -254,7 +262,7 @@ let author_banner = r"
  / _ \/ // / / // / _ \/ __/ __/
 /_.__/\_, /  \___/\___/_/  \__/ 
      /___/                      ";
-let version = "1.0";
+let version = VERSION;
 println!("{}{}v{}\n\n", application_banner, author_banner, version);
 }
 
@@ -308,18 +316,19 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::Key6, "Renders VIEW_6", empty_closure);
     key_bindings.add(Key::Key7, "Renders VIEW_7", empty_closure);
     key_bindings.add(Key::Key8, "Renders VIEW_8", empty_closure);
+    key_bindings.add(Key::Key9, "Renders VIEW_9", empty_closure);
     key_bindings.add(Key::K, "Prints the keybindings", empty_closure);
     key_bindings.print();
-
-
 
     p.pixel_plane.print();
     c.print();
     println!("Mandelbrot set parameters: max. iterations is {} and orbit radius is {}", config.max_iterations, config.orbit_radius);
     println!("Amount of CPU threads that will be used for rendering: {}", amount_of_threads);
+    println!("Supersampling amount used for rendering: {}x", config.supersampling_amount);
     println!();
 
-    rendering::render_complex_plane_into_buffer(&mut p, &c, &m);
+    println!("Rendering Mandelbrot set default view");
+    rendering::render_complex_plane_into_buffer(&mut p, &c, &m, config.supersampling_amount);
 
     // Main loop
     while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -328,10 +337,10 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         window.update_with_buffer(&p.buffer, config.width, config.height).unwrap();
 
         // Handle any window events
-        handle_key_events(&window, &mut c, &mut p, &m, &mut vars, &key_bindings);
+        handle_key_events(&window, &mut c, &mut p, &m, &mut vars, &key_bindings, config.supersampling_amount);
 
         //Handle any mouse events
-        handle_mouse_events(&window, &mut c, &mut p, &m);
+        handle_mouse_events(&window, &mut c, &mut p, &m, config.supersampling_amount);
     }
 
     Ok(())
