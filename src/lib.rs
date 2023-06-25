@@ -1,14 +1,12 @@
 use std::error::Error;
-use std::string::ParseError;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use angular_units::Deg;
-use chrono::Utc;
+
 use mandelbrot_set::MandelbrotSet;
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
-use prisma::{Hsv, Rgb, FromColor};
 use num_cpus;
 
+use crate::coloring::TrueColor;
 use crate::complex_plane::{ComplexPlane, View};
 use crate::key_bindings::{KeyBindings};
 use crate::pixel_buffer::PixelBuffer;
@@ -27,6 +25,7 @@ static WIDTH: usize = 1200;
 static HEIGHT: usize = 800;
 static MAX_ITERATIONS: u32 = 10000;
 static SUPERSAMPLING_AMOUNT: u8 = 5;
+static COLORING_FUNCTION : fn(iterations: u32, max_iterations: u32) -> TrueColor = TrueColor::new_from_hsv_colors;
 
 //Views
 static VIEW_1: View = View::new(-0.6604166666666667, 0.4437500000000001, 0.1);
@@ -161,15 +160,15 @@ impl Default for InteractionVariables{
 }
 
 // Handle any key events
-fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: u8) {
+fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: u8,coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     if let Some(key) = window.get_keys_pressed(minifb::KeyRepeat::No).first() {
         print!("\nKey pressed: ");
         k.print_key(&key);
         match key {
-            Key::Up => rendering::translate_and_render_efficiently(c, p, m, vars.translation_amount.into(), 0, supersampling_amount),
-            Key::Down => rendering::translate_and_render_efficiently(c, p, m, -(vars.translation_amount as i16), 0, supersampling_amount),
-            Key::Left => rendering::translate_and_render_efficiently(c, p, m, 0, -(vars.translation_amount as i16), supersampling_amount),
-            Key::Right => rendering::translate_and_render_efficiently(c, p, m, 0, vars.translation_amount.into(), supersampling_amount),
+            Key::Up => rendering::translate_and_render_efficiently(c, p, m, vars.translation_amount.into(), 0, supersampling_amount, coloring_function),
+            Key::Down => rendering::translate_and_render_efficiently(c, p, m, -(vars.translation_amount as i16), 0, supersampling_amount, coloring_function),
+            Key::Left => rendering::translate_and_render_efficiently(c, p, m, 0, -(vars.translation_amount as i16), supersampling_amount, coloring_function),
+            Key::Right => rendering::translate_and_render_efficiently(c, p, m, 0, vars.translation_amount.into(), supersampling_amount, coloring_function),
             Key::R => c.reset(),
             Key::NumPadPlus => vars.increment_translation_amount(),
             Key::NumPadMinus => vars.decrement_translation_amount(),
@@ -197,7 +196,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}",vars.scale_numerator,vars.scale_denominator),
             Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
             Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::Key0 | Key::LeftBracket | Key::RightBracket => {
-                rendering::render_complex_plane_into_buffer(p, c, m, supersampling_amount);
+                rendering::render_complex_plane_into_buffer(p, c, m, supersampling_amount, coloring_function);
                 c.print();
             },
             _ => (),
@@ -205,7 +204,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
     }
 }
 
-fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, supersampling_amount: u8) {
+fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, supersampling_amount: u8, coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     static LEFT_MOUSE_DOWN_PREVIOUSLY: AtomicBool = AtomicBool::new(false); //Static variable with interior mutability to toggle mouse clicks; without such a variable, clicking the screen once would result in multiple actions
     static RIGHT_MOUSE_DOWN_PREVIOUSLY: AtomicBool = AtomicBool::new(false); 
 
@@ -236,7 +235,7 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
             println!("c.center: {:?}", c.center());
             println!("new_center: {:?}", new_center);
 
-            rendering::translate_to_center_and_render_efficiently(c, p, m, &new_center, supersampling_amount);
+            rendering::translate_to_center_and_render_efficiently(c, p, m, &new_center, supersampling_amount, coloring_function);
             c.print();
             println!();
         }
@@ -291,6 +290,8 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use, TODO: use this value in rendering functions
     // Mandelbrot set iterator
     let m: MandelbrotSet = MandelbrotSet::new(config.max_iterations, config.orbit_radius);
+    //Coloring function
+    let coloring_function = COLORING_FUNCTION;
     // Create a new window
     let mut window = Window::new(
         "Mandelbrot set viewer",
@@ -343,7 +344,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     println!();
 
     println!("Rendering Mandelbrot set default view");
-    rendering::render_complex_plane_into_buffer(&mut p, &c, &m, config.supersampling_amount);
+    rendering::render_complex_plane_into_buffer(&mut p, &c, &m, config.supersampling_amount, coloring_function);
 
     // Main loop
     while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -352,10 +353,10 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         window.update_with_buffer(&p.pixels, config.width, config.height).unwrap();
 
         // Handle any window events
-        handle_key_events(&window, &mut c, &mut p, &m, &mut vars, &key_bindings, config.supersampling_amount);
+        handle_key_events(&window, &mut c, &mut p, &m, &mut vars, &key_bindings, config.supersampling_amount, coloring_function);
 
         //Handle any mouse events
-        handle_mouse_events(&window, &mut c, &mut p, &m, config.supersampling_amount);
+        handle_mouse_events(&window, &mut c, &mut p, &m, config.supersampling_amount, coloring_function);
     }
 
     Ok(())
