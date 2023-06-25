@@ -26,7 +26,7 @@ impl TrueColor {
     /// Maps a normalized value t to a continous 3D color space
     /// ![img](https://solarianprogrammer.com/images/2013/02/28/rgb_smooth.png)</br>
     /// Source: [Bernstein polynomial coloring](https://solarianprogrammer.com/2013/02/28/mandelbrot-set-cpp-11/)
-    pub fn new_from_bernstein_polynomials(t: f64) -> TrueColor {
+    fn new_from_bernstein_polynomials_normalized(t: f64) -> TrueColor {
         let t = t.abs().min(0.999);
         let one_minus_t = 1.0-t;
         let red: f64 = 9.0 * one_minus_t * t.pow(3) * 255.0;
@@ -35,9 +35,20 @@ impl TrueColor {
         TrueColor { red: red as u8, green: green as u8, blue: blue as u8 }
     }
 
+    ///A coloring_function
+    /// Creates a 24-bit truecolor struct from a normalized t = iterations/max_iterations ∈ [0, 1) </br>
+    /// Maps a normalized value t to a continous 3D color space
+    /// ![img](https://solarianprogrammer.com/images/2013/02/28/rgb_smooth.png)</br>
+    /// Source: [Bernstein polynomial coloring](https://solarianprogrammer.com/2013/02/28/mandelbrot-set-cpp-11/)
+    pub fn new_from_bernstein_polynomials(iterations: u32, max_iterations: u32) -> TrueColor {
+        let t: f64 = iterations as f64 / max_iterations as f64;
+        TrueColor::new_from_bernstein_polynomials_normalized(t)
+    }
+
+    ///A coloring_function
     pub fn new_from_hsv_colors(iterations: u32, max_iterations: u32) -> TrueColor {
         let hue = 0.3 * iterations as f64;
-        let saturation = 0.8;
+        let saturation = 1.0;//0.8;
         let value: f64 = if iterations < max_iterations {1.0} else {0.0};
         let hue_degree = Deg(hue % 359.999);
         let hsv = Hsv::new(hue_degree,saturation,value);
