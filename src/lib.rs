@@ -25,7 +25,7 @@ static WIDTH: usize = 1200;
 static HEIGHT: usize = 800;
 static MAX_ITERATIONS: u32 = 10000;
 static SUPERSAMPLING_AMOUNT: u8 = 5;
-static COLORING_FUNCTION : fn(iterations: u32, max_iterations: u32) -> TrueColor = TrueColor::new_from_hsv_colors;
+static COLORING_FUNCTION : fn(iterations: u32, max_iterations: u32) -> TrueColor = TrueColor::new_from_bernstein_polynomials;
 
 //Views
 static VIEW_1: View = View::new(-0.6604166666666667, 0.4437500000000001, 0.1);
