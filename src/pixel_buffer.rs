@@ -79,10 +79,11 @@ impl PixelBuffer {
     ///Stores the supersampling_amount in the metadata </br>
     ///Also stores author and application metadata
     pub fn save_as_png(&self, file_name_without_extension: &str, view: &View, m: &MandelbrotSet, supersampling_amount: u8) {
-        let file_name = format!("saved/{}.png", file_name_without_extension);
+        let file_name_without_extension = file_name_without_extension.replace(":", "-").replace(" ", "_"); //Replace ':' with '-' for Windows file system. Replace ' ' with '_' because spaces are annoying in filenames.
+        let file_name = format!("saved{}{}.png", std::path::MAIN_SEPARATOR_STR, file_name_without_extension);
         match std::fs::create_dir_all("saved") { //Create the saved folder if it does not exist 
             Ok(()) => (), //Currently not doing anything with the Result of trying to create the saved folder
-            Err(_) => (),
+            Err(err) => eprintln!("{}", err.to_string()),
         }
         let path = Path::new(&file_name);
         let file = File::create(path).unwrap();
