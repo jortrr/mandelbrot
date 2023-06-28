@@ -16,5 +16,5 @@
 - [ ] Add a function to allow users to pick from a number of options, that returns the picked option, for example coloring algorithms, saved views, etc.
 - [ ] Add a keybinding to allow users to save the current view to a config file
 - [ ] Add a keybinding to allow users to load a view from a config file
-- [ ] Add a keybinding to allow users to manually input a Mandelbrot set view into the terminal
+- [x] Add a keybinding to allow users to manually input a Mandelbrot set view into the terminal
 - [x] Add a commandline argument to fractionally scale the resolution, so for example a 1920x1080 at 0.5 scale view could be viewed in 960x540

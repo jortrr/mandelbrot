@@ -13,7 +13,7 @@ use crate::complex_plane::{ComplexPlane, View};
 use crate::key_bindings::{KeyBindings};
 use crate::pixel_buffer::PixelBuffer;
 use crate::pixel_buffer::pixel_plane::PixelPlane;
-use crate::user_input::ask;
+use crate::user_input::{ask, pick_option};
 
 mod complex_plane;
 mod complex;
@@ -179,15 +179,15 @@ impl Default for InteractionVariables{
 }
 
 // Handle any key events
-fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: u8,coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
+fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: u8,coloring_function: &mut ColoringFunction) {
     if let Some(key) = window.get_keys_pressed(minifb::KeyRepeat::No).first() {
         print!("\nKey pressed: ");
         k.print_key(&key);
         match key {
-            Key::Up => rendering::translate_and_render_efficiently(c, p, m, vars.translation_amount.into(), 0, supersampling_amount, coloring_function),
-            Key::Down => rendering::translate_and_render_efficiently(c, p, m, -(vars.translation_amount as i16), 0, supersampling_amount, coloring_function),
-            Key::Left => rendering::translate_and_render_efficiently(c, p, m, 0, -(vars.translation_amount as i16), supersampling_amount, coloring_function),
-            Key::Right => rendering::translate_and_render_efficiently(c, p, m, 0, vars.translation_amount.into(), supersampling_amount, coloring_function),
+            Key::Up => rendering::translate_and_render_efficiently(c, p, m, vars.translation_amount.into(), 0, supersampling_amount, *coloring_function),
+            Key::Down => rendering::translate_and_render_efficiently(c, p, m, -(vars.translation_amount as i16), 0, supersampling_amount, *coloring_function),
+            Key::Left => rendering::translate_and_render_efficiently(c, p, m, 0, -(vars.translation_amount as i16), supersampling_amount, *coloring_function),
+            Key::Right => rendering::translate_and_render_efficiently(c, p, m, 0, vars.translation_amount.into(), supersampling_amount, *coloring_function),
             Key::R => c.reset(),
             Key::NumPadPlus => vars.increment_translation_amount(),
             Key::NumPadMinus => vars.decrement_translation_amount(),
@@ -209,14 +209,15 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::K => k.print(),
             Key::S => p.save_as_png(&chrono::Utc::now().to_string(), &c.get_view(), &m, supersampling_amount), //TODO: Remove chrono crate, implement own timestamp function
             Key::I => c.set_view(&View::new(ask("x"), ask("y"), ask("scale"))),
+            Key::A => *coloring_function = pick_option(vec![("HSV", TrueColor::new_from_hsv_colors), ("Bernstein polynomials", TrueColor::new_from_bernstein_polynomials)]),
             _ => (),
         }
         match key {
             Key::NumPadPlus | Key::NumPadMinus => println!("translation_amount: {}", vars.translation_amount),
             Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}",vars.scale_numerator,vars.scale_denominator),
             Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
-            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::Key0 | Key::LeftBracket | Key::RightBracket | Key::I => {
-                rendering::render_complex_plane_into_buffer(p, c, m, supersampling_amount, coloring_function);
+            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::Key0 | Key::LeftBracket | Key::RightBracket | Key::I | Key::A => {
+                rendering::render_complex_plane_into_buffer(p, c, m, supersampling_amount, *coloring_function);
                 c.print();
             },
             _ => (),
@@ -311,7 +312,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     // Mandelbrot set iterator
     let m: MandelbrotSet = MandelbrotSet::new(config.max_iterations, config.orbit_radius);
     //Coloring function
-    let coloring_function = COLORING_FUNCTION;
+    let mut coloring_function = COLORING_FUNCTION;
     // Create a new window
     let mut window = Window::new(
         "Mandelbrot set viewer",
@@ -355,6 +356,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::K, "Prints the keybindings", empty_closure);
     key_bindings.add(Key::S, "Saves the current Mandelbrot set view as an image in the saved folder", empty_closure);
     key_bindings.add(Key::I, "Manually input a Mandelbrot set view", empty_closure);
+    key_bindings.add(Key::A, "Pick an algorithm to color the Mandelbrot set view", empty_closure);
     key_bindings.print();
 
     p.pixel_plane.print();
@@ -374,7 +376,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         window.update_with_buffer(&p.pixels, config.width, config.height).unwrap();
 
         // Handle any window events
-        handle_key_events(&window, &mut c, &mut p, &m, &mut vars, &key_bindings, config.supersampling_amount, coloring_function);
+        handle_key_events(&window, &mut c, &mut p, &m, &mut vars, &key_bindings, config.supersampling_amount, &mut coloring_function);
 
         //Handle any mouse events
         handle_mouse_events(&window, &mut c, &mut p, &m, config.supersampling_amount, coloring_function);
