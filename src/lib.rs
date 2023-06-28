@@ -1,4 +1,6 @@
 use std::error::Error;
+use std::fmt::Display;
+use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 
@@ -11,6 +13,7 @@ use crate::complex_plane::{ComplexPlane, View};
 use crate::key_bindings::{KeyBindings};
 use crate::pixel_buffer::PixelBuffer;
 use crate::pixel_buffer::pixel_plane::PixelPlane;
+use crate::user_input::ask;
 
 mod complex_plane;
 mod complex;
@@ -19,16 +22,18 @@ mod mandelbrot_set;
 mod rendering;
 mod key_bindings;
 mod coloring;
+mod user_input;
 
 //Argument default values
 static WIDTH: usize = 1200;
 static HEIGHT: usize = 800;
 static MAX_ITERATIONS: u32 = 10000;
-static SUPERSAMPLING_AMOUNT: u8 = 5;
+static SUPERSAMPLING_AMOUNT: u8 = 1;
 static WINDOW_SCALE: f64 = 1.0;
 
 //Coloring function
-static COLORING_FUNCTION : fn(iterations: u32, max_iterations: u32) -> TrueColor = TrueColor::new_from_bernstein_polynomials;
+type ColoringFunction = fn(iterations: u32, max_iterations: u32) -> TrueColor;
+static COLORING_FUNCTION : ColoringFunction = TrueColor::new_from_bernstein_polynomials;
 
 //Views
 static VIEW_1: View = View::new(-0.6604166666666667, 0.4437500000000001, 0.1);
@@ -84,16 +89,20 @@ impl Config {
 
         //Fifth argument
         let window_scale = Config::parse_argument("window_scale", args.next(), WINDOW_SCALE).unwrap();
-        width = (width as f64 * window_scale) as usize;
-        height = (height as f64 * window_scale) as usize;
+        let resolution_needs_to_scale = window_scale != 1.0;
+        if resolution_needs_to_scale {
+            //Scale width and height
+            width = (width as f64 * window_scale) as usize;
+            height = (height as f64 * window_scale) as usize;
+        }
 
         Ok(Config {width, height, max_iterations, orbit_radius: ORBIT_RADIUS, supersampling_amount, window_scale})
     }
 
     ///Parses an argument to a T value if possible, returns an error if not. Returns default if argument is None </br>
     ///If Some(arg) == "-", return default
-    pub fn parse_argument<T: std::str::FromStr + std::fmt::Display>(name: &str, argument: Option<String>, default: T) -> Result<T, String> 
-    where <T as std::str::FromStr>::Err: std::fmt::Display{
+    pub fn parse_argument<T: FromStr + Display>(name: &str, argument: Option<String>, default: T) -> Result<T, String> 
+    where <T as std::str::FromStr>::Err: Display{
         match argument {
             Some(arg) => {
                 if arg == "-" {
@@ -199,13 +208,14 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::Key0 => c.set_view(&VIEW_0),
             Key::K => k.print(),
             Key::S => p.save_as_png(&chrono::Utc::now().to_string(), &c.get_view(), &m, supersampling_amount), //TODO: Remove chrono crate, implement own timestamp function
+            Key::I => c.set_view(&View::new(ask("x"), ask("y"), ask("scale"))),
             _ => (),
         }
         match key {
             Key::NumPadPlus | Key::NumPadMinus => println!("translation_amount: {}", vars.translation_amount),
             Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}",vars.scale_numerator,vars.scale_denominator),
             Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
-            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::Key0 | Key::LeftBracket | Key::RightBracket => {
+            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::Key0 | Key::LeftBracket | Key::RightBracket | Key::I => {
                 rendering::render_complex_plane_into_buffer(p, c, m, supersampling_amount, coloring_function);
                 c.print();
             },
@@ -344,6 +354,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::Key9, "Renders VIEW_9", empty_closure);
     key_bindings.add(Key::K, "Prints the keybindings", empty_closure);
     key_bindings.add(Key::S, "Saves the current Mandelbrot set view as an image in the saved folder", empty_closure);
+    key_bindings.add(Key::I, "Manually input a Mandelbrot set view", empty_closure);
     key_bindings.print();
 
     p.pixel_plane.print();
