@@ -38,10 +38,10 @@ pub fn pick_option<T: Copy>(options: Vec<(&str, T)>) -> T {
         println!("\t[{}]: {}",i,option.0);
     }
     
-    let input: usize = ask("option");
-    if input >= options.len() {
+    let mut input: usize = ask("option");
+    while input >= options.len() {
         println!("\tError: the option is out of bounds: {}", input);
-        return pick_option(options);
+        input = ask("option");
     }
     //Now we know the user has picked a valid option
     let (name, value) = options[input];

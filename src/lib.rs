@@ -1,9 +1,8 @@
 use std::error::Error;
-use std::fmt::Display;
-use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 
+pub use config::Config;
 use mandelbrot_set::MandelbrotSet;
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 use num_cpus;
@@ -23,13 +22,8 @@ mod rendering;
 mod key_bindings;
 mod coloring;
 mod user_input;
-
-//Argument default values
-static WIDTH: usize = 1200;
-static HEIGHT: usize = 800;
-static MAX_ITERATIONS: u32 = 10000;
-static SUPERSAMPLING_AMOUNT: u8 = 1;
-static WINDOW_SCALE: f64 = 1.0;
+mod image_parameters;
+mod config;
 
 //Coloring function
 type ColoringFunction = fn(iterations: u32, max_iterations: u32) -> TrueColor;
@@ -49,82 +43,6 @@ static VIEW_0: View = View::new( -0.437520465811966, 0.5632133750000006, 0.00000
 
 //Banner values
 static VERSION: &str = "1.1";
-
-//Mandelbrot set values
-static ORBIT_RADIUS: f64 = 2.0;
-
-pub struct Config {
-    // Window dimensions in pixels
-    pub width: usize,
-    pub height: usize,
-    // Mandelbrot set parameters
-    pub max_iterations: u32,
-    pub orbit_radius: f64,      //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
-    // Rendering parameters
-    pub supersampling_amount: u8,
-    //Window scaling factor
-    pub window_scale: f64,
-}
-
-
-impl Config {
-    /// Parse the command line arguments from e.g. env::args() in the following format
-    /// ```
-    /// cargo run -- width height max_iterations
-    /// ```
-    pub fn build(mut args: impl Iterator<Item = String>) -> Result<Config, String> {
-        args.next(); //Skip the first argument as it is the name of the executable
-
-        //First argument
-        let mut width = Config::parse_argument("width", args.next(), WIDTH).unwrap(); 
-
-        //Second argument
-        let mut height = Config::parse_argument("height", args.next(), HEIGHT).unwrap();
-
-        //Third argument
-        let max_iterations = Config::parse_argument("max_iterations", args.next(), MAX_ITERATIONS).unwrap();
-
-        //Fourth argument
-        let supersampling_amount = Config::parse_argument("supersampling_amount", args.next(), SUPERSAMPLING_AMOUNT).unwrap();
-
-        //Fifth argument
-        let window_scale = Config::parse_argument("window_scale", args.next(), WINDOW_SCALE).unwrap();
-        let resolution_needs_to_scale = window_scale != 1.0;
-        if resolution_needs_to_scale {
-            //Scale width and height
-            width = (width as f64 * window_scale) as usize;
-            height = (height as f64 * window_scale) as usize;
-        }
-
-        Ok(Config {width, height, max_iterations, orbit_radius: ORBIT_RADIUS, supersampling_amount, window_scale})
-    }
-
-    ///Parses an argument to a T value if possible, returns an error if not. Returns default if argument is None </br>
-    ///If Some(arg) == "-", return default
-    pub fn parse_argument<T: FromStr + Display>(name: &str, argument: Option<String>, default: T) -> Result<T, String> 
-    where <T as std::str::FromStr>::Err: Display{
-        match argument {
-            Some(arg) => {
-                if arg == "-" {
-                    Config::print_no_argument_given(name, &default);
-                    return Ok(default);
-                }
-                match arg.parse::<T>() {
-                    Ok(val) => return Ok(val),
-                    Err(err) => return Err(err.to_string() + &format!(" for {} argument", name)),
-                }
-            },
-            None =>  {
-                Config::print_no_argument_given(name, &default);
-                Ok(default)
-            }
-        }
-    }
-
-    pub fn print_no_argument_given<T: std::fmt::Display>(name: &str, default: &T) {
-        println!("No {} argument given, using default: {}", name, default);
-    }
-}
 
 pub struct InteractionVariables{
     ///Variable determining the amount of rows and columns are translated by pressing the 4 arrow keys
@@ -179,7 +97,7 @@ impl Default for InteractionVariables{
 }
 
 // Handle any key events
-fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: u8,coloring_function: &mut ColoringFunction) {
+fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &mut MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: u8,coloring_function: &mut ColoringFunction) {
     if let Some(key) = window.get_keys_pressed(minifb::KeyRepeat::No).first() {
         print!("\nKey pressed: ");
         k.print_key(&key);
@@ -210,13 +128,14 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::S => p.save_as_png(&chrono::Utc::now().to_string(), &c.get_view(), &m, supersampling_amount), //TODO: Remove chrono crate, implement own timestamp function
             Key::I => c.set_view(&View::new(ask("x"), ask("y"), ask("scale"))),
             Key::A => *coloring_function = pick_option(vec![("HSV", TrueColor::new_from_hsv_colors), ("Bernstein polynomials", TrueColor::new_from_bernstein_polynomials)]),
+            Key::M => m.max_iterations = ask("max_iterations"),
             _ => (),
         }
         match key {
             Key::NumPadPlus | Key::NumPadMinus => println!("translation_amount: {}", vars.translation_amount),
             Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}",vars.scale_numerator,vars.scale_denominator),
             Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
-            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::Key0 | Key::LeftBracket | Key::RightBracket | Key::I | Key::A => {
+            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::Key0 | Key::LeftBracket | Key::RightBracket | Key::I | Key::A | Key::M => {
                 rendering::render_complex_plane_into_buffer(p, c, m, supersampling_amount, *coloring_function);
                 c.print();
             },
@@ -310,7 +229,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     // Multithreading variables
     let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use, TODO: use this value in rendering functions
     // Mandelbrot set iterator
-    let m: MandelbrotSet = MandelbrotSet::new(config.max_iterations, config.orbit_radius);
+    let mut m: MandelbrotSet = MandelbrotSet::new(config.max_iterations, config.orbit_radius);
     //Coloring function
     let mut coloring_function = COLORING_FUNCTION;
     // Create a new window
@@ -323,6 +242,8 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     .unwrap_or_else(|e| {
         panic!("{}", e);
     });
+    //Image parameters
+    
     //Print the banner
     print_banner();
     //Print command info
@@ -357,6 +278,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::S, "Saves the current Mandelbrot set view as an image in the saved folder", empty_closure);
     key_bindings.add(Key::I, "Manually input a Mandelbrot set view", empty_closure);
     key_bindings.add(Key::A, "Pick an algorithm to color the Mandelbrot set view", empty_closure);
+    key_bindings.add(Key::M, "Change the Mandelbrot set view max_iterations", empty_closure);
     key_bindings.print();
 
     p.pixel_plane.print();
@@ -376,7 +298,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         window.update_with_buffer(&p.pixels, config.width, config.height).unwrap();
 
         // Handle any window events
-        handle_key_events(&window, &mut c, &mut p, &m, &mut vars, &key_bindings, config.supersampling_amount, &mut coloring_function);
+        handle_key_events(&window, &mut c, &mut p, &mut m, &mut vars, &key_bindings, config.supersampling_amount, &mut coloring_function);
 
         //Handle any mouse events
         handle_mouse_events(&window, &mut c, &mut p, &m, config.supersampling_amount, coloring_function);
