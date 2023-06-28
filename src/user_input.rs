@@ -31,3 +31,20 @@ pub fn get_user_input() -> String {
     let user_input = get_user_input_untrimmed();
     String::from(user_input.trim())
 }
+
+pub fn pick_option<T: Copy>(options: Vec<(&str, T)>) -> T {
+    println!("Please pick an option:");
+    for (i, option) in options.iter().enumerate() {
+        println!("\t[{}]: {}",i,option.0);
+    }
+    
+    let input: usize = ask("option");
+    if input >= options.len() {
+        println!("\tError: the option is out of bounds: {}", input);
+        return pick_option(options);
+    }
+    //Now we know the user has picked a valid option
+    let (name, value) = options[input];
+    println!("\tPicked: {}", name);
+    value
+}
