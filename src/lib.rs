@@ -25,6 +25,9 @@ static WIDTH: usize = 1200;
 static HEIGHT: usize = 800;
 static MAX_ITERATIONS: u32 = 10000;
 static SUPERSAMPLING_AMOUNT: u8 = 5;
+static WINDOW_SCALE: f64 = 1.0;
+
+//Coloring function
 static COLORING_FUNCTION : fn(iterations: u32, max_iterations: u32) -> TrueColor = TrueColor::new_from_bernstein_polynomials;
 
 //Views
@@ -53,7 +56,9 @@ pub struct Config {
     pub max_iterations: u32,
     pub orbit_radius: f64,      //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
     // Rendering parameters
-    pub supersampling_amount: u8
+    pub supersampling_amount: u8,
+    //Window scaling factor
+    pub window_scale: f64,
 }
 
 
@@ -66,10 +71,10 @@ impl Config {
         args.next(); //Skip the first argument as it is the name of the executable
 
         //First argument
-        let width = Config::parse_argument("width", args.next(), WIDTH).unwrap(); 
+        let mut width = Config::parse_argument("width", args.next(), WIDTH).unwrap(); 
 
         //Second argument
-        let height = Config::parse_argument("height", args.next(), HEIGHT).unwrap();
+        let mut height = Config::parse_argument("height", args.next(), HEIGHT).unwrap();
 
         //Third argument
         let max_iterations = Config::parse_argument("max_iterations", args.next(), MAX_ITERATIONS).unwrap();
@@ -77,7 +82,12 @@ impl Config {
         //Fourth argument
         let supersampling_amount = Config::parse_argument("supersampling_amount", args.next(), SUPERSAMPLING_AMOUNT).unwrap();
 
-        Ok(Config {width, height, max_iterations, orbit_radius: ORBIT_RADIUS, supersampling_amount})
+        //Fifth argument
+        let window_scale = Config::parse_argument("window_scale", args.next(), WINDOW_SCALE).unwrap();
+        width = (width as f64 * window_scale) as usize;
+        height = (height as f64 * window_scale) as usize;
+
+        Ok(Config {width, height, max_iterations, orbit_radius: ORBIT_RADIUS, supersampling_amount, window_scale})
     }
 
     ///Parses an argument to a T value if possible, returns an error if not. Returns default if argument is None </br>
