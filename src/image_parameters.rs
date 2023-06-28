@@ -1,3 +1,5 @@
+use crate::Config;
+
 pub struct ImageParameters {
     pub width: usize,
     pub height: usize,
@@ -5,7 +7,11 @@ pub struct ImageParameters {
 }
 
 impl ImageParameters {
-    pub fn save_image(&self) {
+    pub fn new_from_config(config: &Config) -> ImageParameters {
+        ImageParameters { width: config.width, height: config.height, supersampling_amount: config.supersampling_amount }
+    }
 
+    pub fn save_image(&self) {
+        //TODO
     }
 }
