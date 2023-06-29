@@ -1,3 +1,4 @@
+//This entire file is a work-in-progress; currently unused
 use crate::Config;
 
 pub struct ImageParameters {
