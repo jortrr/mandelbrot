@@ -1,12 +1,21 @@
 # Requirements (WIP)
 
 - [x] Create command line arguments for the resolution and the amount of iterations
-- [ ] Create a PixelBuffer struct. This struct should contain its associated PixelPlane struct, and should store the color of each pixel in 8 bits per color, so 8 bits for red, green and blue. This is also called true color (24-bit). The PixelBuffer should be the input for rendering functions.
+- [x] Create a PixelBuffer struct. This struct should contain its associated PixelPlane struct, and should store the color of each pixel in 8 bits per color, so 8 bits for red, green and blue. This is also called true color (24-bit). The PixelBuffer should be the input for rendering functions.
 - [ ] Create a TrueColor struct, containing a 24-bit true color, with 8-bits for the R, G and B channels. The struct should contain methods for conversion to HSV and from HSV. The TrueColor struct should be constructable from a u32 representing a true color.
-- [ ] Create a PixelPlane struct. This struct should contain a width and height in pixels, and an aspect ratio.
+- [x] Create a PixelPlane struct. This struct should contain a width and height in pixels, and an aspect ratio.
 - [x] Create a MandelbrotSet struct. This struct should contain max_iterations, orbit radius, and an iterate function.
 - [ ] Create a logging function, with log levels DEBUG, INFO, ERROR, and a commandline argument specifying the level, default should be INFO
 - [ ] Create a struct to combine KEY, description, action, to make it easy to display what keys are doing in the future, self-documenting
-- [ ] Save the current Mandelbrot view with the 'S' key to a .png file, the name should be the view: x, y and scale
-- [ ] Allow the user to swap R, G and B colors in an image
-- [ ] Make supersampling_amount commandline argument nr. 4
+- [x] Save the current Mandelbrot view with the 'S' key to a .png file, the view is stored in the metadata of the image
+- [ ] Allow the user to swap R, G and B colors in an image by adding a keybinding to ask the user for a "RGB" string
+- [x] Make supersampling_amount commandline argument nr. 4
+- [ ] Add a keybinding to allow the user to change the image parameters, width, height, SSAA, max_iterations
+- [ ] Add a keybinding to allow the user to swap with each other color channels, RGB -> RGB, GRB, RBB, etc.
+- [x] Add a keybinding to change coloring algorithm
+- [ ] Add a function to allow users to pick from a number of options, that returns the picked option, for example coloring algorithms, saved views, etc.
+- [ ] Add a keybinding to allow users to save the current view to a config file
+- [ ] Add a keybinding to allow users to load a view from a config file
+- [x] Add a keybinding to allow users to manually input a Mandelbrot set view into the terminal
+- [x] Add a commandline argument to fractionally scale the resolution, so for example a 1920x1080 at 0.5 scale view could be viewed in 960x540
+- [ ] Add an object that stores Mandelbrot set iterations in a buffer, associated with a view and a pixelplane and a mandelbrot set
