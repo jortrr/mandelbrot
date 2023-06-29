@@ -1,4 +1,36 @@
-# Mandelbrot set viewer in Rust
+# Mandelbrot by Jort, Mandelbrot set viewer written in Rust
+    __  __                 _      _ _               _   
+    |  \/  |               | |    | | |             | |  
+    | \  / | __ _ _ __   __| | ___| | |__  _ __ ___ | |_ 
+    | |\/| |/ _` | '_ \ / _` |/ _ \ | '_ \| '__/ _ \| __|
+    | |  | | (_| | | | | (_| |  __/ | |_) | | | (_) | |_ 
+    |_|  |_|\__,_|_| |_|\__,_|\___|_|_.__/|_|  \___/ \__|
+       __             __         __ 
+      / /  __ __  __ / /__  ____/ /_
+     / _ \/ // / / // / _ \/ __/ __/
+    /_.__/\_, /  \___/\___/_/  \__/ 
+         /___/                      v1.1
+         
+---
+- [Running](#running)
+- [Usage](#usage)
+- [Screenshots](#screenshots)
+- [Wallpapers](#wallpapers)
+---
+
+## Running
+## 1. [Install Rust](https://www.rust-lang.org/tools/install)
+On Linux:
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+### 2. Run Mandelbrot by Jort using cargo run in the root of the repository
+```
+cargo run --release
+```
+
+## Usage
+`TODO`
 
 ## Screenshots
 ![1.png](images/1.png)
