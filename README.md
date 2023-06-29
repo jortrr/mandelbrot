@@ -47,8 +47,8 @@ __  __                 _      _ _               _
 
 
 Run Mandelbrot using:
-	cargo run --release -- <width> <height> <max_iterations> <supersampling_amount>
-where <arg> means substitute with the value of arg
+	cargo run --release -- &lt;width&gt; &lt;height&gt; &lt;max_iterations&gt; &lt;supersampling_amount&gt; &lt;window_scale&gt;
+where &lt;arg&gt; means substitute with the value of arg
 use '-' to use the default value of arg
 
 KeyBindings {
