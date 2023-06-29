@@ -25,7 +25,7 @@ On Linux:
 ```
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
-### 2. Run Mandelbrot by Jort using cargo run in the root of the repository
+### 2. Run Mandelbrot by Jort using `cargo run` in the root of the repository
 ```
 cargo run --release
 ```
