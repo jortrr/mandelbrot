@@ -42,7 +42,7 @@ static VIEW_9: View = View::new( -0.4687339999999999, 0.5425518958333333, 0.0000
 static VIEW_0: View = View::new( -0.437520465811966, 0.5632133750000006, 0.000004000000000000004);
 
 //Banner values
-static VERSION: &str = "1.1";
+static VERSION: &str = "1.2";
 
 pub struct InteractionVariables{
     ///Variable determining the amount of rows and columns are translated by pressing the 4 arrow keys
