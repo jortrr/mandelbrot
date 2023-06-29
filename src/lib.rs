@@ -212,7 +212,7 @@ println!("{}{}v{}\n\n", application_banner, author_banner, version);
 ///Prints a command info tip for the users benefit
 fn print_command_info() {
     let tip = "Run Mandelbrot using:";
-    let command = "cargo run --release -- <width> <height> <max_iterations> <supersampling_amount>";
+    let command = "cargo run --release -- <width> <height> <max_iterations> <supersampling_amount> <window_scale>";
     let command_info = "where <arg> means substitute with the value of arg\nuse '-' to use the default value of arg";
     println!("{}\n\t{}\n{}\n",tip, command, command_info);
 }
