@@ -76,9 +76,6 @@ impl KeyBindings {
 
 impl fmt::Debug for KeyBindings {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        /*f.debug_struct("KeyBindings")
-            .field("key_actions", &self.key_actions)
-            .finish()*/
         write!(f, "KeyBindings {{\n")?;
         for key_action in &self.key_actions {
             write!(f, "    {:?},\n", key_action)?;

@@ -39,9 +39,9 @@ impl RenderBox {
 /// orbit_radius determines when Zn is considered to have gone to infinity.
 /// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
-pub fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, supersampling_amount: u8) {
+pub fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, supersampling_amount: u8,coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     let render_box = RenderBox::new(0, p.pixel_plane.width, 0, p.pixel_plane.height);
-    render_box_render_complex_plane_into_buffer(p, c, m, render_box, supersampling_amount);
+    render_box_render_complex_plane_into_buffer(p, c, m, render_box, supersampling_amount,coloring_function);
 }
 
 /// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
@@ -51,12 +51,13 @@ pub fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m
 /// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
 /// Note: This function is multithreaded
-pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, render_box: RenderBox, supersampling_amount: u8) {
+/// * `coloring_function` - e.g. TrueColor::new_from_hsv
+pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, render_box: RenderBox, supersampling_amount: u8, coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     let time = benchmark_start();
-    let supersampling_amount = supersampling_amount.max(1).min(32); //Supersampling_amount should be at least 1 and atmost 32
+    let supersampling_amount = supersampling_amount.max(1).min(64); //Supersampling_amount should be at least 1 and atmost 64
     render_box.print();
     let chunk_size = p.pixel_plane.width;
-    let chunks: Vec<Vec<u32>> = p.buffer.chunks(chunk_size).map(|c| c.to_owned()).collect();
+    let chunks: Vec<Vec<TrueColor>> = p.colors.chunks(chunk_size).map(|c| c.to_owned()).collect();
     let chunks_len = chunks.len();
     //println!("chunks.len(): {}", chunks.len());
     let mut handles = Vec::new();
@@ -114,11 +115,11 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
                         let (x, y) : (f64, f64) = (original_x+random_x, original_y+random_y);
                         let complex = plane.complex_from_pixel_plane(x, y);
                         let iterations = ms.iterate(complex);
-                        let color = TrueColor::new_from_hsv_colors(iterations, ms.max_iterations);
+                        let color = coloring_function(iterations, ms.max_iterations);
                         colors.push(color);    
                     }
                     let supersampled_color = TrueColor::average(colors);
-                    *pixel = supersampled_color.to_32_bit();
+                    *pixel = supersampled_color;
                 }
                 thread_chunks.push((current_chunk, chunk.clone()));
             }
@@ -130,44 +131,45 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
         let thread_chunks = handle.join().unwrap();
         for (i, chunk) in thread_chunks{
             let mut index = i*p.pixel_plane.width;
-            for pixel in chunk {
-                p.buffer[index] = pixel;
+            for color in chunk {
+                p.colors[index] = color;
                 index+=1;
             }
         }
     }
+    p.update_pixels();
     println!();
     benchmark("render_box_render_complex_plane_into_buffer()", time);
 }
 
-pub fn translate_and_render_complex_plane_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, rows: i128, columns: i128, supersampling_amount: u8) {
+pub fn translate_and_render_complex_plane_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, rows: i128, columns: i128, supersampling_amount: u8,coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     println!("rows: {}, columns: {}",rows, columns);
     let max_x: usize = if columns > 0 {columns as usize} else {p.pixel_plane.width-1};
     let max_y: usize = if rows > 0 {rows as usize} else {p.pixel_plane.height-1};
     p.translate_buffer(rows, columns);
     if rows == 0 {
         let render_box = RenderBox::new((max_x as i128-columns.abs()) as usize, max_x, 0, p.pixel_plane.height);
-        render_box_render_complex_plane_into_buffer(p, c, m, render_box, supersampling_amount);
+        render_box_render_complex_plane_into_buffer(p, c, m, render_box, supersampling_amount, coloring_function);
     }
     else if columns == 0 {
         let render_box = RenderBox::new(0, p.pixel_plane.width, (max_y as i128 -rows.abs()) as usize, max_y);
-        render_box_render_complex_plane_into_buffer(p, c, m, render_box, supersampling_amount);
+        render_box_render_complex_plane_into_buffer(p, c, m, render_box, supersampling_amount, coloring_function);
     } else {
         println!("ERROR: translate_and_render_complex_plane_buffer() requires that rows == 0 || columns == 0");
     }
 }
 
-pub fn translate_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, rows_up: i16, columns_right: i16, supersampling_amount: u8) {
+pub fn translate_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, rows_up: i16, columns_right: i16, supersampling_amount: u8,coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     if rows_up != 0 && columns_right != 0 {
         panic!("translate_and_render_efficiently: rows_up should be 0 or columns_right should be 0!")
     }
     let row_sign: f64 = if rows_up > 0 {-1.0} else {1.0};
     let column_sign: f64 = if columns_right > 0 {1.0} else {-1.0};
     c.translate(column_sign*c.pixels_to_real(columns_right.abs() as u8), row_sign*c.pixels_to_imaginary(rows_up.abs() as u8)); 
-    translate_and_render_complex_plane_buffer(p, c, m, rows_up.into(), (-columns_right).into(), supersampling_amount);
+    translate_and_render_complex_plane_buffer(p, c, m, rows_up.into(), (-columns_right).into(), supersampling_amount, coloring_function);
 }
 
-pub fn translate_to_center_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, new_center: &Complex, supersampling_amount: u8) {
+pub fn translate_to_center_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, new_center: &Complex, supersampling_amount: u8, coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     let mut translation: Complex = new_center.subtract(&c.center());
     //Mirror the y translation because the screen y is mirrored compared to the complex plane y axis
     translation.y = -translation.y;
@@ -176,13 +178,13 @@ pub fn translate_to_center_and_render_efficiently(c: &mut ComplexPlane, p: &mut 
     c.translate(translation.x, 0.0);
     let columns_right = -c.real_to_pixels(translation.x);
     dbg!(columns_right);
-    translate_and_render_complex_plane_buffer(p, c, m, 0, columns_right.into(), supersampling_amount);
+    translate_and_render_complex_plane_buffer(p, c, m, 0, columns_right.into(), supersampling_amount, coloring_function);
 
     //Translate y, up
     c.translate(0.0, translation.y);
     let rows_up = -c.imaginary_to_pixels(translation.y);
     dbg!(rows_up);
-    translate_and_render_complex_plane_buffer(p, c, m, rows_up.into(), 0, supersampling_amount);
+    translate_and_render_complex_plane_buffer(p, c, m, rows_up.into(), 0, supersampling_amount, coloring_function);
 }
 
 fn benchmark_start() -> Instant {
