@@ -29,6 +29,7 @@
 use std::error::Error;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use coloring::ColorChannelMapping;
 pub use config::Config;
 use mandelbrot_set::MandelbrotSet;
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
@@ -55,6 +56,9 @@ pub mod config;
 type ColoringFunction = fn(iterations: u32, max_iterations: u32) -> TrueColor;
 static COLORING_FUNCTION : ColoringFunction = TrueColor::new_from_bernstein_polynomials;
 
+//Color channel mapping
+static COLOR_CHANNEL_MAPPING: ColorChannelMapping = ColorChannelMapping::RGB;
+
 //Views
 static VIEW_1: View = View::new(-0.6604166666666667, 0.4437500000000001, 0.1);
 static VIEW_2: View = View::new(-1.0591666666666668, 0.2629166666666668, 0.01);
@@ -68,7 +72,7 @@ static VIEW_9: View = View::new( -0.4687339999999999, 0.5425518958333333, 0.0000
 static VIEW_0: View = View::new( -0.437520465811966, 0.5632133750000006, 0.000004000000000000004);
 
 //Banner values
-static VERSION: &str = "1.2";
+static VERSION: &str = "1.3";
 
 pub struct InteractionVariables{
     ///Variable determining the amount of rows and columns are translated by pressing the 4 arrow keys
@@ -153,13 +157,14 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::I => c.set_view(&View::new(ask("x"), ask("y"), ask("scale"))),
             Key::A => *coloring_function = pick_option(&[("HSV", TrueColor::new_from_hsv_colors), ("Bernstein polynomials", TrueColor::new_from_bernstein_polynomials)]),
             Key::M => m.max_iterations = ask("max_iterations"),
+            Key::O => p.color_channel_mapping = ask("color_channel_mapping"),
             _ => (),
         }
         match key {
             Key::NumPadPlus | Key::NumPadMinus => println!("translation_amount: {}", vars.translation_amount),
             Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}",vars.scale_numerator,vars.scale_denominator),
             Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
-            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::Key0 | Key::LeftBracket | Key::RightBracket | Key::I | Key::A | Key::M => {
+            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::Key0 | Key::LeftBracket | Key::RightBracket | Key::I | Key::A | Key::M | Key::O => {
                 rendering::render_complex_plane_into_buffer(p, c, m, supersampling_amount, *coloring_function);
                 c.print();
             },
@@ -283,6 +288,8 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     let mut m: MandelbrotSet = MandelbrotSet::new(config.max_iterations, config.orbit_radius);
     //Coloring function
     let mut coloring_function = COLORING_FUNCTION;
+    //Color channel mapping
+    p.color_channel_mapping = COLOR_CHANNEL_MAPPING;
     // Create a new window
     let mut window = Window::new(
         "Mandelbrot set viewer",
@@ -325,11 +332,13 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::Key7, "Renders VIEW_7", empty_closure);
     key_bindings.add(Key::Key8, "Renders VIEW_8", empty_closure);
     key_bindings.add(Key::Key9, "Renders VIEW_9", empty_closure);
+    key_bindings.add(Key::Key0, "Renders VIEW_0", empty_closure);
     key_bindings.add(Key::K, "Prints the keybindings", empty_closure);
     key_bindings.add(Key::S, "Saves the current Mandelbrot set view as an image in the saved folder", empty_closure);
     key_bindings.add(Key::I, "Manually input a Mandelbrot set view", empty_closure);
     key_bindings.add(Key::A, "Pick an algorithm to color the Mandelbrot set view", empty_closure);
     key_bindings.add(Key::M, "Change the Mandelbrot set view max_iterations", empty_closure);
+    key_bindings.add(Key::O, "Change the Mandelbrot set view color channel mapping, xyz -> RGB, where x,y,z ∈ {{'R','G','B'}} (case-insensitive)", empty_closure);
     key_bindings.print();
 
     p.pixel_plane.print();

@@ -11,7 +11,7 @@
 - [ ] Allow the user to swap R, G and B colors in an image by adding a keybinding to ask the user for a "RGB" string
 - [x] Make supersampling_amount commandline argument nr. 4
 - [ ] Add a keybinding to allow the user to change the image parameters, width, height, SSAA, max_iterations
-- [ ] Add a keybinding to allow the user to swap with each other color channels, RGB -> RGB, GRB, RBB, etc.
+- [x] Add a keybinding to allow the user to swap with each other color channels, RGB -> RGB, GRB, RBB, etc.
 - [x] Add a keybinding to change coloring algorithm
 - [ ] Add a function to allow users to pick from a number of options, that returns the picked option, for example coloring algorithms, saved views, etc.
 - [ ] Add a keybinding to allow users to save the current view to a config file
@@ -19,3 +19,4 @@
 - [x] Add a keybinding to allow users to manually input a Mandelbrot set view into the terminal
 - [x] Add a commandline argument to fractionally scale the resolution, so for example a 1920x1080 at 0.5 scale view could be viewed in 960x540
 - [ ] Add an object that stores Mandelbrot set iterations in a buffer, associated with a view and a pixelplane and a mandelbrot set
+- [x] Add ColorChannelMapping value to metadata
