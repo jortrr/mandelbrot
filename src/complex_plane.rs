@@ -41,17 +41,19 @@ impl ComplexPlane {
     /// Creates the dimensions of a Complex plane for viewing the Mandelbrot set based on the width and height of a screen in pixels.
     /// By default: Complex plane: R ∈ [-2,0.5] and C will be calculated to preserve proportionality.
     pub fn new(width: usize, height: usize) -> ComplexPlane {
+        let float_width = f64::from(width as u32);
+        let float_height = f64::from(height as u32);
         // Complex plane dimensions
         let min_x: f64 = -2.0;
         let max_x: f64 = 1.0 / 2.0;
         let length_x: f64 = max_x - min_x;
-        let aspect_ratio_h_w: f64 = height as f64 / width as f64;
+        let aspect_ratio_h_w: f64 = float_height / float_width;
         let min_y: f64 = -(length_x * aspect_ratio_h_w / 2.0);
         let max_y: f64 = -min_y;
         let length_y: f64 = max_y - min_y;
         // Complex plane increments
-        let increment_x: f64 = length_x / width as f64;
-        let increment_y: f64 = length_y / height as f64;
+        let increment_x: f64 = length_x / float_width;
+        let increment_y: f64 = length_y / float_height;
         ComplexPlane {
             min_x,
             max_x,
@@ -117,7 +119,7 @@ impl ComplexPlane {
         self.length_y *= factor;
         self.increment_x *= factor;
         self.increment_y *= factor;
-        self.set_center(center);
+        self.set_center(&center);
     }
 
     /// Returns the center of the Complex plane bounded by `min_x`, `min_y`, `max_x`, `max_y`
@@ -129,7 +131,7 @@ impl ComplexPlane {
 
     /// Translate `min_x`, `max_x`, `min_y`, `max_y` so that center becomes the center of the Complex plane
     /// Returns the translation
-    pub fn set_center(&mut self, center: Complex) -> Complex {
+    pub fn set_center(&mut self, center: &Complex) -> Complex {
         let old = self.center();
         let mut translation = center.subtract(&old);
         translation.y = -translation.y; //Negate because the Complex plane and pixel plane are flipped
@@ -144,7 +146,7 @@ impl ComplexPlane {
     /// Set the Complex plane at Center (x,y) at the given scale, where scale == 1 => max_x-min_x=2.5
     pub fn set_view_separated(&mut self, x: f64, y: f64, scale: f64) {
         self.reset();
-        self.set_center(Complex::new(x, y));
+        self.set_center(&Complex::new(x, y));
         self.scale(scale);
     }
 

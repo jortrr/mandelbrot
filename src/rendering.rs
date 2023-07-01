@@ -52,12 +52,14 @@ pub fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m
 /// Note: This function is computationally intensive, and should not be used for translations
 /// Note: This function is multithreaded
 /// * `coloring_function` - e.g. `TrueColor::new_from_hsv`
+/// # Panics 
+/// If `lock().unwrap()` panics
 pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, render_box: RenderBox, supersampling_amount: u8, coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     let time = benchmark_start();
     let supersampling_amount = supersampling_amount.clamp(1, 64); //Supersampling_amount should be at least 1 and atmost 64
     render_box.print();
     let chunk_size = p.pixel_plane.width;
-    let chunks: Vec<Vec<TrueColor>> = p.colors.chunks(chunk_size).map(|c| c.to_owned()).collect();
+    let chunks: Vec<Vec<TrueColor>> = p.colors.chunks(chunk_size).map(ToOwned::to_owned).collect();
     let chunks_len = chunks.len();
     //println!("chunks.len(): {}", chunks.len());
     let mut handles = Vec::new();
@@ -88,12 +90,11 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
                 }
                 //println!("Thread[{}] takes chunk[{}]", thread_id, current_chunk);
                 if current_chunk % chunks_len_over_max_progress == 0 {
-                    let mutex = atm.lock().unwrap();
-                    let current_progress =   (*mutex).load(Ordering::Relaxed);
+                    let current_progress = atm.lock().unwrap().load(Ordering::Relaxed);
                     print_progress_bar(current_progress, max_progress);
                     if current_progress < u8::MAX
                     {
-                        (*mutex).store(current_progress+1, Ordering::Relaxed);
+                        atm.lock().unwrap().store(current_progress+1, Ordering::Relaxed);
                     }
                 }
 
@@ -106,19 +107,19 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
                     {
                         continue; //Do not render Pixel points outside of the render box
                     }
-                    let original_x: f64 = point.0 as f64;
-                    let original_y: f64 = point.1 as f64;
+                    let original_x: f64 = f64::from(point.0 as u32);
+                    let original_y: f64 = f64::from(point.1 as u32);
                     //Supersampling, see: https://darkeclipz.github.io/fractals/paper/Fractals%20&%20Rendering%20Techniques.html
                     let mut colors: Vec<TrueColor> = Vec::new();
                     for _ in 0..supersampling_amount {
                         let (random_x, random_y): (f64, f64) = rand::thread_rng().gen::<(f64,f64)>();
                         let (x, y) : (f64, f64) = (original_x+random_x, original_y+random_y);
                         let complex = plane.complex_from_pixel_plane(x, y);
-                        let iterations = ms.iterate(complex);
+                        let iterations = ms.iterate(&complex);
                         let color = coloring_function(iterations, ms.max_iterations);
                         colors.push(color);    
                     }
-                    let supersampled_color = TrueColor::average(colors);
+                    let supersampled_color = TrueColor::average(&colors);
                     *pixel = supersampled_color;
                 }
                 thread_chunks.push((current_chunk, chunk.clone()));

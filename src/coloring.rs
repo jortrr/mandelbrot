@@ -61,11 +61,11 @@ impl TrueColor {
 
     ///Computes the average color of the given colors
     ///Can handle at most 2^24 colors
-    pub fn average(colors: Vec<TrueColor>) -> TrueColor {
+    pub fn average(colors: &Vec<TrueColor>) -> TrueColor {
         let mut red: u32 = 0;
         let mut green: u32 = 0;
         let mut blue: u32 = 0;
-        for color in &colors {
+        for color in colors {
             red += u32::from(color.red);
             green += u32::from(color.green);
             blue += u32::from(color.blue);
@@ -85,5 +85,6 @@ impl TrueColor {
 ///Maps a number t ∈ [0.0, 1.0] to a byte b ∈ [0, 255]
 fn normalized_to_byte(t: f64) -> u8 {
     let t = t.abs().min(1.0);
-    (t * 255.0) as u8 
+    let byte = (t * 255.0) as i16;
+    byte.unsigned_abs() as u8 
 }
