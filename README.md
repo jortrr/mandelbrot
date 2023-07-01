@@ -73,11 +73,13 @@ KeyBindings {
     Key7 -> Renders VIEW_7,
     Key8 -> Renders VIEW_8,
     Key9 -> Renders VIEW_9,
+    Key0 -> Renders VIEW_0,
     K -> Prints the keybindings,
     S -> Saves the current Mandelbrot set view as an image in the saved folder,
     I -> Manually input a Mandelbrot set view,
     A -> Pick an algorithm to color the Mandelbrot set view,
     M -> Change the Mandelbrot set view max_iterations,
+    O -> Change the Mandelbrot set view color channel mapping, xyz -> RGB, where x,y,z ∈ {{'R','G','B'}} (case-insensitive),
 }
 
 </pre>
