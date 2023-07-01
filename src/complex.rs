@@ -1,6 +1,6 @@
 use std::fmt;
 
-///Complex number (x + bi), i^2 = -1: <https://en.wikipedia.org/wiki/Complex_number>
+///Complex number (x + bi), i^2 = -1: https://en.wikipedia.org/wiki/Complex_number
 pub struct Complex {
     /// Real part
     pub x: f64,
@@ -35,21 +35,21 @@ impl Complex {
 
     ///Multiply with a complex
     pub fn multiply(&self, c: &Complex) -> Complex {
-        let new_x = self.x.mul_add(c.x, -self.y * c.y);
-        let new_y = self.x.mul_add(c.y, self.y * c.x);
+        let new_x = self.x * c.x - self.y * c.y;
+        let new_y = self.x * c.y + self.y * c.x;
         Complex { x: new_x, y: new_y }
     }
 
     ///Square the complex
     pub fn squared(&self) -> Complex {
-        let new_x = self.x.mul_add(self.x, -self.y * self.y);
+        let new_x = self.x * self.x - self.y * self.y;
         let new_y = 2.0 * self.x * self.y;
         Complex { x: new_x, y: new_y }
     }
 
     ///Calculate the absolute value of the complex (Pythagorean length of the complex, seen as x vector in the complex plane)
     pub fn abs(&self) -> f64 {
-        f64::sqrt(self.x.mul_add(self.x, self.y * self.y))
+        f64::sqrt(self.x * self.x + self.y * self.y)
     }
 }
 
