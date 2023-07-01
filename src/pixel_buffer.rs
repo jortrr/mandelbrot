@@ -1,6 +1,6 @@
 use std::{path::Path, fs::File, io::BufWriter};
 
-use crate::{coloring::TrueColor, complex_plane::View, mandelbrot_set::MandelbrotSet};
+use crate::{coloring::{TrueColor, ColorChannelMapping}, complex_plane::View, mandelbrot_set::MandelbrotSet};
 
 use self::pixel_plane::PixelPlane;
 
@@ -11,6 +11,7 @@ pub struct PixelBuffer {
     pub pixel_plane: PixelPlane,
     pub colors: Vec<TrueColor>,
     pub pixels: Vec<u32>,
+    pub color_channel_mapping: ColorChannelMapping,
 }
 
 impl PixelBuffer {
@@ -18,8 +19,9 @@ impl PixelBuffer {
         // Create a buffer to store pixel data in the form of TrueColor's
         let black = TrueColor::new(0, 0, 0);
         let colors: Vec<TrueColor> = vec![black; pixel_plane.width * pixel_plane.height];
-        let pixels: Vec<u32> = PixelBuffer::colors_to_pixels(&colors);
-        PixelBuffer { pixel_plane, colors, pixels}
+        let color_channel_mapping = ColorChannelMapping::RGB;
+        let pixels: Vec<u32> = PixelBuffer::colors_to_pixels(&colors, &color_channel_mapping);
+        PixelBuffer { pixel_plane, colors, pixels, color_channel_mapping}
     }
 
     /// Converts a buffer index to a screen coordinate
@@ -33,13 +35,13 @@ impl PixelBuffer {
     }
 
     ///Converts a `TrueColor` vector to minifb compatible u32 pixel values
-    pub fn colors_to_pixels(colors: &[TrueColor]) -> Vec<u32> {
-        colors.iter().map(TrueColor::to_32_bit).collect()
+    pub fn colors_to_pixels(colors: &[TrueColor], color_channel_mapping: &ColorChannelMapping) -> Vec<u32> {
+        colors.iter().map(|x| x.to_32_bit(color_channel_mapping)).collect()
     }
 
     ///Updates pixels from colors
     pub fn update_pixels(&mut self) {
-        self.pixels = PixelBuffer::colors_to_pixels(&self.colors);
+        self.pixels = PixelBuffer::colors_to_pixels(&self.colors, &self.color_channel_mapping);
     }
 
     /// Returns the amount of Mandelbrot iterations at a given point inside the pixel plane //TODO: move this somewhere else
@@ -101,11 +103,14 @@ impl PixelBuffer {
         encoder.add_text_chunk(String::from("supersampling_amount"), supersampling_amount_text).unwrap();
         encoder.add_text_chunk(String::from("application"), String::from("Mandelbrot by Jort (https://github.com/jortrr/mandelbrot)")).unwrap();
         encoder.add_text_chunk(String::from("author"), String::from("jortrr (https://github.com/jortrr/)")).unwrap();
+        let color_channel_mapping_text = format!("{:?}", self.color_channel_mapping);
+        encoder.add_text_chunk(String::from("color_channel_mapping"), color_channel_mapping_text).unwrap();
         let mut data: Vec<u8> = Vec::new();
+        let (r_map, g_map, b_map) = self.color_channel_mapping.get_r_g_b_mapping();
         for color in &self.colors {
-            data.push(color.red);
-            data.push(color.green);
-            data.push(color.blue);
+            data.push(color.get_color(r_map));
+            data.push(color.get_color(g_map));
+            data.push(color.get_color(b_map));
         }
         let mut writer = encoder.write_header().unwrap();
         writer.write_image_data(&data).unwrap();
