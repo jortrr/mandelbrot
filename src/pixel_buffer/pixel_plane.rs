@@ -13,7 +13,7 @@ impl PixelPlane {
         PixelPlane {width, height, aspect_ratio_width: width/gcd, aspect_ratio_height: height/gcd}
     }
 
-    /// Prints: "Pixel plane: size is {}x{} and aspect ratio is {}:{}",self.width, self.height, self.aspect_ratio_width, self.aspect_ratio_height)
+    /// Prints: "Pixel plane: size is {}x{} and aspect ratio is {}:{}", `self.width`, `self.height`, `self.aspect_ratio_width`, `self.aspect_ratio_height`)
     pub fn print(&self) {
         println!("Pixel plane: size is {}x{} and aspect ratio is {}:{}",self.width, self.height, self.aspect_ratio_width, self.aspect_ratio_height);
     }

@@ -76,8 +76,8 @@ impl ComplexPlane {
 
     /// Convert the point (x,y) in the pixel plane to the complex number a+bi in the complex plane
     pub fn complex_from_pixel_plane(&self, x: f64, y: f64) -> Complex {
-        let x = self.min_x + x * self.increment_x;
-        let y = -(self.min_y + y * self.increment_y); //Negate because math plane is bottom-top, and screen plane is top-bottom
+        let x = x.mul_add(self.increment_x, self.min_x);
+        let y = -y.mul_add(self.increment_y, self.min_y); //Negate because math plane is bottom-top, and screen plane is top-bottom
         let c = Complex::new(x, y);
         c
     }
@@ -120,14 +120,14 @@ impl ComplexPlane {
         self.set_center(center);
     }
 
-    /// Returns the center of the Complex plane bounded by min_x, min_y, max_x, max_y
+    /// Returns the center of the Complex plane bounded by `min_x`, `min_y`, `max_x`, `max_y`
     pub fn center(&self) -> Complex {
         let x = self.min_x + (self.max_x - self.min_x) / 2.0;
         let y = -(self.min_y + (self.max_y - self.min_y) / 2.0); //Negate because math plane is bottom-top, and screen plane is top-bottom
         Complex::new(x, y)
     }
 
-    /// Translate min_x,max_x,min_y,max_y so that center becomes the center of the Complex plane
+    /// Translate `min_x`, `max_x`, `min_y`, `max_y` so that center becomes the center of the Complex plane
     /// Returns the translation
     pub fn set_center(&mut self, center: Complex) -> Complex {
         let old = self.center();
@@ -155,11 +155,11 @@ impl ComplexPlane {
     }
 
     pub fn pixels_to_imaginary(&self, amount: u8) -> f64 {
-        amount as f64 * self.increment_y 
+        f64::from(amount) * self.increment_y 
     }
 
     pub fn pixels_to_real(&self, amount: u8) -> f64 {
-        amount as f64 * self.increment_x
+        f64::from(amount) * self.increment_x
     }
 
     pub fn imaginary_to_pixels(&self, value: f64) -> i16 {

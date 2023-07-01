@@ -56,6 +56,8 @@ impl Config {
 
     ///Parses an argument to a T value if possible, returns an error if not. Returns default if argument is None </br>
     ///If Some(arg) == "-", return default
+    /// # Errors
+    /// Return an Error if the given argument cannot be parsed to a T type
     pub fn parse_argument<T: FromStr + Display>(name: &str, argument: Option<String>, default: T) -> Result<T, String> 
     where <T as std::str::FromStr>::Err: Display{
         match argument {
