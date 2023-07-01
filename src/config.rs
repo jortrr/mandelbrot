@@ -65,8 +65,8 @@ impl Config {
                     return Ok(default);
                 }
                 match arg.parse::<T>() {
-                    Ok(val) => return Ok(val),
-                    Err(err) => return Err(err.to_string() + &format!(" for {} argument", name)),
+                    Ok(val) => Ok(val),
+                    Err(err) => Err(err.to_string() + &format!(" for {} argument", name)),
                 }
             },
             None =>  {

@@ -1,7 +1,13 @@
 [package]
 name = "mandelbrot"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
+repository = "https://github.com/jortrr/mandelbrot"
+readme = "README.md"
+license = "LICENSE"
+description = "Mandelbrot by Jort, Mandelbrot set viewer written in Rust"
+keywords = ["mandelbrot", "mandelbrot-set"]
+categories = ["mathematics", "rendering", "visualization"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
