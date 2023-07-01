@@ -16,7 +16,11 @@
     clippy::missing_const_for_fn,
     clippy::use_self,
     clippy::cast_possible_truncation,
-    clippy::module_name_repetitions
+    clippy::module_name_repetitions,
+    clippy::needless_return,
+    clippy::return_self_not_must_use,
+    clippy::unreadable_literal,
+    clippy::single_match_else
 )]
 
 use std::error::Error;
@@ -85,9 +89,7 @@ impl InteractionVariables{
     }
 
     pub fn increment_translation_amount(&mut self) {
-        if self.translation_amount < u8::MAX {
-            self.translation_amount+=1;
-        }
+        self.translation_amount = self.translation_amount.saturating_add(1);
     }
 
     pub fn decrement_translation_amount(&mut self) {

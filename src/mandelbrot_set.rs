@@ -1,5 +1,3 @@
-use std::fmt::write;
-
 use crate::complex::Complex;
 
 #[derive(Clone)]
@@ -23,7 +21,7 @@ impl MandelbrotSet {
         for _ in 0..self.max_iterations {
             z = z.squared().add(&c);
 
-            if (z.x * z.x) + (z.y * z.y) > orbit_radius_squared { //Optimization: square both sides of the Mandelbrot set function, saves us taking the square root
+            if z.x.mul_add(z.x, z.y * z.y) > orbit_radius_squared { //Optimization: square both sides of the Mandelbrot set function, saves us taking the square root
                 break;
             }
             iterations += 1;
