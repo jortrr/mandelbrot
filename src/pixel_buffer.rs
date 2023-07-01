@@ -32,9 +32,9 @@ impl PixelBuffer {
         y * self.pixel_plane.width + x
     }
 
-    ///Converts a TrueColors to minifb compatible u32 pixel values
-    pub fn colors_to_pixels(colors: &Vec<TrueColor>) -> Vec<u32> {
-        colors.iter().map(|x| x.to_32_bit()).collect()
+    ///Converts a `TrueColor` vector to minifb compatible u32 pixel values
+    pub fn colors_to_pixels(colors: &[TrueColor]) -> Vec<u32> {
+        colors.iter().map(TrueColor::to_32_bit).collect()
     }
 
     ///Updates pixels from colors
@@ -51,14 +51,14 @@ impl PixelBuffer {
     }*/ 
 
     /// Translate the complex plane in the `buffer` `rows` up and `columns` to the right.
-    /// This operation is significantly less expensive than the render_box_render_complex_plane_into_buffer() function, as it does not rerender anything in the complex plane, it simply
+    /// This operation is significantly less expensive than the `render_box_render_complex_plane_into_buffer` function, as it does not rerender anything in the complex plane, it simply
     /// get rids of `rows.abs()` rows and `columns.abs()` columns, and moves the image rows to the right and columns up.
-    /// Note: The removed rows and columns should be rerendered by the render_box_render_complex_plane_into_buffer() function.
+    /// Note: The removed rows and columns should be rerendered by the `render_box_render_complex_plane_into_buffer` function.
     pub fn translate_buffer(&mut self, rows_up: i128, columns_right: i128) {
         //Iterate over the correct y's in the correct order
-        let y_range : Vec<usize> = if rows_up > 0 {((rows_up as usize)..self.pixel_plane.height).rev().into_iter().collect()} else {(0..((self.pixel_plane.height as i128 + rows_up) as usize)).into_iter().collect()};
+        let y_range : Vec<usize> = if rows_up > 0 {((rows_up as usize)..self.pixel_plane.height).rev().collect()} else {(0..((self.pixel_plane.height as i128 + rows_up) as usize)).collect()};
         //Iterate over the correct x's in the correct order
-        let x_range : Vec<usize> = if columns_right > 0 {((columns_right as usize)..self.pixel_plane.width).rev().into_iter().collect()} else {(0..((self.pixel_plane.width as i128 + columns_right) as usize)).into_iter().collect()};
+        let x_range : Vec<usize> = if columns_right > 0 {((columns_right as usize)..self.pixel_plane.width).rev().collect()} else {(0..((self.pixel_plane.width as i128 + columns_right) as usize)).collect()};
 
         for y in y_range {
             let other_y = (y as i128-rows_up) as usize;
@@ -74,20 +74,22 @@ impl PixelBuffer {
         }
     }
 
-    ///Saves the PixelBuffer as an RGB png image to saved/{file_name_without_extension}.png </br>
-    ///Stores the current ComplexPlane View in the png's metadata under the view keyword </br>
-    ///Stores the supersampling_amount in the metadata </br>
+    ///Saves the `PixelBuffer` as an RGB png image to `saved/{file_name_without_extension}.png` </br>
+    ///Stores the current `ComplexPlane` View in the png's metadata under the view keyword </br>
+    ///Stores the `supersampling_amount` in the metadata </br>
     ///Also stores author and application metadata
+    /// # Panics
+    /// If the file `saved/{file_name_without_extension}.png` cannot be created
     pub fn save_as_png(&self, file_name_without_extension: &str, view: &View, m: &MandelbrotSet, supersampling_amount: u8) {
-        let file_name_without_extension = file_name_without_extension.replace(":", "-").replace(" ", "_"); //Replace ':' with '-' for Windows file system. Replace ' ' with '_' because spaces are annoying in filenames.
+        let file_name_without_extension = file_name_without_extension.replace(':', "-").replace(' ', "_"); //Replace ':' with '-' for Windows file system. Replace ' ' with '_' because spaces are annoying in filenames.
         let file_name = format!("saved{}{}.png", std::path::MAIN_SEPARATOR_STR, file_name_without_extension);
         match std::fs::create_dir_all("saved") { //Create the saved folder if it does not exist 
             Ok(()) => (), //Currently not doing anything with the Result of trying to create the saved folder
-            Err(err) => eprintln!("{}", err.to_string()),
+            Err(err) => eprintln!("{}", err),
         }
         let path = Path::new(&file_name);
         let file = File::create(path).unwrap();
-        let ref mut w = BufWriter::new(file);
+        let w = &mut BufWriter::new(file);
         let mut encoder = png::Encoder::new(w, self.pixel_plane.width as u32, self.pixel_plane.height as u32);
         encoder.set_color(png::ColorType::Rgb);
         encoder.set_depth(png::BitDepth::Eight);

@@ -21,7 +21,7 @@ impl KeyAction {
 
     ///Run self.action
     pub fn action(&self) {
-        (&self.action)();
+        (self.action)();
     }
 }
 
@@ -40,7 +40,7 @@ impl KeyBindings {
         KeyBindings { key_actions }
     }
 
-    ///Adds a KeyAction to these KeyBindings, will remove any existing KeyAction x where x.key == key_action.key
+    ///Adds a `KeyAction` to these `KeyBindings`, will remove any existing `KeyAction` `x` where `x.key` == `key_action.key`
     pub fn add_key(&mut self, key_action: KeyAction) {
         //Remove any KeyAction x where x.key == key_action.key
         self.key_actions.retain(|x| x.key != key_action.key);
@@ -48,7 +48,7 @@ impl KeyBindings {
         self.key_actions.push(key_action);
     }
 
-    ///Adds a KeyAction to these KeyBindings, will remove any existing KeyAction x where x.key == key
+    ///Adds a `KeyAction` to these `KeyBindings`, will remove any existing `KeyAction` `x` where `x.key` == `key`
     pub fn add<F: Fn() + 'static>(&mut self, key: Key, description: &'static str, action: F) {
         self.add_key(KeyAction::new(key, description, Box::new(action)));
     }
@@ -57,7 +57,7 @@ impl KeyBindings {
         &self.key_actions
     }
 
-    /// Prints all KeyActions in these KeyBindings to stdout
+    /// Prints all `KeyAction`s in these `KeyBindings` to stdout
     pub fn print(&self) {
         println!("{:?}",self);
     }
@@ -76,9 +76,9 @@ impl KeyBindings {
 
 impl fmt::Debug for KeyBindings {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "KeyBindings {{\n")?;
+        writeln!(f, "KeyBindings {{")?;
         for key_action in &self.key_actions {
-            write!(f, "    {:?},\n", key_action)?;
+            writeln!(f, "    {:?},", key_action)?;
         }
         write!(f, "}}")
     }

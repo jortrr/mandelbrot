@@ -27,7 +27,7 @@ impl RenderBox {
         (self.max_x-self.min_x)*(self.max_y-self.min_y)
     }
 
-    ///Returns whether the point (x,y) is inside the RenderBox
+    ///Returns whether the point (x,y) is inside the `RenderBox`
     pub fn contains(&self, point: (usize, usize)) -> bool {
         !(point.0 < self.min_x || point.0 > self.max_x || point.1 < self.min_y || point.1 > self.max_y)
     }
@@ -36,8 +36,8 @@ impl RenderBox {
 
 /// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
 /// The buffer should have a size of width*height.
-/// orbit_radius determines when Zn is considered to have gone to infinity.
-/// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
+/// `orbit_radius` determines when Zn is considered to have gone to infinity.
+/// `max_iterations` concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
 pub fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, supersampling_amount: u8,coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     let render_box = RenderBox::new(0, p.pixel_plane.width, 0, p.pixel_plane.height);
@@ -46,18 +46,20 @@ pub fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m
 
 /// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
 /// The buffer should have a size of width*height.
-/// Only renders Pixels inside the render box denoted by render_min_x, render_max_x, render_min_y, render_max_y
-/// orbit_radius determines when Zn is considered to have gone to infinity.
-/// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
+/// Only renders Pixels inside the render box denoted by `render_min_x`, `render_max_x`, `render_min_y`, `render_max_y`
+/// `orbit_radius` determines when Zn is considered to have gone to infinity.
+/// `max_iterations` concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
 /// Note: This function is multithreaded
-/// * `coloring_function` - e.g. TrueColor::new_from_hsv
+/// * `coloring_function` - e.g. `TrueColor::new_from_hsv`
+/// # Panics 
+/// If `lock().unwrap()` panics
 pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, render_box: RenderBox, supersampling_amount: u8, coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     let time = benchmark_start();
-    let supersampling_amount = supersampling_amount.max(1).min(64); //Supersampling_amount should be at least 1 and atmost 64
+    let supersampling_amount = supersampling_amount.clamp(1, 64); //Supersampling_amount should be at least 1 and atmost 64
     render_box.print();
     let chunk_size = p.pixel_plane.width;
-    let chunks: Vec<Vec<TrueColor>> = p.colors.chunks(chunk_size).map(|c| c.to_owned()).collect();
+    let chunks: Vec<Vec<TrueColor>> = p.colors.chunks(chunk_size).map(ToOwned::to_owned).collect();
     let chunks_len = chunks.len();
     //println!("chunks.len(): {}", chunks.len());
     let mut handles = Vec::new();
@@ -67,7 +69,7 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
     let chunks_len_over_max_progress = chunks_len / max_progress as usize;
     let current_progress_atomic: Arc<Mutex<AtomicU8>>= Arc::new(Mutex::new(AtomicU8::new(0)));
 
-    for thread_id in 0..amount_of_threads {
+    for _thread_id in 0..amount_of_threads {
         let plane = (*c).clone();
         let buf = chunks.clone();
         let thread_mutex = Arc::clone(&global_mutex);
@@ -88,12 +90,11 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
                 }
                 //println!("Thread[{}] takes chunk[{}]", thread_id, current_chunk);
                 if current_chunk % chunks_len_over_max_progress == 0 {
-                    let mutex = atm.lock().unwrap();
-                    let current_progress =   (*mutex).load(Ordering::Relaxed);
+                    let current_progress = atm.lock().unwrap().load(Ordering::Relaxed);
                     print_progress_bar(current_progress, max_progress);
                     if current_progress < u8::MAX
                     {
-                        (*mutex).store(current_progress+1, Ordering::Relaxed);
+                        atm.lock().unwrap().store(current_progress+1, Ordering::Relaxed);
                     }
                 }
 
@@ -106,19 +107,19 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
                     {
                         continue; //Do not render Pixel points outside of the render box
                     }
-                    let original_x: f64 = point.0 as f64;
-                    let original_y: f64 = point.1 as f64;
+                    let original_x: f64 = f64::from(point.0 as u32);
+                    let original_y: f64 = f64::from(point.1 as u32);
                     //Supersampling, see: https://darkeclipz.github.io/fractals/paper/Fractals%20&%20Rendering%20Techniques.html
                     let mut colors: Vec<TrueColor> = Vec::new();
                     for _ in 0..supersampling_amount {
                         let (random_x, random_y): (f64, f64) = rand::thread_rng().gen::<(f64,f64)>();
                         let (x, y) : (f64, f64) = (original_x+random_x, original_y+random_y);
                         let complex = plane.complex_from_pixel_plane(x, y);
-                        let iterations = ms.iterate(complex);
+                        let iterations = ms.iterate(&complex);
                         let color = coloring_function(iterations, ms.max_iterations);
                         colors.push(color);    
                     }
-                    let supersampled_color = TrueColor::average(colors);
+                    let supersampled_color = TrueColor::average(&colors);
                     *pixel = supersampled_color;
                 }
                 thread_chunks.push((current_chunk, chunk.clone()));
@@ -159,13 +160,14 @@ pub fn translate_and_render_complex_plane_buffer(p: &mut PixelBuffer, c: &Comple
     }
 }
 
+///# Panics
+/// If `rows_up` != 0 && `columns_right` != 0
 pub fn translate_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, rows_up: i16, columns_right: i16, supersampling_amount: u8,coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
-    if rows_up != 0 && columns_right != 0 {
-        panic!("translate_and_render_efficiently: rows_up should be 0 or columns_right should be 0!")
-    }
+    assert!(rows_up == 0 || columns_right == 0, "translate_and_render_efficiently: rows_up should be 0 or columns_right should be 0!");
+
     let row_sign: f64 = if rows_up > 0 {-1.0} else {1.0};
     let column_sign: f64 = if columns_right > 0 {1.0} else {-1.0};
-    c.translate(column_sign*c.pixels_to_real(columns_right.abs() as u8), row_sign*c.pixels_to_imaginary(rows_up.abs() as u8)); 
+    c.translate(column_sign*c.pixels_to_real(columns_right.unsigned_abs() as u8), row_sign*c.pixels_to_imaginary(rows_up.unsigned_abs() as u8)); 
     translate_and_render_complex_plane_buffer(p, c, m, rows_up.into(), (-columns_right).into(), supersampling_amount, coloring_function);
 }
 

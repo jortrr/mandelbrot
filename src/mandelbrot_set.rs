@@ -1,5 +1,3 @@
-use std::fmt::write;
-
 use crate::complex::Complex;
 
 #[derive(Clone)]
@@ -16,14 +14,14 @@ impl MandelbrotSet {
 
     /// Run the Mandelbrot set algorithm for a single Complex number
     /// Returns the amount of iterations needed before Zn escapes to infinity
-    pub fn iterate(&self, c: Complex) -> u32 {
+    pub fn iterate(&self, c: &Complex) -> u32 {
         let mut z = Complex::new(0.0, 0.0);
         let mut iterations: u32 = 0;
         let orbit_radius_squared = self.orbit_radius*self.orbit_radius;
         for _ in 0..self.max_iterations {
-            z = z.squared().add(&c);
+            z = z.squared().add(c);
 
-            if (z.x * z.x) + (z.y * z.y) > orbit_radius_squared { //Optimization: square both sides of the Mandelbrot set function, saves us taking the square root
+            if (z.x * z.x + z.y * z.y) > orbit_radius_squared { //Optimization: square both sides of the Mandelbrot set function, saves us taking the square root
                 break;
             }
             iterations += 1;
