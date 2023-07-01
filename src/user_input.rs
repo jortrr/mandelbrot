@@ -40,7 +40,7 @@ pub fn get_user_input() -> String {
 
 ///Lets the user pick an option from a `Vec` of options. Returns the picked option. Will ask for an option until a valid option is given
 ///on stdin.
-pub fn pick_option<T: Copy>(options: Vec<(&str, T)>) -> T {
+pub fn pick_option<T: Copy>(options: &[(&str, T)]) -> T {
     println!("Please pick an option:");
     for (i, option) in options.iter().enumerate() {
         println!("\t[{}]: {}",i,option.0);

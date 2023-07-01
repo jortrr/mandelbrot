@@ -33,8 +33,8 @@ impl PixelBuffer {
     }
 
     ///Converts a `TrueColor` vector to minifb compatible u32 pixel values
-    pub fn colors_to_pixels(colors: &Vec<TrueColor>) -> Vec<u32> {
-        colors.iter().map(|x| x.to_32_bit()).collect()
+    pub fn colors_to_pixels(colors: &[TrueColor]) -> Vec<u32> {
+        colors.iter().map(TrueColor::to_32_bit).collect()
     }
 
     ///Updates pixels from colors
@@ -56,9 +56,9 @@ impl PixelBuffer {
     /// Note: The removed rows and columns should be rerendered by the `render_box_render_complex_plane_into_buffer` function.
     pub fn translate_buffer(&mut self, rows_up: i128, columns_right: i128) {
         //Iterate over the correct y's in the correct order
-        let y_range : Vec<usize> = if rows_up > 0 {((rows_up as usize)..self.pixel_plane.height).rev().into_iter().collect()} else {(0..((self.pixel_plane.height as i128 + rows_up) as usize)).into_iter().collect()};
+        let y_range : Vec<usize> = if rows_up > 0 {((rows_up as usize)..self.pixel_plane.height).rev().collect()} else {(0..((self.pixel_plane.height as i128 + rows_up) as usize)).collect()};
         //Iterate over the correct x's in the correct order
-        let x_range : Vec<usize> = if columns_right > 0 {((columns_right as usize)..self.pixel_plane.width).rev().into_iter().collect()} else {(0..((self.pixel_plane.width as i128 + columns_right) as usize)).into_iter().collect()};
+        let x_range : Vec<usize> = if columns_right > 0 {((columns_right as usize)..self.pixel_plane.width).rev().collect()} else {(0..((self.pixel_plane.width as i128 + columns_right) as usize)).collect()};
 
         for y in y_range {
             let other_y = (y as i128-rows_up) as usize;

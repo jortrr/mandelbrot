@@ -20,7 +20,10 @@
     clippy::needless_return,
     clippy::return_self_not_must_use,
     clippy::unreadable_literal,
-    clippy::single_match_else
+    clippy::single_match_else,
+    clippy::suboptimal_flops,
+    clippy::many_single_char_names,
+    clippy::cast_sign_loss
 )]
 
 use std::error::Error;
@@ -118,7 +121,7 @@ impl Default for InteractionVariables{
 }
 
 // Handle any key events
-fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &mut MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: u8,coloring_function: &mut ColoringFunction) {
+fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &mut MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: u8, coloring_function: &mut ColoringFunction) {
     if let Some(key) = window.get_keys_pressed(minifb::KeyRepeat::No).first() {
         print!("\nKey pressed: ");
         k.print_key(key);
@@ -148,7 +151,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::K => k.print(),
             Key::S => p.save_as_png(&chrono::Utc::now().to_string(), &c.get_view(), m, supersampling_amount), //TODO: Remove chrono crate, implement own timestamp function
             Key::I => c.set_view(&View::new(ask("x"), ask("y"), ask("scale"))),
-            Key::A => *coloring_function = pick_option(vec![("HSV", TrueColor::new_from_hsv_colors), ("Bernstein polynomials", TrueColor::new_from_bernstein_polynomials)]),
+            Key::A => *coloring_function = pick_option(&[("HSV", TrueColor::new_from_hsv_colors), ("Bernstein polynomials", TrueColor::new_from_bernstein_polynomials)]),
             Key::M => m.max_iterations = ask("max_iterations"),
             _ => (),
         }
@@ -165,45 +168,68 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
     }
 }
 
-fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, supersampling_amount: u8, coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
-    static LEFT_MOUSE_DOWN_PREVIOUSLY: AtomicBool = AtomicBool::new(false); //Static variable with interior mutability to toggle mouse clicks; without such a variable, clicking the screen once would result in multiple actions
-    static RIGHT_MOUSE_DOWN_PREVIOUSLY: AtomicBool = AtomicBool::new(false); 
+fn was_clicked(current: bool, previous: bool) -> bool {
+    current && !previous
+}
+
+fn handle_left_mouse_clicked(x: f32, y: f32, c: &ComplexPlane) {
+    println!("\nMouseButton::Left -> Info at ({x}, {y})");
+    //let iterations = p.iterations_at_point(x as usize, y as usize, m.max_iterations); //TODO: fix this
+    let complex = c.complex_from_pixel_plane(x.into(), y.into());
+    println!("Complex: {:?}", complex);
+    //println!("iterations: {}", iterations);
+    println!();
+}
+
+fn handle_right_mouse_clicked(x: f32, y: f32, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, supersampling_amount: u8, coloring_function: ColoringFunction) {
+    println!("\nMouseButton::Right -> Move to ({x}, {y})");
+    let new_center = c.complex_from_pixel_plane(x.into(), y.into());
+    println!("c.center: {:?}", c.center());
+    println!("new_center: {:?}", new_center);
+
+    rendering::translate_to_center_and_render_efficiently(c, p, m, &new_center, supersampling_amount, coloring_function);
+    c.print();
+    println!();
+}
+
+/////Mouse click recorder with interior mutability to toggle mouse clicks; 
+/// without such a (static function) variable, clicking the screen once would result in multiple actions
+struct MouseClickRecorder {
+    mouse_button: MouseButton,
+    previous: AtomicBool
+}
+
+impl MouseClickRecorder {
+    pub const fn new(mouse_button: MouseButton) -> MouseClickRecorder {
+        MouseClickRecorder { mouse_button, previous: AtomicBool::new(false) }
+    }
+
+    ///Returns whether the `mouse_button` was clicked once
+    pub fn was_clicked(&self, window: &Window) -> bool {
+        let current = window.get_mouse_down(self.mouse_button);
+        let previous = self.previous.load(Ordering::Relaxed);
+        let result = was_clicked(current, previous);
+        if current != previous {self.previous.store(current, Ordering::Relaxed)}
+        result
+    }
+}
+
+fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, supersampling_amount: u8, coloring_function: ColoringFunction) {
+    static LEFT_MOUSE_RECORDER: MouseClickRecorder = MouseClickRecorder::new(MouseButton::Left); //Static variable with interior mutability to toggle mouse clicks; without such a variable, clicking the screen once would result in multiple actions
+    static RIGHT_MOUSE_RECORDER: MouseClickRecorder = MouseClickRecorder::new(MouseButton::Right); 
 
     if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
 
-        //Left mouse status
-        let left_mouse_down = window.get_mouse_down(MouseButton::Left);
-        let left_mouse_down_previously = LEFT_MOUSE_DOWN_PREVIOUSLY.load(Ordering::Relaxed);
-        let left_mouse_clicked = left_mouse_down && !left_mouse_down_previously;
         //Left mouse actions
-        if left_mouse_clicked {
-            println!("\nMouseButton::Left -> Info at ({x}, {y})");
-            //let iterations = p.iterations_at_point(x as usize, y as usize, m.max_iterations); //TODO: fix this
-            let complex = c.complex_from_pixel_plane(x.into(), y.into());
-            println!("Complex: {:?}", complex);
-            //println!("iterations: {}", iterations);
-            println!();
+        if LEFT_MOUSE_RECORDER.was_clicked(window) {
+            handle_left_mouse_clicked(x, y, c);
         }
 
-        //Right mouse status
-        let right_mouse_down = window.get_mouse_down(MouseButton::Right);
-        let right_mouse_down_previously = RIGHT_MOUSE_DOWN_PREVIOUSLY.load(Ordering::Relaxed);
-        let right_mouse_clicked = right_mouse_down && !right_mouse_down_previously;
         //Right mouse actions
-        if right_mouse_clicked {
-            println!("\nMouseButton::Right -> Move to ({x}, {y})");
-            let new_center = c.complex_from_pixel_plane(x.into(), y.into());
-            println!("c.center: {:?}", c.center());
-            println!("new_center: {:?}", new_center);
-
-            rendering::translate_to_center_and_render_efficiently(c, p, m, &new_center, supersampling_amount, coloring_function);
-            c.print();
-            println!();
+        if RIGHT_MOUSE_RECORDER.was_clicked(window) {
+            handle_right_mouse_clicked(x, y, c, p, m, supersampling_amount, coloring_function);
         }
 
-        //Store the current mouse values, to allow for single-time mouse clicking
-        if left_mouse_down != left_mouse_down_previously {LEFT_MOUSE_DOWN_PREVIOUSLY.store(left_mouse_down, Ordering::Relaxed)};
-        if right_mouse_down != right_mouse_down_previously {RIGHT_MOUSE_DOWN_PREVIOUSLY.store(right_mouse_down, Ordering::Relaxed)};
     }
 }
 
@@ -244,7 +270,7 @@ fn print_command_info() {
 /// Will panic if minifb cannot open a Window
 /// # Errors
 /// Currently does not return any Errors
-pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
+pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     // Complex plane dimensions and increments
     let mut c = ComplexPlane::new(config.width, config.height);
     // Pixel plane and buffer

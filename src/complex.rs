@@ -1,6 +1,6 @@
 use std::fmt;
 
-///Complex number (x + bi), i^2 = -1: https://en.wikipedia.org/wiki/Complex_number
+///Complex number (x + bi), i^2 = -1: <https://en.wikipedia.org/wiki/Complex_number>
 pub struct Complex {
     /// Real part
     pub x: f64,
