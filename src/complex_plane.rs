@@ -9,13 +9,13 @@ use crate::complex::Complex;
 /// ### Complex numbers
 /// In complex analysis, the complex numbers are customarily represented by the symbol z, which can be separated into its real (x) and imaginary (y) parts:
 /// \
-/// ```
+/// ```ignore
 /// z = x + iy
 /// ```
 /// for example: z = 4 + 5i, where x and y are real numbers, and i is the imaginary unit. In this customary notation the complex number z corresponds to the point (x, y) in the Cartesian plane.
 /// \
 /// In the Cartesian plane the point (x, y) can also be represented in polar coordinates as
-/// ```
+/// ```ignore
 /// (x, y) = (rcosθ, rsinθ)  (r, θ)= (√(x^2 + y^2), arctan(y/x))
 /// ```
 /// ### Complex plane notation ℂ

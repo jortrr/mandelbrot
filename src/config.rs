@@ -24,7 +24,7 @@ pub struct Config {
 
 impl Config {
     /// Parse the command line arguments from e.g. env::args() in the following format
-    /// ```
+    /// ```ignore
     /// cargo run -- width height max_iterations
     /// ```
     pub fn build(mut args: impl Iterator<Item = String>) -> Result<Config, String> {
