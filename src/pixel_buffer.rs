@@ -32,7 +32,7 @@ impl PixelBuffer {
         y * self.pixel_plane.width + x
     }
 
-    ///Converts a TrueColors to minifb compatible u32 pixel values
+    ///Converts a `TrueColor` vector to minifb compatible u32 pixel values
     pub fn colors_to_pixels(colors: &Vec<TrueColor>) -> Vec<u32> {
         colors.iter().map(|x| x.to_32_bit()).collect()
     }
@@ -51,9 +51,9 @@ impl PixelBuffer {
     }*/ 
 
     /// Translate the complex plane in the `buffer` `rows` up and `columns` to the right.
-    /// This operation is significantly less expensive than the render_box_render_complex_plane_into_buffer() function, as it does not rerender anything in the complex plane, it simply
+    /// This operation is significantly less expensive than the `render_box_render_complex_plane_into_buffer` function, as it does not rerender anything in the complex plane, it simply
     /// get rids of `rows.abs()` rows and `columns.abs()` columns, and moves the image rows to the right and columns up.
-    /// Note: The removed rows and columns should be rerendered by the render_box_render_complex_plane_into_buffer() function.
+    /// Note: The removed rows and columns should be rerendered by the `render_box_render_complex_plane_into_buffer` function.
     pub fn translate_buffer(&mut self, rows_up: i128, columns_right: i128) {
         //Iterate over the correct y's in the correct order
         let y_range : Vec<usize> = if rows_up > 0 {((rows_up as usize)..self.pixel_plane.height).rev().into_iter().collect()} else {(0..((self.pixel_plane.height as i128 + rows_up) as usize)).into_iter().collect()};
@@ -74,9 +74,9 @@ impl PixelBuffer {
         }
     }
 
-    ///Saves the PixelBuffer as an RGB png image to saved/{file_name_without_extension}.png </br>
-    ///Stores the current ComplexPlane View in the png's metadata under the view keyword </br>
-    ///Stores the supersampling_amount in the metadata </br>
+    ///Saves the `PixelBuffer` as an RGB png image to `saved/{file_name_without_extension}.png` </br>
+    ///Stores the current `ComplexPlane` View in the png's metadata under the view keyword </br>
+    ///Stores the `supersampling_amount` in the metadata </br>
     ///Also stores author and application metadata
     pub fn save_as_png(&self, file_name_without_extension: &str, view: &View, m: &MandelbrotSet, supersampling_amount: u8) {
         let file_name_without_extension = file_name_without_extension.replace(":", "-").replace(" ", "_"); //Replace ':' with '-' for Windows file system. Replace ' ' with '_' because spaces are annoying in filenames.
@@ -87,7 +87,7 @@ impl PixelBuffer {
         }
         let path = Path::new(&file_name);
         let file = File::create(path).unwrap();
-        let ref mut w = BufWriter::new(file);
+        let w = &mut BufWriter::new(file);
         let mut encoder = png::Encoder::new(w, self.pixel_plane.width as u32, self.pixel_plane.height as u32);
         encoder.set_color(png::ColorType::Rgb);
         encoder.set_depth(png::BitDepth::Eight);

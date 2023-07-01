@@ -27,7 +27,7 @@ impl RenderBox {
         (self.max_x-self.min_x)*(self.max_y-self.min_y)
     }
 
-    ///Returns whether the point (x,y) is inside the RenderBox
+    ///Returns whether the point (x,y) is inside the `RenderBox`
     pub fn contains(&self, point: (usize, usize)) -> bool {
         !(point.0 < self.min_x || point.0 > self.max_x || point.1 < self.min_y || point.1 > self.max_y)
     }
@@ -36,8 +36,8 @@ impl RenderBox {
 
 /// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
 /// The buffer should have a size of width*height.
-/// orbit_radius determines when Zn is considered to have gone to infinity.
-/// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
+/// `orbit_radius` determines when Zn is considered to have gone to infinity.
+/// `max_iterations` concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
 pub fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, supersampling_amount: u8,coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     let render_box = RenderBox::new(0, p.pixel_plane.width, 0, p.pixel_plane.height);
@@ -46,15 +46,15 @@ pub fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m
 
 /// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
 /// The buffer should have a size of width*height.
-/// Only renders Pixels inside the render box denoted by render_min_x, render_max_x, render_min_y, render_max_y
-/// orbit_radius determines when Zn is considered to have gone to infinity.
-/// max_iterations concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
+/// Only renders Pixels inside the render box denoted by `render_min_x`, `render_max_x`, `render_min_y`, `render_max_y`
+/// `orbit_radius` determines when Zn is considered to have gone to infinity.
+/// `max_iterations` concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
 /// Note: This function is multithreaded
-/// * `coloring_function` - e.g. TrueColor::new_from_hsv
+/// * `coloring_function` - e.g. `TrueColor::new_from_hsv`
 pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, render_box: RenderBox, supersampling_amount: u8, coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     let time = benchmark_start();
-    let supersampling_amount = supersampling_amount.max(1).min(64); //Supersampling_amount should be at least 1 and atmost 64
+    let supersampling_amount = supersampling_amount.clamp(1, 64); //Supersampling_amount should be at least 1 and atmost 64
     render_box.print();
     let chunk_size = p.pixel_plane.width;
     let chunks: Vec<Vec<TrueColor>> = p.colors.chunks(chunk_size).map(|c| c.to_owned()).collect();
@@ -67,7 +67,7 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
     let chunks_len_over_max_progress = chunks_len / max_progress as usize;
     let current_progress_atomic: Arc<Mutex<AtomicU8>>= Arc::new(Mutex::new(AtomicU8::new(0)));
 
-    for thread_id in 0..amount_of_threads {
+    for _thread_id in 0..amount_of_threads {
         let plane = (*c).clone();
         let buf = chunks.clone();
         let thread_mutex = Arc::clone(&global_mutex);

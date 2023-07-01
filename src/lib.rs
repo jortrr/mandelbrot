@@ -1,29 +1,48 @@
+#![warn(
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::perf,
+    clippy::correctness,
+    clippy::suspicious,
+    clippy::complexity
+)]
+#![allow(
+    clippy::must_use_candidate,
+    clippy::multiple_crate_versions,
+    clippy::uninlined_format_args,
+    clippy::let_and_return,
+    clippy::missing_const_for_fn,
+    clippy::use_self,
+    clippy::cast_possible_truncation,
+    clippy::module_name_repetitions
+)]
+
 use std::error::Error;
 use std::sync::atomic::{AtomicBool, Ordering};
-
 
 pub use config::Config;
 use mandelbrot_set::MandelbrotSet;
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
-use num_cpus;
 
 use crate::coloring::TrueColor;
 use crate::complex_plane::{ComplexPlane, View};
-use crate::key_bindings::{KeyBindings};
+use crate::key_bindings::KeyBindings;
 use crate::pixel_buffer::PixelBuffer;
 use crate::pixel_buffer::pixel_plane::PixelPlane;
 use crate::user_input::{ask, pick_option};
 
-mod complex_plane;
-mod complex;
-mod pixel_buffer;
-mod mandelbrot_set;
-mod rendering;
-mod key_bindings;
-mod coloring;
-mod user_input;
-mod image_parameters;
-mod config;
+pub mod complex_plane;
+pub mod complex;
+pub mod pixel_buffer;
+pub mod mandelbrot_set;
+pub mod rendering;
+pub mod key_bindings;
+pub mod coloring;
+pub mod user_input;
+pub mod image_parameters;
+pub mod config;
 
 //Coloring function
 type ColoringFunction = fn(iterations: u32, max_iterations: u32) -> TrueColor;
@@ -54,7 +73,7 @@ pub struct InteractionVariables{
 
 impl InteractionVariables{
     pub fn new(translation_amount: u8, scale_numerator: f64, scale_denominator: f64) -> InteractionVariables {
-        InteractionVariables { translation_amount, scale_numerator, scale_denominator }
+        InteractionVariables { translation_amount, scale_denominator, scale_numerator }
     }
 
     pub fn scaling_factor(&self) -> f64 {
@@ -100,11 +119,11 @@ impl Default for InteractionVariables{
 fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &mut MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: u8,coloring_function: &mut ColoringFunction) {
     if let Some(key) = window.get_keys_pressed(minifb::KeyRepeat::No).first() {
         print!("\nKey pressed: ");
-        k.print_key(&key);
+        k.print_key(key);
         match key {
             Key::Up => rendering::translate_and_render_efficiently(c, p, m, vars.translation_amount.into(), 0, supersampling_amount, *coloring_function),
-            Key::Down => rendering::translate_and_render_efficiently(c, p, m, -(vars.translation_amount as i16), 0, supersampling_amount, *coloring_function),
-            Key::Left => rendering::translate_and_render_efficiently(c, p, m, 0, -(vars.translation_amount as i16), supersampling_amount, *coloring_function),
+            Key::Down => rendering::translate_and_render_efficiently(c, p, m, -i16::from(vars.translation_amount), 0, supersampling_amount, *coloring_function),
+            Key::Left => rendering::translate_and_render_efficiently(c, p, m, 0, -i16::from(vars.translation_amount), supersampling_amount, *coloring_function),
             Key::Right => rendering::translate_and_render_efficiently(c, p, m, 0, vars.translation_amount.into(), supersampling_amount, *coloring_function),
             Key::R => c.reset(),
             Key::NumPadPlus => vars.increment_translation_amount(),
@@ -125,7 +144,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::Key9 => c.set_view(&VIEW_9),
             Key::Key0 => c.set_view(&VIEW_0),
             Key::K => k.print(),
-            Key::S => p.save_as_png(&chrono::Utc::now().to_string(), &c.get_view(), &m, supersampling_amount), //TODO: Remove chrono crate, implement own timestamp function
+            Key::S => p.save_as_png(&chrono::Utc::now().to_string(), &c.get_view(), m, supersampling_amount), //TODO: Remove chrono crate, implement own timestamp function
             Key::I => c.set_view(&View::new(ask("x"), ask("y"), ask("scale"))),
             Key::A => *coloring_function = pick_option(vec![("HSV", TrueColor::new_from_hsv_colors), ("Bernstein polynomials", TrueColor::new_from_bernstein_polynomials)]),
             Key::M => m.max_iterations = ask("max_iterations"),
@@ -187,7 +206,7 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
 }
 
 ///Prints Mandelbrot ASCII art :) </br> 
-///Prints the application_banner, author_banner, and version
+///Prints the `application_banner`, `author_banner`, and `version`
 fn print_banner()
 {
 //Made using: https://patorjk.com/software/taag/#p=display&f=Big&t=Mandelbrot
@@ -219,6 +238,10 @@ fn print_command_info() {
 
 ///Holds all the logic currently in the main function that isn't involved with setting up configuration or handling errors, to make `main` concise and
 ///easy to verify by inspection
+/// # Panics
+/// Will panic if minifb cannot open a Window
+/// # Errors
+/// Currently does not return any Errors
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     // Complex plane dimensions and increments
     let mut c = ComplexPlane::new(config.width, config.height);

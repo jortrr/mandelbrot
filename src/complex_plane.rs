@@ -66,7 +66,7 @@ impl ComplexPlane {
         }
     }
 
-    /// Translate the Complex plane by adding x to min_x and max_x, and y to min_y and max_y
+    /// Translate the Complex plane by adding x to `min_x` and `max_x`, and y to `min_y` and `max_y`
     pub fn translate(&mut self, x: f64, y: f64) {
         self.min_x += x;
         self.max_x += x;
@@ -82,7 +82,7 @@ impl ComplexPlane {
         c
     }
 
-    /// Prints: "Complex plane: R ∈ [{},{}] and C ∈ [{},{}]",c.min_x, c.max_x, c.min_y, c.max_y
+    /// Prints: "Complex plane: R ∈ [{},{}] and C ∈ [{},{}]",`c.min_x`, `c.max_x`, `c.min_y`, `c.max_y`y
     pub fn print(&self) {
         println!("Complex plane:\tR ∈ [{},{}]", self.min_x, self.max_x);
         println!("\t\tC ∈ [{},{}]", self.min_y, self.max_y);
@@ -101,7 +101,7 @@ impl ComplexPlane {
     //Returns the total scale applied to the Complex plane
     pub fn get_scale(&self) -> f64 {
         let s = self.length_x / 2.5;
-        return s;
+        s
     }
 
     /// Scale the complex plane, by multiplying the complex plane dimensions and increments by factor.

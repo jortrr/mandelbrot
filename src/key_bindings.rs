@@ -21,7 +21,7 @@ impl KeyAction {
 
     ///Run self.action
     pub fn action(&self) {
-        (&self.action)();
+        (self.action)();
     }
 }
 
@@ -76,9 +76,9 @@ impl KeyBindings {
 
 impl fmt::Debug for KeyBindings {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "KeyBindings {{\n")?;
+        writeln!(f, "KeyBindings {{")?;
         for key_action in &self.key_actions {
-            write!(f, "    {:?},\n", key_action)?;
+            writeln!(f, "    {:?},", key_action)?;
         }
         write!(f, "}}")
     }
