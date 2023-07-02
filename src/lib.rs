@@ -125,15 +125,15 @@ impl Default for InteractionVariables{
 }
 
 // Handle any key events
-fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &mut MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: u8, coloring_function: &mut ColoringFunction) {
+fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &mut MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: &mut u8, coloring_function: &mut ColoringFunction) {
     if let Some(key) = window.get_keys_pressed(minifb::KeyRepeat::No).first() {
         print!("\nKey pressed: ");
         k.print_key(key);
         match key {
-            Key::Up => rendering::translate_and_render_efficiently(c, p, m, vars.translation_amount.into(), 0, supersampling_amount, *coloring_function),
-            Key::Down => rendering::translate_and_render_efficiently(c, p, m, -i16::from(vars.translation_amount), 0, supersampling_amount, *coloring_function),
-            Key::Left => rendering::translate_and_render_efficiently(c, p, m, 0, -i16::from(vars.translation_amount), supersampling_amount, *coloring_function),
-            Key::Right => rendering::translate_and_render_efficiently(c, p, m, 0, vars.translation_amount.into(), supersampling_amount, *coloring_function),
+            Key::Up => rendering::translate_and_render_efficiently(c, p, m, vars.translation_amount.into(), 0, *supersampling_amount, *coloring_function),
+            Key::Down => rendering::translate_and_render_efficiently(c, p, m, -i16::from(vars.translation_amount), 0, *supersampling_amount, *coloring_function),
+            Key::Left => rendering::translate_and_render_efficiently(c, p, m, 0, -i16::from(vars.translation_amount), *supersampling_amount, *coloring_function),
+            Key::Right => rendering::translate_and_render_efficiently(c, p, m, 0, vars.translation_amount.into(), *supersampling_amount, *coloring_function),
             Key::R => c.reset(),
             Key::NumPadPlus => vars.increment_translation_amount(),
             Key::NumPadMinus => vars.decrement_translation_amount(),
@@ -153,19 +153,20 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::Key9 => c.set_view(&VIEW_9),
             Key::Key0 => c.set_view(&VIEW_0),
             Key::K => k.print(),
-            Key::S => p.save_as_png(&chrono::Utc::now().to_string(), &c.get_view(), m, supersampling_amount), //TODO: Remove chrono crate, implement own timestamp function
+            Key::S => p.save_as_png(&chrono::Utc::now().to_string(), &c.get_view(), m, *supersampling_amount), //TODO: Remove chrono crate, implement own timestamp function
             Key::I => c.set_view(&View::new(ask("x"), ask("y"), ask("scale"))),
             Key::A => *coloring_function = pick_option(&[("HSV", TrueColor::new_from_hsv_colors), ("Bernstein polynomials", TrueColor::new_from_bernstein_polynomials)]),
             Key::M => m.max_iterations = ask("max_iterations"),
             Key::O => p.color_channel_mapping = ask("color_channel_mapping"),
+            Key::Q => *supersampling_amount = ask::<u8>("supersampling_amount").clamp(1, 64),
             _ => (),
         }
         match key {
             Key::NumPadPlus | Key::NumPadMinus => println!("translation_amount: {}", vars.translation_amount),
             Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}",vars.scale_numerator,vars.scale_denominator),
             Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
-            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::Key0 | Key::LeftBracket | Key::RightBracket | Key::I | Key::A | Key::M | Key::O => {
-                rendering::render_complex_plane_into_buffer(p, c, m, supersampling_amount, *coloring_function);
+            Key::R | Key::Key1 | Key::Key2 | Key::Key3 | Key::Key4 | Key::Key5 | Key::Key6 | Key::Key7 | Key::Key8 | Key::Key9 | Key::Key0 | Key::LeftBracket | Key::RightBracket | Key::I | Key::A | Key::M | Key::O | Key::Q => {
+                rendering::render_complex_plane_into_buffer(p, c, m, *supersampling_amount, *coloring_function);
                 c.print();
             },
             _ => (),
@@ -290,6 +291,8 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     let mut coloring_function = COLORING_FUNCTION;
     //Color channel mapping
     p.color_channel_mapping = COLOR_CHANNEL_MAPPING;
+    //SSAA multiplier
+    let mut supersampling_amount = config.supersampling_amount;
     // Create a new window
     let mut window = Window::new(
         "Mandelbrot set viewer",
@@ -339,17 +342,18 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::A, "Pick an algorithm to color the Mandelbrot set view", empty_closure);
     key_bindings.add(Key::M, "Change the Mandelbrot set view max_iterations", empty_closure);
     key_bindings.add(Key::O, "Change the Mandelbrot set view color channel mapping, xyz -> RGB, where x,y,z ∈ {{'R','G','B'}} (case-insensitive)", empty_closure);
+    key_bindings.add(Key::Q, "Change the quality of the Mandelbrot set rendering by setting the SSAA multiplier, clamped from 1x to 64x", empty_closure);
     key_bindings.print();
 
     p.pixel_plane.print();
     c.print();
     println!("Mandelbrot set parameters: max. iterations is {} and orbit radius is {}", config.max_iterations, config.orbit_radius);
     println!("Amount of CPU threads that will be used for rendering: {}", amount_of_threads);
-    println!("Supersampling amount used for rendering: {}x", config.supersampling_amount);
+    println!("Supersampling amount used for rendering: {}x", supersampling_amount);
     println!();
 
     println!("Rendering Mandelbrot set default view");
-    rendering::render_complex_plane_into_buffer(&mut p, &c, &m, config.supersampling_amount, coloring_function);
+    rendering::render_complex_plane_into_buffer(&mut p, &c, &m, supersampling_amount, coloring_function);
 
     // Main loop
     while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -358,10 +362,10 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
         window.update_with_buffer(&p.pixels, config.width, config.height).unwrap();
 
         // Handle any window events
-        handle_key_events(&window, &mut c, &mut p, &mut m, &mut vars, &key_bindings, config.supersampling_amount, &mut coloring_function);
+        handle_key_events(&window, &mut c, &mut p, &mut m, &mut vars, &key_bindings, &mut supersampling_amount, &mut coloring_function);
 
         //Handle any mouse events
-        handle_mouse_events(&window, &mut c, &mut p, &m, config.supersampling_amount, coloring_function);
+        handle_mouse_events(&window, &mut c, &mut p, &m, supersampling_amount, coloring_function);
     }
 
     Ok(())

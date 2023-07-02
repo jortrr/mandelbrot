@@ -81,6 +81,7 @@ KeyBindings {
     A -> Pick an algorithm to color the Mandelbrot set view,
     M -> Change the Mandelbrot set view max_iterations,
     O -> Change the Mandelbrot set view color channel mapping, xyz -> RGB, where x,y,z ∈ {{'R','G','B'}} (case-insensitive),
+    Q -> Change the quality of the Mandelbrot set rendering by setting the SSAA multiplier, clamped from 1x to 64x,
 }
 
 </pre>
@@ -98,6 +99,8 @@ Keys | Action
 <kbd>I</kbd> | Manually input a Mandelbrot set view
 <kbd>A</kbd> | Pick an algorithm to color the Mandelbrot set view
 <kbd>M</kbd> | Change the Mandelbrot set view max_iterations
+<kbd>O</kbd> | Change the Mandelbrot set view color channel mapping
+<kbd>Q</kbd> | Change the quality of the Mandelbrot set rendering by setting the SSAA multiplier
 <kbd>ESC</kbd>, <kbd>CTRL</kbd>+<kbd>C</kbd> | Exit
 
 ## Screenshots
