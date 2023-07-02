@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688303122302,
+  "lastUpdate": 1688306065554,
   "repoUrl": "https://github.com/jortrr/mandelbrot",
   "entries": {
     "Benchmark": [
@@ -209,6 +209,42 @@ window.BENCHMARK_DATA = {
             "name": "bench_mandelbrot_set_iterate",
             "value": 78840,
             "range": "± 232",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JRR.vanWaes@student.han.nl",
+            "name": "Jort vanWaes",
+            "username": "jortrr"
+          },
+          "committer": {
+            "email": "JRR.vanWaes@student.han.nl",
+            "name": "Jort vanWaes",
+            "username": "jortrr"
+          },
+          "distinct": true,
+          "id": "2fdd95a1cdfa1ad8cc993f7782871e39a44cec27",
+          "message": "Added --profile release to cargo bench in rust.yml, and lowered the resoluton of benchmark rendering from 1080p to 720p, to increase Github benchmark job speed",
+          "timestamp": "2023-07-02T15:46:48+02:00",
+          "tree_id": "a350ede3cd88f27c687a2e074138bba7ba9ec9a4",
+          "url": "https://github.com/jortrr/mandelbrot/commit/2fdd95a1cdfa1ad8cc993f7782871e39a44cec27"
+        },
+        "date": 1688306064252,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "bench_mandelbrot_set_iterate",
+            "value": 54229,
+            "range": "± 113",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bench_render_mandelbrot_set_default_view_720p_1x_ssaa",
+            "value": 1002880536,
+            "range": "± 12981430",
             "unit": "ns/iter"
           }
         ]
