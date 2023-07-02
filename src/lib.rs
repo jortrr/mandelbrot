@@ -49,7 +49,6 @@ pub mod rendering;
 pub mod key_bindings;
 pub mod coloring;
 pub mod user_input;
-pub mod image_parameters;
 pub mod config;
 
 //Coloring function
@@ -125,7 +124,7 @@ impl Default for InteractionVariables{
 }
 
 // Handle any key events
-fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &mut MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: &mut u8, coloring_function: &mut ColoringFunction) {
+fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &mut MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: &mut u8, image_supersampling_amount: &mut u8,coloring_function: &mut ColoringFunction, config: &Config) {
     if let Some(key) = window.get_keys_pressed(minifb::KeyRepeat::No).first() {
         print!("\nKey pressed: ");
         k.print_key(key);
@@ -141,7 +140,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::NumPadSlash => vars.decrement_scale_numerator(),
             Key::LeftBracket => c.scale(vars.scaling_factor()),
             Key::RightBracket => c.scale(vars.inverse_scaling_factor()),
-            Key::C => println!("Center: {:?}, scale: {:?}", c.center(), c.get_scale()),
+            Key::V => println!("Center: {:?}, scale: {:?}", c.center(), c.get_scale()),
             Key::Key1 => c.set_view(&VIEW_1),
             Key::Key2 => c.set_view(&VIEW_2),
             Key::Key3 => c.set_view(&VIEW_3),
@@ -153,12 +152,25 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
             Key::Key9 => c.set_view(&VIEW_9),
             Key::Key0 => c.set_view(&VIEW_0),
             Key::K => k.print(),
-            Key::S => p.save_as_png(&chrono::Utc::now().to_string(), &c.get_view(), m, *supersampling_amount), //TODO: Remove chrono crate, implement own timestamp function
+            Key::S => {
+                let time_stamp = chrono::Utc::now().to_string();
+                if config.window_scale == 1.0 {
+                    p.save_as_png(&time_stamp, &c.get_view(), m, *image_supersampling_amount);
+                } else {
+                    let mut image_p: PixelBuffer = PixelBuffer::new(PixelPlane::new(config.image_width, config.image_height));
+                    let mut image_c: ComplexPlane = ComplexPlane::new(config.image_width, config.image_height);
+                    image_c.set_view(&c.get_view());
+                    rendering::render_complex_plane_into_buffer(&mut image_p, &image_c, m, *image_supersampling_amount, *coloring_function);
+                    image_p.save_as_png(&time_stamp, &c.get_view(), m, *image_supersampling_amount)
+                }
+            }
             Key::I => c.set_view(&View::new(ask("x"), ask("y"), ask("scale"))),
             Key::A => *coloring_function = pick_option(&[("HSV", TrueColor::new_from_hsv_colors), ("Bernstein polynomials", TrueColor::new_from_bernstein_polynomials)]),
             Key::M => m.max_iterations = ask("max_iterations"),
             Key::O => p.color_channel_mapping = ask("color_channel_mapping"),
-            Key::Q => *supersampling_amount = ask::<u8>("supersampling_amount").clamp(1, 64),
+            Key::Q => {*supersampling_amount = ask::<u8>("supersampling_amount").clamp(1, 64); *image_supersampling_amount = *supersampling_amount;},
+            Key::X => *image_supersampling_amount = ask::<u8>("image_supersampling_amount").clamp(1, 64),
+            Key::C => println!("{:?}", config),
             _ => (),
         }
         match key {
@@ -278,9 +290,9 @@ fn print_command_info() {
 /// Currently does not return any Errors
 pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     // Complex plane dimensions and increments
-    let mut c = ComplexPlane::new(config.width, config.height);
+    let mut c = ComplexPlane::new(config.window_width, config.window_height);
     // Pixel plane and buffer
-    let mut p = PixelBuffer::new(PixelPlane::new(config.width, config.height));
+    let mut p = PixelBuffer::new(PixelPlane::new(config.window_width, config.window_height));
     // User interaction variables
     let mut vars = InteractionVariables::default();
     // Multithreading variables
@@ -293,18 +305,18 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     p.color_channel_mapping = COLOR_CHANNEL_MAPPING;
     //SSAA multiplier
     let mut supersampling_amount = config.supersampling_amount;
+    //Image SSAA multiplier
+    let mut image_supersampling_amount = supersampling_amount;
     // Create a new window
     let mut window = Window::new(
         "Mandelbrot set viewer",
-        config.width,
-        config.height,
+        config.window_width,
+        config.window_height,
         WindowOptions::default(),
     )
     .unwrap_or_else(|e| {
         panic!("{}", e);
     });
-    //Image parameters
-    
     //Print the banner
     print_banner();
     //Print command info
@@ -325,7 +337,7 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::NumPadSlash, "Decrement scale_numerator", empty_closure);
     key_bindings.add(Key::LeftBracket, "Scale the view by scaling_factor, effectively zooming in",empty_closure);
     key_bindings.add(Key::RightBracket, "Scale the view by inverse_scaling_factor, effectively zooming out", empty_closure);
-    key_bindings.add(Key::C, "Prints the current Mandelbrot set view; the center and scale", empty_closure);
+    key_bindings.add(Key::V, "Prints the current Mandelbrot set view; the center and scale", empty_closure);
     key_bindings.add(Key::Key1, "Renders VIEW_1", empty_closure);
     key_bindings.add(Key::Key2, "Renders VIEW_2", empty_closure);
     key_bindings.add(Key::Key3, "Renders VIEW_3", empty_closure);
@@ -342,7 +354,9 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::A, "Pick an algorithm to color the Mandelbrot set view", empty_closure);
     key_bindings.add(Key::M, "Change the Mandelbrot set view max_iterations", empty_closure);
     key_bindings.add(Key::O, "Change the Mandelbrot set view color channel mapping, xyz -> RGB, where x,y,z ∈ {{'R','G','B'}} (case-insensitive)", empty_closure);
-    key_bindings.add(Key::Q, "Change the quality of the Mandelbrot set rendering by setting the SSAA multiplier, clamped from 1x to 64x", empty_closure);
+    key_bindings.add(Key::Q, "Change the window and image quality of the Mandelbrot set rendering by setting the SSAA multiplier, clamped from 1x to 64x", empty_closure);
+    key_bindings.add(Key::X, "Change the image quality of the Mandelbrot set rendering by setting the SSAA multiplier, clamped from 1x to 64x", empty_closure);
+    key_bindings.add(Key::C, "Prints the configuration variables", empty_closure);
     key_bindings.print();
 
     p.pixel_plane.print();
@@ -359,10 +373,10 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     while window.is_open() && !window.is_key_down(Key::Escape) {
         
         // Update the window with the new buffer
-        window.update_with_buffer(&p.pixels, config.width, config.height).unwrap();
+        window.update_with_buffer(&p.pixels, config.window_width, config.window_height).unwrap();
 
         // Handle any window events
-        handle_key_events(&window, &mut c, &mut p, &mut m, &mut vars, &key_bindings, &mut supersampling_amount, &mut coloring_function);
+        handle_key_events(&window, &mut c, &mut p, &mut m, &mut vars, &key_bindings, &mut supersampling_amount, &mut image_supersampling_amount, &mut coloring_function, config);
 
         //Handle any mouse events
         handle_mouse_events(&window, &mut c, &mut p, &m, supersampling_amount, coloring_function);

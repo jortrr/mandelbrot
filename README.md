@@ -64,7 +64,7 @@ KeyBindings {
     NumPadSlash -> Decrement scale_numerator,
     LeftBracket -> Scale the view by scaling_factor, effectively zooming in,
     RightBracket -> Scale the view by inverse_scaling_factor, effectively zooming out,
-    C -> Prints the current Mandelbrot set view; the center and scale,
+    V -> Prints the current Mandelbrot set view; the center and scale,
     Key1 -> Renders VIEW_1,
     Key2 -> Renders VIEW_2,
     Key3 -> Renders VIEW_3,
@@ -81,7 +81,9 @@ KeyBindings {
     A -> Pick an algorithm to color the Mandelbrot set view,
     M -> Change the Mandelbrot set view max_iterations,
     O -> Change the Mandelbrot set view color channel mapping, xyz -> RGB, where x,y,z ∈ {{'R','G','B'}} (case-insensitive),
-    Q -> Change the quality of the Mandelbrot set rendering by setting the SSAA multiplier, clamped from 1x to 64x,
+    Q -> Change the window and image quality of the Mandelbrot set rendering by setting the SSAA multiplier, clamped from 1x to 64x,
+    X -> Change the image quality of the Mandelbrot set rendering by setting the SSAA multiplier, clamped from 1x to 64x,
+    C -> Prints the configuration variables,
 }
 
 </pre>
@@ -92,7 +94,7 @@ Keys | Action
 <kbd>R</kbd> | Reset the Mandelbrot set view to the starting view
 <kbd>[</kbd> | Zoom in
 <kbd>]</kbd> | Zoom out
-<kbd>C</kbd> | Prints the current Mandelbrot set view; the center and scale
+<kbd>V</kbd> | Prints the current Mandelbrot set view; the center and scale
 <kbd>0</kbd>, ...,  <kbd>9</kbd> | Render a preconfigured view
 <kbd>K</kbd> | Print the keybindings 
 <kbd>S</kbd> | Saves the current Mandelbrot set view as an image
@@ -100,7 +102,8 @@ Keys | Action
 <kbd>A</kbd> | Pick an algorithm to color the Mandelbrot set view
 <kbd>M</kbd> | Change the Mandelbrot set view max_iterations
 <kbd>O</kbd> | Change the Mandelbrot set view color channel mapping
-<kbd>Q</kbd> | Change the quality of the Mandelbrot set rendering by setting the SSAA multiplier
+<kbd>Q</kbd> | Change the window and image quality of the Mandelbrot set rendering by setting the SSAA multiplier
+<kbd>X</kbd> | Change the image quality of the Mandelbrot set rendering by setting the SSAA multiplier
 <kbd>ESC</kbd>, <kbd>CTRL</kbd>+<kbd>C</kbd> | Exit
 
 ## Screenshots
