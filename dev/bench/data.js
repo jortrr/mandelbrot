@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688307017726,
+  "lastUpdate": 1688307019253,
   "repoUrl": "https://github.com/jortrr/mandelbrot",
   "entries": {
     "Benchmark": [
@@ -281,6 +281,42 @@ window.BENCHMARK_DATA = {
             "name": "bench_render_mandelbrot_set_default_view_720p_1x_ssaa",
             "value": 1002880536,
             "range": "± 12981430",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JRR.vanWaes@student.han.nl",
+            "name": "Jort vanWaes",
+            "username": "jortrr"
+          },
+          "committer": {
+            "email": "JRR.vanWaes@student.han.nl",
+            "name": "Jort vanWaes",
+            "username": "jortrr"
+          },
+          "distinct": true,
+          "id": "68a219d4c2a330a9da7db48811559475e75960b4",
+          "message": "Added a keybinding for Key::Q to change the SSAA multiplier",
+          "timestamp": "2023-07-02T16:01:45+02:00",
+          "tree_id": "9cd969af9e82e54d591ff525fc351f130c8ba6c3",
+          "url": "https://github.com/jortrr/mandelbrot/commit/68a219d4c2a330a9da7db48811559475e75960b4"
+        },
+        "date": 1688307016330,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "bench_mandelbrot_set_iterate",
+            "value": 78860,
+            "range": "± 281",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bench_render_mandelbrot_set_default_view_720p_1x_ssaa",
+            "value": 1199932686,
+            "range": "± 11687418",
             "unit": "ns/iter"
           }
         ]
