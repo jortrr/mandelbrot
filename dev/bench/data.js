@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688309424118,
+  "lastUpdate": 1688309425678,
   "repoUrl": "https://github.com/jortrr/mandelbrot",
   "entries": {
     "Benchmark": [
@@ -553,6 +553,42 @@ window.BENCHMARK_DATA = {
             "name": "bench_render_mandelbrot_set_default_view_720p_1x_ssaa",
             "value": 816297780,
             "range": "± 53584493",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JRR.vanWaes@student.han.nl",
+            "name": "Jort vanWaes",
+            "username": "jortrr"
+          },
+          "committer": {
+            "email": "JRR.vanWaes@student.han.nl",
+            "name": "Jort vanWaes",
+            "username": "jortrr"
+          },
+          "distinct": true,
+          "id": "220e7adee27b78425c0fbdca75f86491dd23e58c",
+          "message": "Fixed a bug where the color_channel_mapping of an image wasn't the same as the color_channel_mapping of the window",
+          "timestamp": "2023-07-02T16:42:11+02:00",
+          "tree_id": "81f75cd022d314d4c91acf57280753af75835b7b",
+          "url": "https://github.com/jortrr/mandelbrot/commit/220e7adee27b78425c0fbdca75f86491dd23e58c"
+        },
+        "date": 1688309422442,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "bench_mandelbrot_set_iterate",
+            "value": 51406,
+            "range": "± 3179",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bench_render_mandelbrot_set_default_view_720p_1x_ssaa",
+            "value": 998555224,
+            "range": "± 24246023",
             "unit": "ns/iter"
           }
         ]
