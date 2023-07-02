@@ -159,6 +159,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
                 } else {
                     let mut image_p: PixelBuffer = PixelBuffer::new(PixelPlane::new(config.image_width, config.image_height));
                     let mut image_c: ComplexPlane = ComplexPlane::new(config.image_width, config.image_height);
+                    image_p.color_channel_mapping = p.color_channel_mapping;
                     image_c.set_view(&c.get_view());
                     rendering::render_complex_plane_into_buffer(&mut image_p, &image_c, m, *image_supersampling_amount, *coloring_function);
                     image_p.save_as_png(&time_stamp, &c.get_view(), m, *image_supersampling_amount)
