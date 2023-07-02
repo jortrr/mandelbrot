@@ -12,8 +12,8 @@ static ORBIT_RADIUS: f64 = 2.0;
 static POINT_INSIDE_MANDELBROT_SET: Complex = Complex::new(-0.3, 0.0);
 
 //Screen parameters
-static WIDTH: usize = 1920;
-static HEIGHT: usize = 1080;
+static WIDTH: usize = 1280;
+static HEIGHT: usize = 720;
 
 
 #[bench]
@@ -28,8 +28,8 @@ fn bench_mandelbrot_set_iterate(b: &mut Bencher) {
 }
 
 #[bench]
-///Renders a 1920x1080 1x SSAA image of the Mandelbrot set default view using Bernstein polynomal coloring, 1k max_iterations
-fn bench_render_mandelbrot_set_default_view_1080p_1x_ssaa(b: &mut Bencher) {
+///Renders a 1280x720 1x SSAA image of the Mandelbrot set default view using Bernstein polynomal coloring, 1k max_iterations
+fn bench_render_mandelbrot_set_default_view_720p_1x_ssaa(b: &mut Bencher) {
     //Setup
     let mut p: PixelBuffer = PixelBuffer::new(PixelPlane::new(WIDTH, HEIGHT));
     let c: ComplexPlane = ComplexPlane::new(WIDTH, HEIGHT);
