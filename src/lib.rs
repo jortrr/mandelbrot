@@ -71,7 +71,7 @@ static VIEW_9: View = View::new( -0.4687339999999999, 0.5425518958333333, 0.0000
 static VIEW_0: View = View::new( -0.437520465811966, 0.5632133750000006, 0.000004000000000000004);
 
 //Banner values
-static VERSION: &str = "1.3";
+static VERSION: &str = "1.4";
 
 pub struct InteractionVariables{
     ///Variable determining the amount of rows and columns are translated by pressing the 4 arrow keys
@@ -162,7 +162,7 @@ fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer,
                     image_p.color_channel_mapping = p.color_channel_mapping;
                     image_c.set_view(&c.get_view());
                     rendering::render_complex_plane_into_buffer(&mut image_p, &image_c, m, *image_supersampling_amount, *coloring_function);
-                    image_p.save_as_png(&time_stamp, &c.get_view(), m, *image_supersampling_amount)
+                    image_p.save_as_png(&time_stamp, &c.get_view(), m, *image_supersampling_amount);
                 }
             }
             Key::I => c.set_view(&View::new(ask("x"), ask("y"), ask("scale"))),
