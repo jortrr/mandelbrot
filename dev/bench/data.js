@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688307019253,
+  "lastUpdate": 1688308961893,
   "repoUrl": "https://github.com/jortrr/mandelbrot",
   "entries": {
     "Benchmark": [
@@ -353,6 +353,42 @@ window.BENCHMARK_DATA = {
             "name": "bench_render_mandelbrot_set_default_view_720p_1x_ssaa",
             "value": 1199932686,
             "range": "± 11687418",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JRR.vanWaes@student.han.nl",
+            "name": "Jort vanWaes",
+            "username": "jortrr"
+          },
+          "committer": {
+            "email": "JRR.vanWaes@student.han.nl",
+            "name": "Jort vanWaes",
+            "username": "jortrr"
+          },
+          "distinct": true,
+          "id": "28f1e314a9145619883c65429db2e7f719e8f717",
+          "message": "Release of version 1.4.\nAdded a new variable, image_supersampling_amount, to separate window and image SSAA, to allow the user to explore the Mandelbrot set in a lower SSAA multiplier, and take high quality images using a higher SSAA multiplier, bound to Key::X.",
+          "timestamp": "2023-07-02T16:35:09+02:00",
+          "tree_id": "ea5ab0e384b0564f6d3f2ac515a3f533981b7a2c",
+          "url": "https://github.com/jortrr/mandelbrot/commit/28f1e314a9145619883c65429db2e7f719e8f717"
+        },
+        "date": 1688308960347,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "bench_mandelbrot_set_iterate",
+            "value": 51398,
+            "range": "± 6561",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bench_render_mandelbrot_set_default_view_720p_1x_ssaa",
+            "value": 958178401,
+            "range": "± 52148609",
             "unit": "ns/iter"
           }
         ]
