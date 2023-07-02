@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688309710541,
+  "lastUpdate": 1688309790947,
   "repoUrl": "https://github.com/jortrr/mandelbrot",
   "entries": {
     "Benchmark": [
@@ -769,6 +769,38 @@ window.BENCHMARK_DATA = {
             "name": "bench_render_mandelbrot_set_default_view_720p_1x_ssaa",
             "value": 1003927496,
             "range": "± 6323277",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "jortrr",
+            "username": "jortrr"
+          },
+          "committer": {
+            "name": "jortrr",
+            "username": "jortrr"
+          },
+          "id": "839f8a2bc890881cb9fb8543b0f51d6480ff89ca",
+          "message": "Changed version number to v1.4",
+          "timestamp": "2023-06-30T11:55:18Z",
+          "url": "https://github.com/jortrr/mandelbrot/pull/15/commits/839f8a2bc890881cb9fb8543b0f51d6480ff89ca"
+        },
+        "date": 1688309789422,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "bench_mandelbrot_set_iterate",
+            "value": 78860,
+            "range": "± 382",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bench_render_mandelbrot_set_default_view_720p_1x_ssaa",
+            "value": 1200821658,
+            "range": "± 12160434",
             "unit": "ns/iter"
           }
         ]
