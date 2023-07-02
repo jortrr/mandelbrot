@@ -2,20 +2,42 @@
 
 extern crate test;
 
-use mandelbrot::{mandelbrot_set::MandelbrotSet, complex::Complex};
+use mandelbrot::{mandelbrot_set::MandelbrotSet, complex::Complex, pixel_buffer::{PixelBuffer, pixel_plane::PixelPlane}, complex_plane::ComplexPlane, coloring::TrueColor, rendering};
 use test::Bencher;
 
 //Mandelbrot set parameters
-static MAX_ITERATIONS: u32 = 10000;
+static HIGH_MAX_ITERATIONS: u32 = 10000;
+static DEFAULT_MAX_ITERATIONS: u32 = 1000;
 static ORBIT_RADIUS: f64 = 2.0;
 static POINT_INSIDE_MANDELBROT_SET: Complex = Complex::new(-0.3, 0.0);
 
+//Screen parameters
+static WIDTH: usize = 1920;
+static HEIGHT: usize = 1080;
+
 
 #[bench]
-///Run MandelbrotSet::iterate on a point inside the Mandelbrot set, with typical Mandelbrot set parameters
+///Run MandelbrotSet::iterate on a point inside the Mandelbrot set, with typical Mandelbrot set parameters, 10k max_iterations, orbit_radius of 2.0
 fn bench_mandelbrot_set_iterate(b: &mut Bencher) {
-    let m: MandelbrotSet = MandelbrotSet::new(MAX_ITERATIONS, ORBIT_RADIUS);
+    //Setup
+    let m: MandelbrotSet = MandelbrotSet::new(HIGH_MAX_ITERATIONS, ORBIT_RADIUS);
+    //Benchmark
     b.iter(|| {
         let _ = m.iterate(&POINT_INSIDE_MANDELBROT_SET);
+    })
+}
+
+#[bench]
+///Renders a 1920x1080 1x SSAA image of the Mandelbrot set default view using Bernstein polynomal coloring, 1k max_iterations
+fn bench_render_mandelbrot_set_default_view_1080p_1x_ssaa(b: &mut Bencher) {
+    //Setup
+    let mut p: PixelBuffer = PixelBuffer::new(PixelPlane::new(WIDTH, HEIGHT));
+    let c: ComplexPlane = ComplexPlane::new(WIDTH, HEIGHT);
+    let m: MandelbrotSet = MandelbrotSet::new(DEFAULT_MAX_ITERATIONS, ORBIT_RADIUS);
+    let supersampling_amount = 1;
+    let coloring_function = TrueColor::new_from_bernstein_polynomials;
+    //Benchmark
+    b.iter(|| {
+        rendering::render_complex_plane_into_buffer(&mut p, &c, &m, supersampling_amount, coloring_function);
     })
 }
