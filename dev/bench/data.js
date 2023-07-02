@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688302938502,
+  "lastUpdate": 1688302940191,
   "repoUrl": "https://github.com/jortrr/mandelbrot",
   "entries": {
     "Benchmark": [
@@ -89,6 +89,36 @@ window.BENCHMARK_DATA = {
             "name": "bench_mandelbrot_set_iterate",
             "value": 78858,
             "range": "± 718",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JRR.vanWaes@student.han.nl",
+            "name": "Jort vanWaes",
+            "username": "jortrr"
+          },
+          "committer": {
+            "email": "JRR.vanWaes@student.han.nl",
+            "name": "Jort vanWaes",
+            "username": "jortrr"
+          },
+          "distinct": true,
+          "id": "4503903ab63e1291558d899051cda2b8288e783d",
+          "message": "Added benchmark results Github pages link to README.md",
+          "timestamp": "2023-07-02T15:00:35+02:00",
+          "tree_id": "bbe5f1417975384c890c2a5c73bb904316341d5b",
+          "url": "https://github.com/jortrr/mandelbrot/commit/4503903ab63e1291558d899051cda2b8288e783d"
+        },
+        "date": 1688302936828,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "bench_mandelbrot_set_iterate",
+            "value": 54258,
+            "range": "± 167",
             "unit": "ns/iter"
           }
         ]
