@@ -1,4 +1,4 @@
-use std::{str::FromStr, fmt::Display};
+use std::{str::FromStr, fmt::{Display, self}};
 
 //Argument default values
 static WIDTH: usize = 1200;
@@ -10,8 +10,8 @@ static WINDOW_SCALE: f64 = 1.0;
 
 pub struct Config {
     // Window dimensions in pixels
-    pub width: usize,
-    pub height: usize,
+    pub window_width: usize,
+    pub window_height: usize,
     // Mandelbrot set parameters
     pub max_iterations: u32,
     pub orbit_radius: f64,      //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
@@ -19,6 +19,9 @@ pub struct Config {
     pub supersampling_amount: u8,
     //Window scaling factor
     pub window_scale: f64,
+    //Scaled window dimensions in pixels (used in images)
+    pub image_width: usize,
+    pub image_height: usize
 }
 
 
@@ -33,10 +36,10 @@ impl Config {
         args.next(); //Skip the first argument as it is the name of the executable
 
         //First argument
-        let mut width = Config::parse_argument("width", args.next(), WIDTH)?; 
+        let image_width = Config::parse_argument("width", args.next(), WIDTH)?; 
 
         //Second argument
-        let mut height = Config::parse_argument("height", args.next(), HEIGHT)?;
+        let image_height = Config::parse_argument("height", args.next(), HEIGHT)?;
 
         //Third argument
         let max_iterations = Config::parse_argument("max_iterations", args.next(), MAX_ITERATIONS)?;
@@ -46,14 +49,11 @@ impl Config {
 
         //Fifth argument
         let window_scale = Config::parse_argument("window_scale", args.next(), WINDOW_SCALE)?;
-        let resolution_needs_to_scale = (window_scale - 1.0).abs() > f64::EPSILON;
-        if resolution_needs_to_scale {
-            //Scale width and height
-            width = (f64::from(width as u32) * window_scale) as usize;
-            height = (f64::from(height as u32) * window_scale) as usize;
-        }
+        //Scale width and height
+        let window_width = (f64::from(image_width as u32) * window_scale) as usize;
+        let window_height = (f64::from(image_height as u32) * window_scale) as usize;
 
-        Ok(Config {width, height, max_iterations, orbit_radius: ORBIT_RADIUS, supersampling_amount, window_scale})
+        Ok(Config {window_width, window_height, max_iterations, orbit_radius: ORBIT_RADIUS, supersampling_amount, window_scale, image_width, image_height})
     }
 
     ///Parses an argument to a T value if possible, returns an error if not. Returns default if argument is None </br>
@@ -82,5 +82,11 @@ impl Config {
 
     pub fn print_no_argument_given<T: std::fmt::Display>(name: &str, default: &T) {
         println!("No {} argument given, using default: {}", name, default);
+    }
+}
+
+impl fmt::Debug for Config {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { //TODO: Improve debug printing format legibility
+        f.debug_struct("Config").field("window_width", &self.window_width).field("window_height", &self.window_height).field("max_iterations", &self.max_iterations).field("orbit_radius", &self.orbit_radius).field("supersampling_amount", &self.supersampling_amount).field("window_scale", &self.window_scale).field("image_width", &self.image_width).field("image_height", &self.image_height).finish()
     }
 }

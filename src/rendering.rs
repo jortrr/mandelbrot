@@ -58,6 +58,7 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
     let time = benchmark_start();
     let supersampling_amount = supersampling_amount.clamp(1, 64); //Supersampling_amount should be at least 1 and atmost 64
     render_box.print();
+    println!("SSAA: {}x", supersampling_amount);
     let chunk_size = p.pixel_plane.width;
     let chunks: Vec<Vec<TrueColor>> = p.colors.chunks(chunk_size).map(ToOwned::to_owned).collect();
     let chunks_len = chunks.len();

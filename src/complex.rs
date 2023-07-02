@@ -9,7 +9,7 @@ pub struct Complex {
 }
 
 impl Complex {
-    pub fn new(x: f64, y: f64) -> Complex {
+    pub const fn new(x: f64, y: f64) -> Complex {
         Complex { x, y }
     }
 
