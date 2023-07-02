@@ -33,6 +33,7 @@ jobs:
       run: cargo test --verbose
 
   benchmark:
+    needs: [clippy_check, build]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2

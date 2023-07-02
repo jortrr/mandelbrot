@@ -137,4 +137,4 @@ Keys | Action
 ![2023-06-24 19:29:53 436765840 UTC](https://github.com/jortrr/mandelbrot/assets/38651009/9b67dcdb-9dc3-4646-bbb4-96d7dc3ddb8f)
 
 ## Benchmarks
-[Benchmark results on GitHub pages](https://jortrr.github.io/mandelbrot/dev/bench/)
+- [Benchmark results on GitHub pages](https://jortrr.github.io/mandelbrot/dev/bench/)
