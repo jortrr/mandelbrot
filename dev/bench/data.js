@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688302940191,
+  "lastUpdate": 1688303121116,
   "repoUrl": "https://github.com/jortrr/mandelbrot",
   "entries": {
     "Benchmark": [
@@ -149,6 +149,36 @@ window.BENCHMARK_DATA = {
             "name": "bench_mandelbrot_set_iterate",
             "value": 54258,
             "range": "± 167",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JRR.vanWaes@student.han.nl",
+            "name": "Jort vanWaes",
+            "username": "jortrr"
+          },
+          "committer": {
+            "email": "JRR.vanWaes@student.han.nl",
+            "name": "Jort vanWaes",
+            "username": "jortrr"
+          },
+          "distinct": true,
+          "id": "afb5cab8a8ec9c9d31c4e9ad8a03456aa66ccacf",
+          "message": "Added benchmark job dependency for build and clippy_check tasks in rust.yml",
+          "timestamp": "2023-07-02T15:02:50+02:00",
+          "tree_id": "ad09f5013ca931ca08b551b98fcbff12dd844fbe",
+          "url": "https://github.com/jortrr/mandelbrot/commit/afb5cab8a8ec9c9d31c4e9ad8a03456aa66ccacf"
+        },
+        "date": 1688303120027,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "bench_mandelbrot_set_iterate",
+            "value": 78840,
+            "range": "± 232",
             "unit": "ns/iter"
           }
         ]
