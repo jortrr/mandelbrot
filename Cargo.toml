@@ -1,11 +1,11 @@
 [package]
-name = "mandelbrot"
+name = "mandeljort"
 version = "0.1.4"
 edition = "2021"
-repository = "https://github.com/jortrr/mandelbrot"
+repository = "https://github.com/itrekr/mandeljort"
 readme = "README.md"
 license = "LICENSE"
-description = "Mandelbrot by Jort, Mandelbrot set viewer written in Rust"
+description = "Mandeljort by Oscar, Improved fork of Mandelbrot by Jort"
 keywords = ["mandelbrot", "mandelbrot-set"]
 categories = ["mathematics", "rendering", "visualization"]
 

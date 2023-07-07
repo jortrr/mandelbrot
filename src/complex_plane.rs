@@ -38,7 +38,7 @@ pub struct ComplexPlane {
 }
 
 impl ComplexPlane {
-    /// Creates the dimensions of a Complex plane for viewing the Mandelbrot set based on the width and height of a screen in pixels.
+    /// Creates the dimensions of a Complex plane for viewing the Mandeljort set based on the width and height of a screen in pixels.
     /// By default: Complex plane: R ∈ [-2,0.5] and C will be calculated to preserve proportionality.
     pub fn new(width: usize, height: usize) -> ComplexPlane {
         let float_width = f64::from(width as u32);

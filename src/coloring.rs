@@ -127,7 +127,7 @@ impl TrueColor {
     /// Creates a 24-bit truecolor struct from a normalized t ∈ [0, 1) </br>
     /// Maps a normalized value t to a continous 3D color space
     /// ![img](https://solarianprogrammer.com/images/2013/02/28/rgb_smooth.png)</br>
-    /// Source: [Bernstein polynomial coloring](https://solarianprogrammer.com/2013/02/28/mandelbrot-set-cpp-11/)
+    /// Source: [Bernstein polynomial coloring](https://solarianprogrammer.com/2013/02/28/mandeljort-set-cpp-11/)
     fn new_from_bernstein_polynomials_normalized(t: f64) -> TrueColor {
         let t = t.abs().min(0.999);
         let one_minus_t = 1.0-t;
@@ -141,7 +141,7 @@ impl TrueColor {
     /// Creates a 24-bit truecolor struct from a normalized t = `iterations`/`max_iterations` ∈ [0, 1) </br>
     /// Maps a normalized value t to a continous 3D color space
     /// ![img](https://solarianprogrammer.com/images/2013/02/28/rgb_smooth.png)</br>
-    /// Source: [Bernstein polynomial coloring](https://solarianprogrammer.com/2013/02/28/mandelbrot-set-cpp-11/)
+    /// Source: [Bernstein polynomial coloring](https://solarianprogrammer.com/2013/02/28/mandeljort-set-cpp-11/)
     pub fn new_from_bernstein_polynomials(iterations: u32, max_iterations: u32) -> TrueColor {
         let t: f64 = f64::from(iterations) / f64::from(max_iterations);
         TrueColor::new_from_bernstein_polynomials_normalized(t)

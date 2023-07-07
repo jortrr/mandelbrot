@@ -3,7 +3,7 @@ use std::{time::Instant, thread, sync::{Arc, Mutex, atomic::{AtomicU8, Ordering}
 
 use rand::Rng;
 
-use crate::{pixel_buffer::PixelBuffer, complex_plane::ComplexPlane, mandelbrot_set::MandelbrotSet, complex::Complex, coloring::TrueColor};
+use crate::{pixel_buffer::PixelBuffer, complex_plane::ComplexPlane, mandeljort_set::MandeljortSet, complex::Complex, coloring::TrueColor};
 
 ///A box representing the area to render by rendering functions
 #[derive(Clone,Copy)]
@@ -34,27 +34,27 @@ impl RenderBox {
 }
 
 
-/// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
+/// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandeljort formula iteratively to every Complex point mapped to a pixel in the buffer.
 /// The buffer should have a size of width*height.
 /// `orbit_radius` determines when Zn is considered to have gone to infinity.
-/// `max_iterations` concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
+/// `max_iterations` concerns the maximum amount of times the Mandeljort formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
-pub fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, supersampling_amount: u8,coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
+pub fn render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandeljortSet, supersampling_amount: u8,coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     let render_box = RenderBox::new(0, p.pixel_plane.width, 0, p.pixel_plane.height);
     render_box_render_complex_plane_into_buffer(p, c, m, render_box, supersampling_amount,coloring_function);
 }
 
-/// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer. 
+/// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandeljort formula iteratively to every Complex point mapped to a pixel in the buffer.
 /// The buffer should have a size of width*height.
 /// Only renders Pixels inside the render box denoted by `render_min_x`, `render_max_x`, `render_min_y`, `render_max_y`
 /// `orbit_radius` determines when Zn is considered to have gone to infinity.
-/// `max_iterations` concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
+/// `max_iterations` concerns the maximum amount of times the Mandeljort formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
 /// Note: This function is multithreaded
 /// * `coloring_function` - e.g. `TrueColor::new_from_hsv`
 /// # Panics 
 /// If `lock().unwrap()` panics
-pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, render_box: RenderBox, supersampling_amount: u8, coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
+pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandeljortSet, render_box: RenderBox, supersampling_amount: u8, coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     let time = benchmark_start();
     let supersampling_amount = supersampling_amount.clamp(1, 64); //Supersampling_amount should be at least 1 and atmost 64
     render_box.print();
@@ -144,7 +144,7 @@ pub fn render_box_render_complex_plane_into_buffer(p: &mut PixelBuffer, c: &Comp
     benchmark("render_box_render_complex_plane_into_buffer()", time);
 }
 
-pub fn translate_and_render_complex_plane_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandelbrotSet, rows: i128, columns: i128, supersampling_amount: u8,coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
+pub fn translate_and_render_complex_plane_buffer(p: &mut PixelBuffer, c: &ComplexPlane, m: &MandeljortSet, rows: i128, columns: i128, supersampling_amount: u8,coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     println!("rows: {}, columns: {}",rows, columns);
     let max_x: usize = if columns > 0 {columns as usize} else {p.pixel_plane.width-1};
     let max_y: usize = if rows > 0 {rows as usize} else {p.pixel_plane.height-1};
@@ -163,7 +163,7 @@ pub fn translate_and_render_complex_plane_buffer(p: &mut PixelBuffer, c: &Comple
 
 ///# Panics
 /// If `rows_up` != 0 && `columns_right` != 0
-pub fn translate_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, rows_up: i16, columns_right: i16, supersampling_amount: u8,coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
+pub fn translate_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandeljortSet, rows_up: i16, columns_right: i16, supersampling_amount: u8,coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     assert!(rows_up == 0 || columns_right == 0, "translate_and_render_efficiently: rows_up should be 0 or columns_right should be 0!");
 
     let row_sign: f64 = if rows_up > 0 {-1.0} else {1.0};
@@ -172,7 +172,7 @@ pub fn translate_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffe
     translate_and_render_complex_plane_buffer(p, c, m, rows_up.into(), (-columns_right).into(), supersampling_amount, coloring_function);
 }
 
-pub fn translate_to_center_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, new_center: &Complex, supersampling_amount: u8, coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
+pub fn translate_to_center_and_render_efficiently(c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandeljortSet, new_center: &Complex, supersampling_amount: u8, coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor) {
     let mut translation: Complex = new_center.subtract(&c.center());
     //Mirror the y translation because the screen y is mirrored compared to the complex plane y axis
     translation.y = -translation.y;
