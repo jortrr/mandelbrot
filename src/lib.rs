@@ -31,7 +31,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use coloring::ColorChannelMapping;
 pub use config::Config;
-use mandelbrot_set::MandelbrotSet;
+use mandeljort_set::MandeljortSet;
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 
 use crate::coloring::TrueColor;
@@ -44,7 +44,7 @@ use crate::user_input::{ask, pick_option};
 pub mod complex_plane;
 pub mod complex;
 pub mod pixel_buffer;
-pub mod mandelbrot_set;
+pub mod mandeljort_set;
 pub mod rendering;
 pub mod key_bindings;
 pub mod coloring;
@@ -124,7 +124,7 @@ impl Default for InteractionVariables{
 }
 
 // Handle any key events
-fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &mut MandelbrotSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: &mut u8, image_supersampling_amount: &mut u8,coloring_function: &mut ColoringFunction, config: &Config) {
+fn handle_key_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &mut MandeljortSet, vars: &mut InteractionVariables, k: &KeyBindings, supersampling_amount: &mut u8, image_supersampling_amount: &mut u8,coloring_function: &mut ColoringFunction, config: &Config) {
     if let Some(key) = window.get_keys_pressed(minifb::KeyRepeat::No).first() {
         print!("\nKey pressed: ");
         k.print_key(key);
@@ -200,7 +200,7 @@ fn handle_left_mouse_clicked(x: f32, y: f32, c: &ComplexPlane) {
     println!();
 }
 
-fn handle_right_mouse_clicked(x: f32, y: f32, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, supersampling_amount: u8, coloring_function: ColoringFunction) {
+fn handle_right_mouse_clicked(x: f32, y: f32, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandeljortSet, supersampling_amount: u8, coloring_function: ColoringFunction) {
     println!("\nMouseButton::Right -> Move to ({x}, {y})");
     let new_center = c.complex_from_pixel_plane(x.into(), y.into());
     println!("c.center: {:?}", c.center());
@@ -233,7 +233,7 @@ impl MouseClickRecorder {
     }
 }
 
-fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandelbrotSet, supersampling_amount: u8, coloring_function: ColoringFunction) {
+fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffer, m: &MandeljortSet, supersampling_amount: u8, coloring_function: ColoringFunction) {
     static LEFT_MOUSE_RECORDER: MouseClickRecorder = MouseClickRecorder::new(MouseButton::Left); //Static variable with interior mutability to toggle mouse clicks; without such a variable, clicking the screen once would result in multiple actions
     static RIGHT_MOUSE_RECORDER: MouseClickRecorder = MouseClickRecorder::new(MouseButton::Right); 
 
@@ -252,32 +252,34 @@ fn handle_mouse_events(window: &Window, c: &mut ComplexPlane, p: &mut PixelBuffe
     }
 }
 
-///Prints Mandelbrot ASCII art :) </br> 
+///Prints Mandeljort ASCII art :) </br>
 ///Prints the `application_banner`, `author_banner`, and `version`
 fn print_banner()
 {
-//Made using: https://patorjk.com/software/taag/#p=display&f=Big&t=Mandelbrot
+//Made using: https://patorjk.com/software/taag/#p=display&f=Big&t=Mandeljort
 let application_banner = r"
-__  __                 _      _ _               _   
-|  \/  |               | |    | | |             | |  
-| \  / | __ _ _ __   __| | ___| | |__  _ __ ___ | |_ 
-| |\/| |/ _` | '_ \ / _` |/ _ \ | '_ \| '__/ _ \| __|
-| |  | | (_| | | | | (_| |  __/ | |_) | | | (_) | |_ 
-|_|  |_|\__,_|_| |_|\__,_|\___|_|_.__/|_|  \___/ \__|";
+  __  __                 _      _ _            _
+ |  \/  |               | |    | (_)          | |
+ | \  / | __ _ _ __   __| | ___| |_  ___  _ __| |_
+ | |\/| |/ _` | '_ \ / _` |/ _ \ | |/ _ \| '__| __|
+ | |  | | (_| | | | | (_| |  __/ | | (_) | |  | |_
+ |_|  |_|\__,_|_| |_|\__,_|\___|_| |\___/|_|   \__|
+                                _/ |
+                               |__/                ";
 //Made using: https://patorjk.com/software/taag/#p=display&f=Small%20Slant&t=by%20Jort
 let author_banner = r"
-   __             __         __ 
-  / /  __ __  __ / /__  ____/ /_
- / _ \/ // / / // / _ \/ __/ __/
-/_.__/\_, /  \___/\___/_/  \__/ 
-     /___/                      ";
+   __          ____
+  / /  __ __  / __ \___ _______ _____
+ / _ \/ // / / /_/ (_-</ __/ _ `/ __/
+/_.__/\_, /  \____/___/\__/\_,_/_/
+     /___/                          ";
 let version = VERSION;
 println!("{}{}v{}\n\n", application_banner, author_banner, version);
 }
 
 ///Prints a command info tip for the users benefit
 fn print_command_info() {
-    let tip = "Run Mandelbrot using:";
+    let tip = "Run Mandeljort using:";
     let command = "cargo run --release -- <width> <height> <max_iterations> <supersampling_amount> <window_scale>";
     let command_info = "where <arg> means substitute with the value of arg\nuse '-' to use the default value of arg";
     println!("{}\n\t{}\n{}\n",tip, command, command_info);
@@ -298,8 +300,8 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     let mut vars = InteractionVariables::default();
     // Multithreading variables
     let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use, TODO: use this value in rendering functions
-    // Mandelbrot set iterator
-    let mut m: MandelbrotSet = MandelbrotSet::new(config.max_iterations, config.orbit_radius);
+    // Mandeljort set iterator
+    let mut m: MandeljortSet = MandeljortSet::new(config.max_iterations, config.orbit_radius);
     //Coloring function
     let mut coloring_function = COLORING_FUNCTION;
     //Color channel mapping
@@ -310,7 +312,7 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     let mut image_supersampling_amount = supersampling_amount;
     // Create a new window
     let mut window = Window::new(
-        "Mandelbrot set viewer",
+        "Mandeljort set viewer",
         config.window_width,
         config.window_height,
         WindowOptions::default(),
@@ -331,14 +333,14 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::Down, "Move down translation_amount pixels", empty_closure);
     key_bindings.add(Key::Left, "Move left translation_amount pixels", empty_closure);
     key_bindings.add(Key::Right, "Move right translation_amount pixels", empty_closure);
-    key_bindings.add(Key::R, "Reset the Mandelbrot set view to the starting view", empty_closure);
+    key_bindings.add(Key::R, "Reset the Mandeljort set view to the starting view", empty_closure);
     key_bindings.add(Key::NumPadPlus, "Increment translation_amount", empty_closure);
     key_bindings.add(Key::NumPadMinus, "Decrement translation amount", empty_closure);
     key_bindings.add(Key::NumPadAsterisk, "Increment scale_numerator", empty_closure);
     key_bindings.add(Key::NumPadSlash, "Decrement scale_numerator", empty_closure);
     key_bindings.add(Key::LeftBracket, "Scale the view by scaling_factor, effectively zooming in",empty_closure);
     key_bindings.add(Key::RightBracket, "Scale the view by inverse_scaling_factor, effectively zooming out", empty_closure);
-    key_bindings.add(Key::V, "Prints the current Mandelbrot set view; the center and scale", empty_closure);
+    key_bindings.add(Key::V, "Prints the current Mandeljort set view; the center and scale", empty_closure);
     key_bindings.add(Key::Key1, "Renders VIEW_1", empty_closure);
     key_bindings.add(Key::Key2, "Renders VIEW_2", empty_closure);
     key_bindings.add(Key::Key3, "Renders VIEW_3", empty_closure);
@@ -350,24 +352,24 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::Key9, "Renders VIEW_9", empty_closure);
     key_bindings.add(Key::Key0, "Renders VIEW_0", empty_closure);
     key_bindings.add(Key::K, "Prints the keybindings", empty_closure);
-    key_bindings.add(Key::S, "Saves the current Mandelbrot set view as an image in the saved folder", empty_closure);
-    key_bindings.add(Key::I, "Manually input a Mandelbrot set view", empty_closure);
-    key_bindings.add(Key::A, "Pick an algorithm to color the Mandelbrot set view", empty_closure);
-    key_bindings.add(Key::M, "Change the Mandelbrot set view max_iterations", empty_closure);
-    key_bindings.add(Key::O, "Change the Mandelbrot set view color channel mapping, xyz -> RGB, where x,y,z ∈ {{'R','G','B'}} (case-insensitive)", empty_closure);
-    key_bindings.add(Key::Q, "Change the window and image quality of the Mandelbrot set rendering by setting the SSAA multiplier, clamped from 1x to 64x", empty_closure);
-    key_bindings.add(Key::X, "Change the image quality of the Mandelbrot set rendering by setting the SSAA multiplier, clamped from 1x to 64x", empty_closure);
+    key_bindings.add(Key::S, "Saves the current Mandeljort set view as an image in the saved folder", empty_closure);
+    key_bindings.add(Key::I, "Manually input a Mandeljort set view", empty_closure);
+    key_bindings.add(Key::A, "Pick an algorithm to color the Mandeljort set view", empty_closure);
+    key_bindings.add(Key::M, "Change the Mandeljort set view max_iterations", empty_closure);
+    key_bindings.add(Key::O, "Change the Mandeljort set view color channel mapping, xyz -> RGB, where x,y,z ∈ {{'R','G','B'}} (case-insensitive)", empty_closure);
+    key_bindings.add(Key::Q, "Change the window and image quality of the Mandeljort set rendering by setting the SSAA multiplier, clamped from 1x to 64x", empty_closure);
+    key_bindings.add(Key::X, "Change the image quality of the Mandeljort set rendering by setting the SSAA multiplier, clamped from 1x to 64x", empty_closure);
     key_bindings.add(Key::C, "Prints the configuration variables", empty_closure);
     key_bindings.print();
 
     p.pixel_plane.print();
     c.print();
-    println!("Mandelbrot set parameters: max. iterations is {} and orbit radius is {}", config.max_iterations, config.orbit_radius);
+    println!("Mandeljort set parameters: max. iterations is {} and orbit radius is {}", config.max_iterations, config.orbit_radius);
     println!("Amount of CPU threads that will be used for rendering: {}", amount_of_threads);
     println!("Supersampling amount used for rendering: {}x", supersampling_amount);
     println!();
 
-    println!("Rendering Mandelbrot set default view");
+    println!("Rendering Mandeljort set default view");
     rendering::render_complex_plane_into_buffer(&mut p, &c, &m, supersampling_amount, coloring_function);
 
     // Main loop

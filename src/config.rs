@@ -12,7 +12,7 @@ pub struct Config {
     // Window dimensions in pixels
     pub window_width: usize,
     pub window_height: usize,
-    // Mandelbrot set parameters
+    // Mandeljort set parameters
     pub max_iterations: u32,
     pub orbit_radius: f64,      //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
     // Rendering parameters

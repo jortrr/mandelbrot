@@ -1,6 +1,6 @@
 use std::{path::Path, fs::File, io::BufWriter};
 
-use crate::{coloring::{TrueColor, ColorChannelMapping}, complex_plane::View, mandelbrot_set::MandelbrotSet};
+use crate::{coloring::{TrueColor, ColorChannelMapping}, complex_plane::View, mandeljort_set::MandeljortSet};
 
 use self::pixel_plane::PixelPlane;
 
@@ -44,7 +44,7 @@ impl PixelBuffer {
         self.pixels = PixelBuffer::colors_to_pixels(&self.colors, &self.color_channel_mapping);
     }
 
-    /// Returns the amount of Mandelbrot iterations at a given point inside the pixel plane //TODO: move this somewhere else
+    /// Returns the amount of Mandeljort iterations at a given point inside the pixel plane //TODO: move this somewhere else
     /*pub fn iterations_at_point(&self, x: usize, y: usize, max_iterations: u32) -> u32 {
         let index = self.point_to_index(x, y);
         let pixel = self.buffer[index];
@@ -82,7 +82,7 @@ impl PixelBuffer {
     ///Also stores author and application metadata
     /// # Panics
     /// If the file `saved/{file_name_without_extension}.png` cannot be created
-    pub fn save_as_png(&self, file_name_without_extension: &str, view: &View, m: &MandelbrotSet, supersampling_amount: u8) {
+    pub fn save_as_png(&self, file_name_without_extension: &str, view: &View, m: &MandeljortSet, supersampling_amount: u8) {
         let file_name_without_extension = file_name_without_extension.replace(':', "-").replace(' ', "_"); //Replace ':' with '-' for Windows file system. Replace ' ' with '_' because spaces are annoying in filenames.
         let file_name = format!("saved{}{}.png", std::path::MAIN_SEPARATOR_STR, file_name_without_extension);
         match std::fs::create_dir_all("saved") { //Create the saved folder if it does not exist 
@@ -97,12 +97,12 @@ impl PixelBuffer {
         encoder.set_depth(png::BitDepth::Eight);
         let view_text = format!("{:?}", view);
         encoder.add_text_chunk(String::from("view"), view_text).unwrap();
-        let mandelbrot_set_text = format!("{:?}", m);
-        encoder.add_text_chunk(String::from("mandelbrot_set"), mandelbrot_set_text).unwrap();
+        let mandeljort_set_text = format!("{:?}", m);
+        encoder.add_text_chunk(String::from("mandeljort_set"), mandeljort_set_text).unwrap();
         let supersampling_amount_text = format!("{}x", supersampling_amount);
         encoder.add_text_chunk(String::from("supersampling_amount"), supersampling_amount_text).unwrap();
-        encoder.add_text_chunk(String::from("application"), String::from("Mandelbrot by Jort (https://github.com/jortrr/mandelbrot)")).unwrap();
-        encoder.add_text_chunk(String::from("author"), String::from("jortrr (https://github.com/jortrr/)")).unwrap();
+        encoder.add_text_chunk(String::from("application"), String::from("Mandeljort by Jort (https://github.com/itrekr/mandeljort)")).unwrap();
+        encoder.add_text_chunk(String::from("author"), String::from("itrekr (https://github.com/itrekr/)")).unwrap();
         let color_channel_mapping_text = format!("{:?}", self.color_channel_mapping);
         encoder.add_text_chunk(String::from("color_channel_mapping"), color_channel_mapping_text).unwrap();
         let mut data: Vec<u8> = Vec::new();
