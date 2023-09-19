@@ -149,7 +149,7 @@ fn handle_key_events(
                 c,
                 p,
                 m,
-                vars.translation_amount.into(),
+                MandelbrotModel::get_instance().vars.translation_amount.into(),
                 0,
                 *supersampling_amount,
                 *coloring_function,
@@ -158,7 +158,7 @@ fn handle_key_events(
                 c,
                 p,
                 m,
-                -i16::from(vars.translation_amount),
+                -i16::from(MandelbrotModel::get_instance().vars.translation_amount),
                 0,
                 *supersampling_amount,
                 *coloring_function,
@@ -168,7 +168,7 @@ fn handle_key_events(
                 p,
                 m,
                 0,
-                -i16::from(vars.translation_amount),
+                -i16::from(MandelbrotModel::get_instance().vars.translation_amount),
                 *supersampling_amount,
                 *coloring_function,
             ),
@@ -177,51 +177,71 @@ fn handle_key_events(
                 p,
                 m,
                 0,
-                vars.translation_amount.into(),
+                MandelbrotModel::get_instance().vars.translation_amount.into(),
                 *supersampling_amount,
                 *coloring_function,
             ),
-            Key::R => c.reset(),
-            Key::NumPadPlus => vars.increment_translation_amount(),
-            Key::NumPadMinus => vars.decrement_translation_amount(),
-            Key::NumPadAsterisk => vars.increment_scale_numerator(),
-            Key::NumPadSlash => vars.decrement_scale_numerator(),
-            Key::LeftBracket => c.scale(vars.scaling_factor()),
-            Key::RightBracket => c.scale(vars.inverse_scaling_factor()),
-            Key::V => println!("Center: {:?}, scale: {:?}", c.center(), c.get_scale()),
-            Key::Key1 => c.set_view(&VIEW_1),
-            Key::Key2 => c.set_view(&VIEW_2),
-            Key::Key3 => c.set_view(&VIEW_3),
-            Key::Key4 => c.set_view(&VIEW_4),
-            Key::Key5 => c.set_view(&VIEW_5),
-            Key::Key6 => c.set_view(&VIEW_6),
-            Key::Key7 => c.set_view(&VIEW_7),
-            Key::Key8 => c.set_view(&VIEW_8),
-            Key::Key9 => c.set_view(&VIEW_9),
-            Key::Key0 => c.set_view(&VIEW_0),
+            Key::R => MandelbrotModel::get_instance().c.reset(),
+            Key::NumPadPlus => MandelbrotModel::get_instance().vars.increment_translation_amount(),
+            Key::NumPadMinus => MandelbrotModel::get_instance().vars.decrement_translation_amount(),
+            Key::NumPadAsterisk => MandelbrotModel::get_instance().vars.increment_scale_numerator(),
+            Key::NumPadSlash => MandelbrotModel::get_instance().vars.decrement_scale_numerator(),
+            Key::LeftBracket => MandelbrotModel::get_instance()
+                .c
+                .scale(MandelbrotModel::get_instance().vars.scaling_factor()),
+            Key::RightBracket => MandelbrotModel::get_instance()
+                .c
+                .scale(MandelbrotModel::get_instance().vars.inverse_scaling_factor()),
+            Key::V => println!(
+                "Center: {:?}, scale: {:?}",
+                MandelbrotModel::get_instance().c.center(),
+                MandelbrotModel::get_instance().c.get_scale()
+            ),
+            Key::Key1 => MandelbrotModel::get_instance().c.set_view(&VIEW_1),
+            Key::Key2 => MandelbrotModel::get_instance().c.set_view(&VIEW_2),
+            Key::Key3 => MandelbrotModel::get_instance().c.set_view(&VIEW_3),
+            Key::Key4 => MandelbrotModel::get_instance().c.set_view(&VIEW_4),
+            Key::Key5 => MandelbrotModel::get_instance().c.set_view(&VIEW_5),
+            Key::Key6 => MandelbrotModel::get_instance().c.set_view(&VIEW_6),
+            Key::Key7 => MandelbrotModel::get_instance().c.set_view(&VIEW_7),
+            Key::Key8 => MandelbrotModel::get_instance().c.set_view(&VIEW_8),
+            Key::Key9 => MandelbrotModel::get_instance().c.set_view(&VIEW_9),
+            Key::Key0 => MandelbrotModel::get_instance().c.set_view(&VIEW_0),
             Key::K => k.print(),
             Key::S => {
                 let time_stamp = chrono::Utc::now().to_string();
                 if config.window_scale == 1.0 {
-                    p.save_as_png(&time_stamp, &c.get_view(), m, *image_supersampling_amount);
+                    MandelbrotModel::get_instance().p.save_as_png(
+                        &time_stamp,
+                        &MandelbrotModel::get_instance().c.get_view(),
+                        m,
+                        *image_supersampling_amount,
+                    );
                 } else {
                     let mut image_p: PixelBuffer = PixelBuffer::new(PixelPlane::new(config.image_width, config.image_height));
                     let mut image_c: ComplexPlane = ComplexPlane::new(config.image_width, config.image_height);
-                    image_p.color_channel_mapping = p.color_channel_mapping;
-                    image_c.set_view(&c.get_view());
+                    image_p.color_channel_mapping = MandelbrotModel::get_instance().p.color_channel_mapping;
+                    image_c.set_view(&MandelbrotModel::get_instance().c.get_view());
                     rendering::render_complex_plane_into_buffer(&mut image_p, &image_c, m, *image_supersampling_amount, *coloring_function);
-                    image_p.save_as_png(&time_stamp, &c.get_view(), m, *image_supersampling_amount);
+                    image_p.save_as_png(
+                        &time_stamp,
+                        &MandelbrotModel::get_instance().c.get_view(),
+                        m,
+                        *image_supersampling_amount,
+                    );
                 }
             }
-            Key::I => c.set_view(&View::new(ask("x"), ask("y"), ask("scale"))),
+            Key::I => MandelbrotModel::get_instance()
+                .c
+                .set_view(&View::new(ask("x"), ask("y"), ask("scale"))),
             Key::A => {
                 *coloring_function = pick_option(&[
                     ("HSV", TrueColor::new_from_hsv_colors),
                     ("Bernstein polynomials", TrueColor::new_from_bernstein_polynomials),
                 ])
             }
-            Key::M => m.max_iterations = ask("max_iterations"),
-            Key::O => p.color_channel_mapping = ask("color_channel_mapping"),
+            Key::M => MandelbrotModel::get_instance().m.max_iterations = ask("max_iterations"),
+            Key::O => MandelbrotModel::get_instance().p.color_channel_mapping = ask("color_channel_mapping"),
             Key::Q => {
                 *supersampling_amount = ask::<u8>("supersampling_amount").clamp(1, 64);
                 *image_supersampling_amount = *supersampling_amount;
@@ -231,9 +251,15 @@ fn handle_key_events(
             _ => (),
         }
         match key {
-            Key::NumPadPlus | Key::NumPadMinus => println!("translation_amount: {}", vars.translation_amount),
-            Key::NumPadSlash | Key::NumPadAsterisk => println!("scale factor: {}/{}", vars.scale_numerator, vars.scale_denominator),
-            Key::Up | Key::Down | Key::Left | Key::Right => c.print(),
+            Key::NumPadPlus | Key::NumPadMinus => {
+                println!("translation_amount: {}", MandelbrotModel::get_instance().vars.translation_amount)
+            }
+            Key::NumPadSlash | Key::NumPadAsterisk => println!(
+                "scale factor: {}/{}",
+                MandelbrotModel::get_instance().vars.scale_numerator,
+                MandelbrotModel::get_instance().vars.scale_denominator
+            ),
+            Key::Up | Key::Down | Key::Left | Key::Right => MandelbrotModel::get_instance().c.print(),
             Key::R
             | Key::Key1
             | Key::Key2
@@ -253,7 +279,7 @@ fn handle_key_events(
             | Key::O
             | Key::Q => {
                 rendering::render_complex_plane_into_buffer(p, c, m, *supersampling_amount, *coloring_function);
-                c.print();
+                MandelbrotModel::get_instance().c.print();
             }
             _ => (),
         }
@@ -266,8 +292,8 @@ fn was_clicked(current: bool, previous: bool) -> bool {
 
 fn handle_left_mouse_clicked(x: f32, y: f32, c: &ComplexPlane) {
     println!("\nMouseButton::Left -> Info at ({x}, {y})");
-    //let iterations = p.iterations_at_point(x as usize, y as usize, m.max_iterations); //TODO: fix this
-    let complex = c.complex_from_pixel_plane(x.into(), y.into());
+    //let iterations = MandelbrotModel::get_instance().p.iterations_at_point(x as usize, y as usize, MandelbrotModel::get_instance().m.max_iterations); //TODO: fix this
+    let complex = MandelbrotModel::get_instance().c.complex_from_pixel_plane(x.into(), y.into());
     println!("Complex: {:?}", complex);
     //println!("iterations: {}", iterations);
     println!();
@@ -283,12 +309,15 @@ fn handle_right_mouse_clicked(
     coloring_function: ColoringFunction,
 ) {
     println!("\nMouseButton::Right -> Move to ({x}, {y})");
-    let new_center = c.complex_from_pixel_plane(x.into(), y.into());
-    println!("c.center: {:?}", c.center());
+    let new_center = MandelbrotModel::get_instance().c.complex_from_pixel_plane(x.into(), y.into());
+    println!(
+        "MandelbrotModel::get_instance().c.center: {:?}",
+        MandelbrotModel::get_instance().c.center()
+    );
     println!("new_center: {:?}", new_center);
 
     rendering::translate_to_center_and_render_efficiently(c, p, m, &new_center, supersampling_amount, coloring_function);
-    c.print();
+    MandelbrotModel::get_instance().c.print();
     println!();
 }
 
@@ -346,7 +375,7 @@ fn handle_mouse_events(
 ///Prints Mandelbrot ASCII art :) </br>
 ///Prints the `application_banner`, `author_banner`, and `version`
 fn print_banner() {
-    //Made using: https://patorjk.com/software/taag/#p=display&f=Big&t=Mandelbrot
+    //Made using: https://patorjk.com/software/taag/#MandelbrotModel::get_instance().p=display&f=Big&t=Mandelbrot
     let application_banner = r"
 __  __                 _      _ _               _   
 |  \/  |               | |    | | |             | |  
@@ -354,7 +383,7 @@ __  __                 _      _ _               _
 | |\/| |/ _` | '_ \ / _` |/ _ \ | '_ \| '__/ _ \| __|
 | |  | | (_| | | | | (_| |  __/ | |_) | | | (_) | |_ 
 |_|  |_|\__,_|_| |_|\__,_|\___|_|_.__/|_|  \___/ \__|";
-    //Made using: https://patorjk.com/software/taag/#p=display&f=Small%20Slant&t=by%20Jort
+    //Made using: https://patorjk.com/software/taag/#MandelbrotModel::get_instance().p=display&f=Small%20Slant&t=by%20Jort
     let author_banner = r"
    __             __         __ 
   / /  __ __  __ / /__  ____/ /_
@@ -380,20 +409,10 @@ fn print_command_info() {
 /// # Errors
 /// Currently does not return any Errors
 pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
-    // Complex plane dimensions and increments
-    let mut c = ComplexPlane::new(config.window_width, config.window_height);
-    // Pixel plane and buffer
-    let mut p = PixelBuffer::new(PixelPlane::new(config.window_width, config.window_height));
-    // User interaction variables
-    let mut vars = InteractionVariables::default();
-    // Multithreading variables
-    let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use, TODO: use this value in rendering functions
-                                             // Mandelbrot set iterator
-    let mut m: MandelbrotFunction = MandelbrotFunction::new(config.max_iterations, config.orbit_radius);
     //Coloring function
     let mut coloring_function = COLORING_FUNCTION;
     //Color channel mapping
-    p.color_channel_mapping = COLOR_CHANNEL_MAPPING;
+    //MandelbrotModel::get_instance().p.color_channel_mapping = COLOR_CHANNEL_MAPPING;
     //SSAA multiplier
     let mut supersampling_amount = config.supersampling_amount;
     //Image SSAA multiplier
@@ -478,33 +497,42 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::C, "Prints the configuration variables", empty_closure);
     key_bindings.print();
 
-    p.pixel_plane.print();
-    c.print();
+    MandelbrotModel::get_instance().p.pixel_plane.print();
+    MandelbrotModel::get_instance().c.print();
     println!(
         "Mandelbrot set parameters: max. iterations is {} and orbit radius is {}",
         config.max_iterations, config.orbit_radius
     );
-    println!("Amount of CPU threads that will be used for rendering: {}", amount_of_threads);
+    println!(
+        "Amount of CPU threads that will be used for rendering: {}",
+        MandelbrotModel::get_instance().amount_of_threads
+    );
     println!("Supersampling amount used for rendering: {}x", supersampling_amount);
     println!();
 
     println!("Rendering Mandelbrot set default view");
-    rendering::render_complex_plane_into_buffer(&mut p, &c, &m, supersampling_amount, coloring_function);
+    rendering::render_complex_plane_into_buffer(
+        &mut MandelbrotModel::get_instance().p,
+        &MandelbrotModel::get_instance().c,
+        &MandelbrotModel::get_instance().m,
+        supersampling_amount,
+        coloring_function,
+    );
 
     // Main loop
     while window.is_open() && !window.is_key_down(Key::Escape) {
         // Update the window with the new buffer
         window
-            .update_with_buffer(&p.pixels, config.window_width, config.window_height)
+            .update_with_buffer(&MandelbrotModel::get_instance().p.pixels, config.window_width, config.window_height)
             .unwrap();
 
         // Handle any window events
         handle_key_events(
             &window,
-            &mut c,
-            &mut p,
-            &mut m,
-            &mut vars,
+            &mut MandelbrotModel::get_instance().c,
+            &mut MandelbrotModel::get_instance().p,
+            &mut MandelbrotModel::get_instance().m,
+            &mut MandelbrotModel::get_instance().vars,
             &key_bindings,
             &mut supersampling_amount,
             &mut image_supersampling_amount,
@@ -513,7 +541,14 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
         );
 
         //Handle any mouse events
-        handle_mouse_events(&window, &mut c, &mut p, &m, supersampling_amount, coloring_function);
+        handle_mouse_events(
+            &window,
+            &mut MandelbrotModel::get_instance().c,
+            &mut MandelbrotModel::get_instance().p,
+            &MandelbrotModel::get_instance().m,
+            supersampling_amount,
+            coloring_function,
+        );
     }
 
     Ok(())

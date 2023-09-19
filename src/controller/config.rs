@@ -11,6 +11,7 @@ static ORBIT_RADIUS: f64 = 2.0;
 static SUPERSAMPLING_AMOUNT: u8 = 1;
 static WINDOW_SCALE: f64 = 1.0;
 
+#[derive(Clone, Copy)]
 pub struct Config {
     // Window dimensions in pixels
     pub window_width: usize,
