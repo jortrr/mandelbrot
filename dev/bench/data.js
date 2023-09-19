@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688309806095,
+  "lastUpdate": 1695136501373,
   "repoUrl": "https://github.com/jortrr/mandelbrot",
   "entries": {
     "Benchmark": [
@@ -905,6 +905,40 @@ window.BENCHMARK_DATA = {
             "name": "bench_render_mandelbrot_set_default_view_720p_1x_ssaa",
             "value": 1197823331,
             "range": "± 9101514",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jort.van.waes@inspiro.nl",
+            "name": "Jort van Waes"
+          },
+          "committer": {
+            "email": "jort.van.waes@inspiro.nl",
+            "name": "Jort van Waes"
+          },
+          "distinct": true,
+          "id": "0379adc5270dd380f252eecaa2b5452922e7f21b",
+          "message": "This version does not work, singleton is incorrect",
+          "timestamp": "2023-09-19T17:05:53+02:00",
+          "tree_id": "57a055c1ddee9b6b4406c555bff68763dbe5573b",
+          "url": "https://github.com/jortrr/mandelbrot/commit/0379adc5270dd380f252eecaa2b5452922e7f21b"
+        },
+        "date": 1695136499316,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "bench_mandelbrot_set_iterate",
+            "value": 66069,
+            "range": "± 4755",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bench_render_mandelbrot_set_default_view_720p_1x_ssaa",
+            "value": 1202533072,
+            "range": "± 34290751",
             "unit": "ns/iter"
           }
         ]
