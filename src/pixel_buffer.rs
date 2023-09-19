@@ -1,10 +1,11 @@
-use std::{path::Path, fs::File, io::BufWriter};
+use std::{fs::File, io::BufWriter, path::Path};
 
-use crate::{coloring::{TrueColor, ColorChannelMapping}, complex_plane::View, mandelbrot_set::MandelbrotSet};
-
-use self::pixel_plane::PixelPlane;
-
-pub mod pixel_plane;
+use crate::{
+    coloring::{ColorChannelMapping, TrueColor},
+    complex_plane::View,
+    mandelbrot_set::MandelbrotSet,
+    pixel_plane::PixelPlane,
+};
 
 #[derive(Clone)]
 pub struct PixelBuffer {
@@ -21,7 +22,12 @@ impl PixelBuffer {
         let colors: Vec<TrueColor> = vec![black; pixel_plane.width * pixel_plane.height];
         let color_channel_mapping = ColorChannelMapping::RGB;
         let pixels: Vec<u32> = PixelBuffer::colors_to_pixels(&colors, &color_channel_mapping);
-        PixelBuffer { pixel_plane, colors, pixels, color_channel_mapping}
+        PixelBuffer {
+            pixel_plane,
+            colors,
+            pixels,
+            color_channel_mapping,
+        }
     }
 
     /// Converts a buffer index to a screen coordinate
@@ -50,7 +56,7 @@ impl PixelBuffer {
         let pixel = self.buffer[index];
         let iterations = crate::iterations_from_hsv_pixel(pixel, max_iterations);
         iterations
-    }*/ 
+    }*/
 
     /// Translate the complex plane in the `buffer` `rows` up and `columns` to the right.
     /// This operation is significantly less expensive than the `render_box_render_complex_plane_into_buffer` function, as it does not rerender anything in the complex plane, it simply
@@ -58,12 +64,20 @@ impl PixelBuffer {
     /// Note: The removed rows and columns should be rerendered by the `render_box_render_complex_plane_into_buffer` function.
     pub fn translate_buffer(&mut self, rows_up: i128, columns_right: i128) {
         //Iterate over the correct y's in the correct order
-        let y_range : Vec<usize> = if rows_up > 0 {((rows_up as usize)..self.pixel_plane.height).rev().collect()} else {(0..((self.pixel_plane.height as i128 + rows_up) as usize)).collect()};
+        let y_range: Vec<usize> = if rows_up > 0 {
+            ((rows_up as usize)..self.pixel_plane.height).rev().collect()
+        } else {
+            (0..((self.pixel_plane.height as i128 + rows_up) as usize)).collect()
+        };
         //Iterate over the correct x's in the correct order
-        let x_range : Vec<usize> = if columns_right > 0 {((columns_right as usize)..self.pixel_plane.width).rev().collect()} else {(0..((self.pixel_plane.width as i128 + columns_right) as usize)).collect()};
+        let x_range: Vec<usize> = if columns_right > 0 {
+            ((columns_right as usize)..self.pixel_plane.width).rev().collect()
+        } else {
+            (0..((self.pixel_plane.width as i128 + columns_right) as usize)).collect()
+        };
 
         for y in y_range {
-            let other_y = (y as i128-rows_up) as usize;
+            let other_y = (y as i128 - rows_up) as usize;
             //println!("y: {y} and other_y: {other_y}");
             for x in &x_range {
                 let other_x = (*x as i128 - columns_right) as usize;
@@ -85,7 +99,8 @@ impl PixelBuffer {
     pub fn save_as_png(&self, file_name_without_extension: &str, view: &View, m: &MandelbrotSet, supersampling_amount: u8) {
         let file_name_without_extension = file_name_without_extension.replace(':', "-").replace(' ', "_"); //Replace ':' with '-' for Windows file system. Replace ' ' with '_' because spaces are annoying in filenames.
         let file_name = format!("saved{}{}.png", std::path::MAIN_SEPARATOR_STR, file_name_without_extension);
-        match std::fs::create_dir_all("saved") { //Create the saved folder if it does not exist 
+        match std::fs::create_dir_all("saved") {
+            //Create the saved folder if it does not exist
             Ok(()) => (), //Currently not doing anything with the Result of trying to create the saved folder
             Err(err) => eprintln!("{}", err),
         }
@@ -100,11 +115,22 @@ impl PixelBuffer {
         let mandelbrot_set_text = format!("{:?}", m);
         encoder.add_text_chunk(String::from("mandelbrot_set"), mandelbrot_set_text).unwrap();
         let supersampling_amount_text = format!("{}x", supersampling_amount);
-        encoder.add_text_chunk(String::from("supersampling_amount"), supersampling_amount_text).unwrap();
-        encoder.add_text_chunk(String::from("application"), String::from("Mandelbrot by Jort (https://github.com/jortrr/mandelbrot)")).unwrap();
-        encoder.add_text_chunk(String::from("author"), String::from("jortrr (https://github.com/jortrr/)")).unwrap();
+        encoder
+            .add_text_chunk(String::from("supersampling_amount"), supersampling_amount_text)
+            .unwrap();
+        encoder
+            .add_text_chunk(
+                String::from("application"),
+                String::from("Mandelbrot by Jort (https://github.com/jortrr/mandelbrot)"),
+            )
+            .unwrap();
+        encoder
+            .add_text_chunk(String::from("author"), String::from("jortrr (https://github.com/jortrr/)"))
+            .unwrap();
         let color_channel_mapping_text = format!("{:?}", self.color_channel_mapping);
-        encoder.add_text_chunk(String::from("color_channel_mapping"), color_channel_mapping_text).unwrap();
+        encoder
+            .add_text_chunk(String::from("color_channel_mapping"), color_channel_mapping_text)
+            .unwrap();
         let mut data: Vec<u8> = Vec::new();
         let (r_map, g_map, b_map) = self.color_channel_mapping.get_r_g_b_mapping();
         for color in &self.colors {

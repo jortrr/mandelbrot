@@ -1,4 +1,7 @@
-use std::{str::FromStr, fmt::{Display, self}};
+use std::{
+    fmt::{self, Display},
+    str::FromStr,
+};
 
 //Argument default values
 static WIDTH: usize = 1200;
@@ -14,16 +17,15 @@ pub struct Config {
     pub window_height: usize,
     // Mandelbrot set parameters
     pub max_iterations: u32,
-    pub orbit_radius: f64,      //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
+    pub orbit_radius: f64, //If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
     // Rendering parameters
     pub supersampling_amount: u8,
     //Window scaling factor
     pub window_scale: f64,
     //Scaled window dimensions in pixels (used in images)
     pub image_width: usize,
-    pub image_height: usize
+    pub image_height: usize,
 }
-
 
 impl Config {
     /// Parse the command line arguments from e.g. `env::args` in the following format
@@ -36,7 +38,7 @@ impl Config {
         args.next(); //Skip the first argument as it is the name of the executable
 
         //First argument
-        let image_width = Config::parse_argument("width", args.next(), WIDTH)?; 
+        let image_width = Config::parse_argument("width", args.next(), WIDTH)?;
 
         //Second argument
         let image_height = Config::parse_argument("height", args.next(), HEIGHT)?;
@@ -53,15 +55,26 @@ impl Config {
         let window_width = (f64::from(image_width as u32) * window_scale) as usize;
         let window_height = (f64::from(image_height as u32) * window_scale) as usize;
 
-        Ok(Config {window_width, window_height, max_iterations, orbit_radius: ORBIT_RADIUS, supersampling_amount, window_scale, image_width, image_height})
+        Ok(Config {
+            window_width,
+            window_height,
+            max_iterations,
+            orbit_radius: ORBIT_RADIUS,
+            supersampling_amount,
+            window_scale,
+            image_width,
+            image_height,
+        })
     }
 
     ///Parses an argument to a T value if possible, returns an error if not. Returns default if argument is None </br>
     ///If Some(arg) == "-", return default
     /// # Errors
     /// Return an Error if the given argument cannot be parsed to a T type
-    pub fn parse_argument<T: FromStr + Display>(name: &str, argument: Option<String>, default: T) -> Result<T, String> 
-    where <T as std::str::FromStr>::Err: Display{
+    pub fn parse_argument<T: FromStr + Display>(name: &str, argument: Option<String>, default: T) -> Result<T, String>
+    where
+        <T as std::str::FromStr>::Err: Display,
+    {
         match argument {
             Some(arg) => {
                 if arg == "-" {
@@ -72,8 +85,8 @@ impl Config {
                     Ok(val) => Ok(val),
                     Err(err) => Err(err.to_string() + &format!(" for {} argument", name)),
                 }
-            },
-            None =>  {
+            }
+            None => {
                 Config::print_no_argument_given(name, &default);
                 Ok(default)
             }
@@ -86,7 +99,17 @@ impl Config {
 }
 
 impl fmt::Debug for Config {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { //TODO: Improve debug printing format legibility
-        f.debug_struct("Config").field("window_width", &self.window_width).field("window_height", &self.window_height).field("max_iterations", &self.max_iterations).field("orbit_radius", &self.orbit_radius).field("supersampling_amount", &self.supersampling_amount).field("window_scale", &self.window_scale).field("image_width", &self.image_width).field("image_height", &self.image_height).finish()
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        //TODO: Improve debug printing format legibility
+        f.debug_struct("Config")
+            .field("window_width", &self.window_width)
+            .field("window_height", &self.window_height)
+            .field("max_iterations", &self.max_iterations)
+            .field("orbit_radius", &self.orbit_radius)
+            .field("supersampling_amount", &self.supersampling_amount)
+            .field("window_scale", &self.window_scale)
+            .field("image_width", &self.image_width)
+            .field("image_height", &self.image_height)
+            .finish()
     }
 }

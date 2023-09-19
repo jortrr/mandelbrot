@@ -12,11 +12,7 @@ pub struct KeyAction {
 
 impl KeyAction {
     pub fn new(key: Key, description: &'static str, action: Box<dyn Fn()>) -> KeyAction {
-        KeyAction {
-            key,
-            description,
-            action,
-        }
+        KeyAction { key, description, action }
     }
 
     ///Run self.action
@@ -27,7 +23,7 @@ impl KeyAction {
 
 impl fmt::Debug for KeyAction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write!(f,"{:?} -> {}", &self.key, &self.description)
+        write!(f, "{:?} -> {}", &self.key, &self.description)
     }
 }
 
@@ -59,7 +55,7 @@ impl KeyBindings {
 
     /// Prints all `KeyAction`s in these `KeyBindings` to stdout
     pub fn print(&self) {
-        println!("{:?}",self);
+        println!("{:?}", self);
     }
 
     pub fn print_key(&self, key: &Key) {
@@ -88,8 +84,8 @@ impl Default for KeyBindings {
     /// Define all your keybindings here
     fn default() -> KeyBindings {
         let mut key_bindings = KeyBindings::new(Vec::new());
-        key_bindings.add(Key::A, "This is the A key", ||println!("Action A"));
-        key_bindings.add(Key::B, "This is the B key", ||println!("Action B"));
+        key_bindings.add(Key::A, "This is the A key", || println!("Action A"));
+        key_bindings.add(Key::B, "This is the B key", || println!("Action B"));
         key_bindings
     }
 }

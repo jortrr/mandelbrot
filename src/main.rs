@@ -1,7 +1,7 @@
 use std::env;
 use std::process;
 
-use mandelbrot::{Config, self};
+use mandelbrot::{self, Config};
 
 fn main() {
     let config = Config::build(env::args()).unwrap_or_else(|err| {
