@@ -4,15 +4,15 @@ use minifb::Key;
 
 //https://stackoverflow.com/questions/68066875/how-to-store-a-closure-inside-rust-struct
 //https://stackoverflow.com/questions/65756096/how-can-i-store-a-closure-object-in-a-struct
-pub struct KeyAction {
+pub struct KeyBinding {
     pub key: Key,
     pub description: &'static str,
     action: Box<dyn Fn()>,
 }
 
-impl KeyAction {
-    pub fn new(key: Key, description: &'static str, action: Box<dyn Fn()>) -> KeyAction {
-        KeyAction { key, description, action }
+impl KeyBinding {
+    pub fn new(key: Key, description: &'static str, action: Box<dyn Fn()>) -> KeyBinding {
+        KeyBinding { key, description, action }
     }
 
     ///Run self.action
@@ -21,39 +21,39 @@ impl KeyAction {
     }
 }
 
-impl fmt::Debug for KeyAction {
+impl fmt::Debug for KeyBinding {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?} -> {}", &self.key, &self.description)
     }
 }
 
 pub struct KeyBindings {
-    key_bindings: Vec<KeyAction>,
+    key_bindings: Vec<KeyBinding>,
 }
 
 impl KeyBindings {
-    pub fn new(key_bindings: Vec<KeyAction>) -> KeyBindings {
+    pub fn new(key_bindings: Vec<KeyBinding>) -> KeyBindings {
         KeyBindings { key_bindings }
     }
 
-    ///Adds a `KeyAction` to these `KeyBindings`, will remove any existing `KeyAction` `x` where `x.key` == `key_action.key`
-    pub fn add_key(&mut self, key_action: KeyAction) {
-        //Remove any KeyAction x where x.key == key_action.key
+    ///Adds a `KeyBinding` to these `KeyBindings`, will remove any existing `KeyBinding` `x` where `x.key` == `key_action.key`
+    pub fn add_key(&mut self, key_action: KeyBinding) {
+        //Remove any KeyBinding x where x.key == key_action.key
         self.key_bindings.retain(|x| x.key != key_action.key);
 
         self.key_bindings.push(key_action);
     }
 
-    ///Adds a `KeyAction` to these `KeyBindings`, will remove any existing `KeyAction` `x` where `x.key` == `key`
+    ///Adds a `KeyBinding` to these `KeyBindings`, will remove any existing `KeyBinding` `x` where `x.key` == `key`
     pub fn add<F: Fn() + 'static>(&mut self, key: Key, description: &'static str, action: F) {
-        self.add_key(KeyAction::new(key, description, Box::new(action)));
+        self.add_key(KeyBinding::new(key, description, Box::new(action)));
     }
 
-    pub fn key_actions(&self) -> &Vec<KeyAction> {
+    pub fn key_actions(&self) -> &Vec<KeyBinding> {
         &self.key_bindings
     }
 
-    /// Prints all `KeyAction`s in these `KeyBindings` to stdout
+    /// Prints all `KeyBinding`s in these `KeyBindings` to stdout
     pub fn print(&self) {
         println!("{:?}", self);
     }
@@ -65,7 +65,7 @@ impl KeyBindings {
                 return;
             }
         }
-        //KeyBindings does not contain a KeyAction x with x.key == key, unbound
+        //KeyBindings does not contain a KeyBinding x with x.key == key, unbound
         println!("{:?}", key);
     }
 
