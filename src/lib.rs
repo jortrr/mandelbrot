@@ -51,6 +51,7 @@ use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 use crate::coloring::TrueColor;
 use crate::complex_plane::{ComplexPlane, View};
 use crate::key_bindings::KeyBindings;
+use crate::model::mandelbrot_model::MandelbrotModel;
 use crate::pixel_buffer::PixelBuffer;
 use crate::pixel_plane::PixelPlane;
 use crate::user_input::{ask, pick_option};
