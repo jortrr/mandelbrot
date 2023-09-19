@@ -41,7 +41,7 @@ use controller::key_bindings::KeyBindings;
 use controller::user_input::{ask, pick_option};
 use model::complex_plane::{ComplexPlane, View};
 use model::mandelbrot_function::MandelbrotFunction;
-use model::mandelbrot_model::MandelbrotModel;
+pub use model::mandelbrot_model::MandelbrotModel;
 use model::{pixel_buffer, pixel_plane, rendering};
 use pixel_buffer::PixelBuffer;
 use pixel_plane::PixelPlane;

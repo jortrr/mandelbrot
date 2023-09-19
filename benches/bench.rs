@@ -3,12 +3,8 @@
 extern crate test;
 
 use mandelbrot::{
-    coloring::TrueColor,
-    complex::Complex,
-    complex_plane::ComplexPlane,
-    mandelbrot_function::MandelbrotFunction,
-    pixel_buffer::{pixel_plane::PixelPlane, PixelBuffer},
-    rendering,
+    model::complex::Complex, model::complex_plane::ComplexPlane, model::mandelbrot_function::MandelbrotFunction,
+    model::pixel_buffer::PixelBuffer, model::pixel_plane::PixelPlane, model::rendering, view::coloring::TrueColor,
 };
 use test::Bencher;
 

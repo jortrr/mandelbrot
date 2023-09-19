@@ -28,6 +28,18 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn new() -> Config {
+        Config {
+            window_width: WIDTH,
+            window_height: HEIGHT,
+            max_iterations: MAX_ITERATIONS,
+            orbit_radius: ORBIT_RADIUS,
+            supersampling_amount: SUPERSAMPLING_AMOUNT,
+            window_scale: WINDOW_SCALE,
+            image_width: WIDTH,
+            image_height: HEIGHT,
+        }
+    }
     /// Parse the command line arguments from e.g. `env::args` in the following format
     /// ```ignore
     /// cargo run -- width height max_iterations
