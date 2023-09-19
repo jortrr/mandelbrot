@@ -130,10 +130,11 @@ impl Default for InteractionVariables {
 
 // Handle any key events
 fn handle_key_events(window: &Window, k: &KeyBindings, coloring_function: &mut ColoringFunction) {
-    let mut mandelbrot_model = MandelbrotModel::get_instance();
     if let Some(key) = window.get_keys_pressed(minifb::KeyRepeat::No).first() {
         print!("\nKey pressed: ");
         k.print_key(key);
+        k.run(key);
+        let mut mandelbrot_model = MandelbrotModel::get_instance();
         match key {
             Key::Up => {
                 let rows = mandelbrot_model.vars.translation_amount;
@@ -169,16 +170,6 @@ fn handle_key_events(window: &Window, k: &KeyBindings, coloring_function: &mut C
                 mandelbrot_model.c.center(),
                 mandelbrot_model.c.get_scale()
             ),
-            Key::Key1 => mandelbrot_model.c.set_view(&VIEW_1),
-            Key::Key2 => mandelbrot_model.c.set_view(&VIEW_2),
-            Key::Key3 => mandelbrot_model.c.set_view(&VIEW_3),
-            Key::Key4 => mandelbrot_model.c.set_view(&VIEW_4),
-            Key::Key5 => mandelbrot_model.c.set_view(&VIEW_5),
-            Key::Key6 => mandelbrot_model.c.set_view(&VIEW_6),
-            Key::Key7 => mandelbrot_model.c.set_view(&VIEW_7),
-            Key::Key8 => mandelbrot_model.c.set_view(&VIEW_8),
-            Key::Key9 => mandelbrot_model.c.set_view(&VIEW_9),
-            Key::Key0 => mandelbrot_model.c.set_view(&VIEW_0),
             Key::K => k.print(),
             Key::S => {
                 let time_stamp = chrono::Utc::now().to_string();
@@ -261,23 +252,22 @@ fn was_clicked(current: bool, previous: bool) -> bool {
     current && !previous
 }
 
-fn handle_left_mouse_clicked(x: f32, y: f32, c: &ComplexPlane) {
+fn handle_left_mouse_clicked(mandelbrot_model: &MandelbrotModel, x: f32, y: f32) {
     println!("\nMouseButton::Left -> Info at ({x}, {y})");
     //let iterations = MandelbrotModel::get_instance().p.iterations_at_point(x as usize, y as usize, MandelbrotModel::get_instance().m.max_iterations); //TODO: fix this
-    let complex = MandelbrotModel::get_instance().c.complex_from_pixel_plane(x.into(), y.into());
+    let complex = mandelbrot_model.c.complex_from_pixel_plane(x.into(), y.into());
     println!("Complex: {:?}", complex);
     //println!("iterations: {}", iterations);
     println!();
 }
 
-fn handle_right_mouse_clicked(x: f32, y: f32, coloring_function: ColoringFunction) {
-    let mut mandelbrot_model = MandelbrotModel::get_instance();
+fn handle_right_mouse_clicked(mandelbrot_model: &mut MandelbrotModel, x: f32, y: f32, coloring_function: ColoringFunction) {
     println!("\nMouseButton::Right -> Move to ({x}, {y})");
     let new_center = mandelbrot_model.c.complex_from_pixel_plane(x.into(), y.into());
     println!("mandelbrot_model.c.center: {:?}", mandelbrot_model.c.center());
     println!("new_center: {:?}", new_center);
 
-    rendering::translate_to_center_and_render_efficiently(&mut mandelbrot_model, &new_center, coloring_function);
+    rendering::translate_to_center_and_render_efficiently(mandelbrot_model, &new_center, coloring_function);
     mandelbrot_model.c.print();
     println!();
 }
@@ -310,19 +300,19 @@ impl MouseClickRecorder {
 }
 
 fn handle_mouse_events(window: &Window, coloring_function: ColoringFunction) {
-    let mandelbrot_model = MandelbrotModel::get_instance();
+    let mut mandelbrot_model = MandelbrotModel::get_instance();
     static LEFT_MOUSE_RECORDER: MouseClickRecorder = MouseClickRecorder::new(MouseButton::Left); //Static variable with interior mutability to toggle mouse clicks; without such a variable, clicking the screen once would result in multiple actions
     static RIGHT_MOUSE_RECORDER: MouseClickRecorder = MouseClickRecorder::new(MouseButton::Right);
 
     if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
         //Left mouse actions
         if LEFT_MOUSE_RECORDER.was_clicked(window) {
-            handle_left_mouse_clicked(x, y, &mandelbrot_model.c);
+            handle_left_mouse_clicked(&mandelbrot_model, x, y);
         }
 
         //Right mouse actions
         if RIGHT_MOUSE_RECORDER.was_clicked(window) {
-            handle_right_mouse_clicked(x, y, coloring_function);
+            handle_right_mouse_clicked(&mut mandelbrot_model, x, y, coloring_function);
         }
     }
 }
@@ -412,16 +402,16 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         "Prints the current Mandelbrot set view; the center and scale",
         empty_closure,
     );
-    key_bindings.add(Key::Key1, "Renders VIEW_1", empty_closure);
-    key_bindings.add(Key::Key2, "Renders VIEW_2", empty_closure);
-    key_bindings.add(Key::Key3, "Renders VIEW_3", empty_closure);
-    key_bindings.add(Key::Key4, "Renders VIEW_4", empty_closure);
-    key_bindings.add(Key::Key5, "Renders VIEW_5", empty_closure);
-    key_bindings.add(Key::Key6, "Renders VIEW_6", empty_closure);
-    key_bindings.add(Key::Key7, "Renders VIEW_7", empty_closure);
-    key_bindings.add(Key::Key8, "Renders VIEW_8", empty_closure);
-    key_bindings.add(Key::Key9, "Renders VIEW_9", empty_closure);
-    key_bindings.add(Key::Key0, "Renders VIEW_0", empty_closure);
+    key_bindings.add(Key::Key1, "Renders VIEW_1", || MandelbrotModel::get_instance().c.set_view(&VIEW_1));
+    key_bindings.add(Key::Key2, "Renders VIEW_2", || MandelbrotModel::get_instance().c.set_view(&VIEW_2));
+    key_bindings.add(Key::Key3, "Renders VIEW_3", || MandelbrotModel::get_instance().c.set_view(&VIEW_3));
+    key_bindings.add(Key::Key4, "Renders VIEW_4", || MandelbrotModel::get_instance().c.set_view(&VIEW_4));
+    key_bindings.add(Key::Key5, "Renders VIEW_5", || MandelbrotModel::get_instance().c.set_view(&VIEW_5));
+    key_bindings.add(Key::Key6, "Renders VIEW_6", || MandelbrotModel::get_instance().c.set_view(&VIEW_6));
+    key_bindings.add(Key::Key7, "Renders VIEW_7", || MandelbrotModel::get_instance().c.set_view(&VIEW_7));
+    key_bindings.add(Key::Key8, "Renders VIEW_8", || MandelbrotModel::get_instance().c.set_view(&VIEW_8));
+    key_bindings.add(Key::Key9, "Renders VIEW_9", || MandelbrotModel::get_instance().c.set_view(&VIEW_9));
+    key_bindings.add(Key::Key0, "Renders VIEW_0", || MandelbrotModel::get_instance().c.set_view(&VIEW_0));
     key_bindings.add(Key::K, "Prints the keybindings", empty_closure);
     key_bindings.add(
         Key::S,

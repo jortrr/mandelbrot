@@ -16,7 +16,7 @@ impl KeyAction {
     }
 
     ///Run self.action
-    pub fn action(&self) {
+    pub fn run(&self) {
         (self.action)();
     }
 }
@@ -28,20 +28,20 @@ impl fmt::Debug for KeyAction {
 }
 
 pub struct KeyBindings {
-    key_actions: Vec<KeyAction>,
+    key_bindings: Vec<KeyAction>,
 }
 
 impl KeyBindings {
-    pub fn new(key_actions: Vec<KeyAction>) -> KeyBindings {
-        KeyBindings { key_actions }
+    pub fn new(key_bindings: Vec<KeyAction>) -> KeyBindings {
+        KeyBindings { key_bindings }
     }
 
     ///Adds a `KeyAction` to these `KeyBindings`, will remove any existing `KeyAction` `x` where `x.key` == `key_action.key`
     pub fn add_key(&mut self, key_action: KeyAction) {
         //Remove any KeyAction x where x.key == key_action.key
-        self.key_actions.retain(|x| x.key != key_action.key);
+        self.key_bindings.retain(|x| x.key != key_action.key);
 
-        self.key_actions.push(key_action);
+        self.key_bindings.push(key_action);
     }
 
     ///Adds a `KeyAction` to these `KeyBindings`, will remove any existing `KeyAction` `x` where `x.key` == `key`
@@ -50,7 +50,7 @@ impl KeyBindings {
     }
 
     pub fn key_actions(&self) -> &Vec<KeyAction> {
-        &self.key_actions
+        &self.key_bindings
     }
 
     /// Prints all `KeyAction`s in these `KeyBindings` to stdout
@@ -59,7 +59,7 @@ impl KeyBindings {
     }
 
     pub fn print_key(&self, key: &Key) {
-        for key_action in &self.key_actions {
+        for key_action in &self.key_bindings {
             if key_action.key == *key {
                 println!("{:?}", key_action);
                 return;
@@ -68,12 +68,21 @@ impl KeyBindings {
         //KeyBindings does not contain a KeyAction x with x.key == key, unbound
         println!("{:?}", key);
     }
+
+    pub fn run(&self, key: &Key) {
+        for key_binding in &self.key_bindings {
+            if key_binding.key == *key {
+                key_binding.run();
+                break;
+            }
+        }
+    }
 }
 
 impl fmt::Debug for KeyBindings {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "KeyBindings {{")?;
-        for key_action in &self.key_actions {
+        for key_action in &self.key_bindings {
             writeln!(f, "    {:?},", key_action)?;
         }
         write!(f, "}}")

@@ -39,6 +39,10 @@ impl MandelbrotModel {
 
     /// Returns the singleton MandelbrotModel instance.
     pub fn get_instance() -> MutexGuard<'static, MandelbrotModel> {
-        MANDELBROT_MODEL_INSTANCE.lock().unwrap()
+        let lock = MANDELBROT_MODEL_INSTANCE.try_lock();
+        if let Ok(instance) = lock {
+            return instance;
+        }
+        panic!("You have called the singleton twice! This should never happen. It means that within the same scope, MandelbrotModel::get_instance() was called more than once.");
     }
 }
