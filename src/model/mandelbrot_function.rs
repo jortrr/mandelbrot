@@ -1,15 +1,15 @@
-use crate::complex::Complex;
+use crate::model::complex::Complex;
 
 #[derive(Clone)]
-pub struct MandelbrotSet {
+pub struct MandelbrotFunction {
     pub max_iterations: u32,
     ///If z remains within the orbit_radius in max_iterations, we assume c does not tend to infinity
     pub orbit_radius: f64,
 }
 
-impl MandelbrotSet {
-    pub fn new(max_iterations: u32, orbit_radius: f64) -> MandelbrotSet {
-        MandelbrotSet {
+impl MandelbrotFunction {
+    pub fn new(max_iterations: u32, orbit_radius: f64) -> MandelbrotFunction {
+        MandelbrotFunction {
             max_iterations,
             orbit_radius,
         }
@@ -34,7 +34,7 @@ impl MandelbrotSet {
     }
 }
 
-impl std::fmt::Debug for MandelbrotSet {
+impl std::fmt::Debug for MandelbrotFunction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "max_iterations = {}, orbit_radius = {}", self.max_iterations, self.orbit_radius)
     }

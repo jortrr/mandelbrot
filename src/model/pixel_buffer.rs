@@ -1,11 +1,7 @@
 use std::{fs::File, io::BufWriter, path::Path};
 
-use crate::{
-    coloring::{ColorChannelMapping, TrueColor},
-    complex_plane::View,
-    mandelbrot_set::MandelbrotSet,
-    pixel_plane::PixelPlane,
-};
+use crate::model::{complex_plane::View, mandelbrot_function::MandelbrotFunction, pixel_plane::PixelPlane};
+use crate::view::coloring::{ColorChannelMapping, TrueColor};
 
 #[derive(Clone)]
 pub struct PixelBuffer {
@@ -96,7 +92,7 @@ impl PixelBuffer {
     ///Also stores author and application metadata
     /// # Panics
     /// If the file `saved/{file_name_without_extension}.png` cannot be created
-    pub fn save_as_png(&self, file_name_without_extension: &str, view: &View, m: &MandelbrotSet, supersampling_amount: u8) {
+    pub fn save_as_png(&self, file_name_without_extension: &str, view: &View, m: &MandelbrotFunction, supersampling_amount: u8) {
         let file_name_without_extension = file_name_without_extension.replace(':', "-").replace(' ', "_"); //Replace ':' with '-' for Windows file system. Replace ' ' with '_' because spaces are annoying in filenames.
         let file_name = format!("saved{}{}.png", std::path::MAIN_SEPARATOR_STR, file_name_without_extension);
         match std::fs::create_dir_all("saved") {
@@ -113,7 +109,9 @@ impl PixelBuffer {
         let view_text = format!("{:?}", view);
         encoder.add_text_chunk(String::from("view"), view_text).unwrap();
         let mandelbrot_set_text = format!("{:?}", m);
-        encoder.add_text_chunk(String::from("mandelbrot_set"), mandelbrot_set_text).unwrap();
+        encoder
+            .add_text_chunk(String::from("mandelbrot_function"), mandelbrot_set_text)
+            .unwrap();
         let supersampling_amount_text = format!("{}x", supersampling_amount);
         encoder
             .add_text_chunk(String::from("supersampling_amount"), supersampling_amount_text)

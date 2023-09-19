@@ -1,4 +1,4 @@
-use crate::complex::Complex;
+use crate::model::complex::Complex;
 
 /// # Complex plane
 /// In mathematics, the complex plane is the plane formed by the complex numbers, with a Cartesian coordinate system such that the x-axis, called the real axis, is formed by the real numbers, and the y-axis, called the imaginary axis, is formed by the imaginary numbers.

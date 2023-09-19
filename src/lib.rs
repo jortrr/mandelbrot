@@ -26,35 +26,27 @@
     clippy::cast_sign_loss
 )]
 
-pub mod coloring;
-pub mod complex;
-pub mod complex_plane;
-pub mod config;
 pub mod controller;
-pub mod key_bindings;
-pub mod mandelbrot_set;
 pub mod model;
-pub mod pixel_buffer;
-pub mod pixel_plane;
-pub mod rendering;
-pub mod user_input;
 pub mod view;
 
 use std::error::Error;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use coloring::ColorChannelMapping;
-pub use config::Config;
-use mandelbrot_set::MandelbrotSet;
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 
-use crate::coloring::TrueColor;
-use crate::complex_plane::{ComplexPlane, View};
-use crate::key_bindings::KeyBindings;
-use crate::model::mandelbrot_model::MandelbrotModel;
-use crate::pixel_buffer::PixelBuffer;
-use crate::pixel_plane::PixelPlane;
-use crate::user_input::{ask, pick_option};
+//Crate includes
+pub use controller::config::Config;
+use controller::key_bindings::KeyBindings;
+use controller::user_input::{ask, pick_option};
+use model::complex_plane::{ComplexPlane, View};
+use model::mandelbrot_function::MandelbrotFunction;
+use model::mandelbrot_model::MandelbrotModel;
+use model::{pixel_buffer, pixel_plane, rendering};
+use pixel_buffer::PixelBuffer;
+use pixel_plane::PixelPlane;
+use view::coloring::ColorChannelMapping;
+use view::coloring::TrueColor;
 
 //Coloring function
 type ColoringFunction = fn(iterations: u32, max_iterations: u32) -> TrueColor;
@@ -141,7 +133,7 @@ fn handle_key_events(
     window: &Window,
     c: &mut ComplexPlane,
     p: &mut PixelBuffer,
-    m: &mut MandelbrotSet,
+    m: &mut MandelbrotFunction,
     vars: &mut InteractionVariables,
     k: &KeyBindings,
     supersampling_amount: &mut u8,
@@ -286,7 +278,7 @@ fn handle_right_mouse_clicked(
     y: f32,
     c: &mut ComplexPlane,
     p: &mut PixelBuffer,
-    m: &MandelbrotSet,
+    m: &MandelbrotFunction,
     supersampling_amount: u8,
     coloring_function: ColoringFunction,
 ) {
@@ -331,7 +323,7 @@ fn handle_mouse_events(
     window: &Window,
     c: &mut ComplexPlane,
     p: &mut PixelBuffer,
-    m: &MandelbrotSet,
+    m: &MandelbrotFunction,
     supersampling_amount: u8,
     coloring_function: ColoringFunction,
 ) {
@@ -397,7 +389,7 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     // Multithreading variables
     let amount_of_threads = num_cpus::get(); //Amount of CPU threads to use, TODO: use this value in rendering functions
                                              // Mandelbrot set iterator
-    let mut m: MandelbrotSet = MandelbrotSet::new(config.max_iterations, config.orbit_radius);
+    let mut m: MandelbrotFunction = MandelbrotFunction::new(config.max_iterations, config.orbit_radius);
     //Coloring function
     let mut coloring_function = COLORING_FUNCTION;
     //Color channel mapping

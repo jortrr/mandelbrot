@@ -11,7 +11,8 @@ use std::{
 
 use rand::Rng;
 
-use crate::{coloring::TrueColor, complex::Complex, complex_plane::ComplexPlane, mandelbrot_set::MandelbrotSet, pixel_buffer::PixelBuffer};
+use crate::model::{complex::Complex, complex_plane::ComplexPlane, mandelbrot_function::MandelbrotFunction, pixel_buffer::PixelBuffer};
+use crate::view::coloring::TrueColor;
 
 ///A box representing the area to render by rendering functions
 #[derive(Clone, Copy)]
@@ -61,7 +62,7 @@ impl RenderBox {
 pub fn render_complex_plane_into_buffer(
     p: &mut PixelBuffer,
     c: &ComplexPlane,
-    m: &MandelbrotSet,
+    m: &MandelbrotFunction,
     supersampling_amount: u8,
     coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor,
 ) {
@@ -82,7 +83,7 @@ pub fn render_complex_plane_into_buffer(
 pub fn render_box_render_complex_plane_into_buffer(
     p: &mut PixelBuffer,
     c: &ComplexPlane,
-    m: &MandelbrotSet,
+    m: &MandelbrotFunction,
     render_box: RenderBox,
     supersampling_amount: u8,
     coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor,
@@ -177,7 +178,7 @@ pub fn render_box_render_complex_plane_into_buffer(
 pub fn translate_and_render_complex_plane_buffer(
     p: &mut PixelBuffer,
     c: &ComplexPlane,
-    m: &MandelbrotSet,
+    m: &MandelbrotFunction,
     rows: i128,
     columns: i128,
     supersampling_amount: u8,
@@ -203,7 +204,7 @@ pub fn translate_and_render_complex_plane_buffer(
 pub fn translate_and_render_efficiently(
     c: &mut ComplexPlane,
     p: &mut PixelBuffer,
-    m: &MandelbrotSet,
+    m: &MandelbrotFunction,
     rows_up: i16,
     columns_right: i16,
     supersampling_amount: u8,
@@ -234,7 +235,7 @@ pub fn translate_and_render_efficiently(
 pub fn translate_to_center_and_render_efficiently(
     c: &mut ComplexPlane,
     p: &mut PixelBuffer,
-    m: &MandelbrotSet,
+    m: &MandelbrotFunction,
     new_center: &Complex,
     supersampling_amount: u8,
     coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor,
