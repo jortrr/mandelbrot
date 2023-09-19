@@ -4,13 +4,15 @@ use std::{
     sync::{Mutex, MutexGuard},
 };
 
-use crate::{Config, InteractionVariables};
+use crate::{view::coloring::TrueColor, Config, InteractionVariables};
 
 use super::{complex_plane::ComplexPlane, mandelbrot_function::MandelbrotFunction, pixel_buffer::PixelBuffer, pixel_plane::PixelPlane};
 
 lazy_static! {
     static ref MANDELBROT_MODEL_INSTANCE: Mutex<MandelbrotModel> = Mutex::new(MandelbrotModel::new());
 }
+
+pub type ColoringFunction = fn(iterations: u32, max_iterations: u32) -> TrueColor;
 
 pub struct MandelbrotModel {
     pub config: Config,
@@ -19,6 +21,7 @@ pub struct MandelbrotModel {
     pub vars: InteractionVariables,
     pub amount_of_threads: usize,
     pub m: MandelbrotFunction,
+    pub coloring_function: ColoringFunction,
 }
 
 impl MandelbrotModel {
@@ -34,6 +37,7 @@ impl MandelbrotModel {
             vars: InteractionVariables::default(),
             amount_of_threads: num_cpus::get(),
             m: MandelbrotFunction::new(config.max_iterations, config.orbit_radius),
+            coloring_function: TrueColor::new_from_bernstein_polynomials,
         }
     }
 

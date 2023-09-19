@@ -59,12 +59,9 @@ impl RenderBox {
 /// `orbit_radius` determines when Zn is considered to have gone to infinity.
 /// `max_iterations` concerns the maximum amount of times the Mandelbrot formula will be applied to each Complex number.
 /// Note: This function is computationally intensive, and should not be used for translations
-pub fn render_complex_plane_into_buffer(
-    mandelbrot_model: &mut MandelbrotModel,
-    coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor,
-) {
+pub fn render_complex_plane_into_buffer(mandelbrot_model: &mut MandelbrotModel) {
     let render_box = RenderBox::new(0, mandelbrot_model.p.pixel_plane.width, 0, mandelbrot_model.p.pixel_plane.height);
-    render_box_render_complex_plane_into_buffer(mandelbrot_model, render_box, coloring_function);
+    render_box_render_complex_plane_into_buffer(mandelbrot_model, render_box);
 }
 
 /// Render the Complex plane c into the 32-bit pixel buffer by applying the Mandelbrot formula iteratively to every Complex point mapped to a pixel in the buffer.
@@ -77,11 +74,7 @@ pub fn render_complex_plane_into_buffer(
 /// * `coloring_function` - e.g. `TrueColor::new_from_hsv`
 /// # Panics
 /// If `lock().unwrap()` panics
-pub fn render_box_render_complex_plane_into_buffer(
-    mandelbrot_model: &mut MandelbrotModel,
-    render_box: RenderBox,
-    coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor,
-) {
+pub fn render_box_render_complex_plane_into_buffer(mandelbrot_model: &mut MandelbrotModel, render_box: RenderBox) {
     let time = benchmark_start();
     let supersampling_amount = mandelbrot_model.config.supersampling_amount.clamp(1, 64); //Supersampling_amount should be at least 1 and atmost 64
     render_box.print();
@@ -104,6 +97,7 @@ pub fn render_box_render_complex_plane_into_buffer(
         let pixel_buffer = (mandelbrot_model.p).clone();
         let ms = (mandelbrot_model.m).clone();
         let atm = Arc::clone(&current_progress_atomic);
+        let coloring_function = (mandelbrot_model.coloring_function).clone();
 
         let handle = thread::spawn(move || {
             let mut thread_chunks = Vec::new();
@@ -169,12 +163,7 @@ pub fn render_box_render_complex_plane_into_buffer(
     benchmark("render_box_render_complex_plane_into_buffer()", time);
 }
 
-pub fn translate_and_render_complex_plane_buffer(
-    mandelbrot_model: &mut MandelbrotModel,
-    rows: i128,
-    columns: i128,
-    coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor,
-) {
+pub fn translate_and_render_complex_plane_buffer(mandelbrot_model: &mut MandelbrotModel, rows: i128, columns: i128) {
     println!("rows: {}, columns: {}", rows, columns);
     let max_x: usize = if columns > 0 {
         columns as usize
@@ -194,7 +183,7 @@ pub fn translate_and_render_complex_plane_buffer(
             0,
             mandelbrot_model.p.pixel_plane.height,
         );
-        render_box_render_complex_plane_into_buffer(mandelbrot_model, render_box, coloring_function);
+        render_box_render_complex_plane_into_buffer(mandelbrot_model, render_box);
     } else if columns == 0 {
         let render_box = RenderBox::new(
             0,
@@ -202,7 +191,7 @@ pub fn translate_and_render_complex_plane_buffer(
             (max_y as i128 - rows.abs()) as usize,
             max_y,
         );
-        render_box_render_complex_plane_into_buffer(mandelbrot_model, render_box, coloring_function);
+        render_box_render_complex_plane_into_buffer(mandelbrot_model, render_box);
     } else {
         println!("ERROR: translate_and_render_complex_plane_buffer() requires that rows == 0 || columns == 0");
     }
@@ -210,12 +199,7 @@ pub fn translate_and_render_complex_plane_buffer(
 
 ///# Panics
 /// If `rows_up` != 0 && `columns_right` != 0
-pub fn translate_and_render_efficiently(
-    mandelbrot_model: &mut MandelbrotModel,
-    rows_up: i16,
-    columns_right: i16,
-    coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor,
-) {
+pub fn translate_and_render_efficiently(mandelbrot_model: &mut MandelbrotModel, rows_up: i16, columns_right: i16) {
     assert!(
         rows_up == 0 || columns_right == 0,
         "translate_and_render_efficiently: rows_up should be 0 or columns_right should be 0!"
@@ -227,14 +211,10 @@ pub fn translate_and_render_efficiently(
         column_sign * mandelbrot_model.c.pixels_to_real(columns_right.unsigned_abs() as u8),
         row_sign * mandelbrot_model.c.pixels_to_imaginary(rows_up.unsigned_abs() as u8),
     );
-    translate_and_render_complex_plane_buffer(mandelbrot_model, rows_up.into(), (-columns_right).into(), coloring_function);
+    translate_and_render_complex_plane_buffer(mandelbrot_model, rows_up.into(), (-columns_right).into());
 }
 
-pub fn translate_to_center_and_render_efficiently(
-    mandelbrot_model: &mut MandelbrotModel,
-    new_center: &Complex,
-    coloring_function: fn(iterations: u32, max_iterations: u32) -> TrueColor,
-) {
+pub fn translate_to_center_and_render_efficiently(mandelbrot_model: &mut MandelbrotModel, new_center: &Complex) {
     let mut translation: Complex = new_center.subtract(&mandelbrot_model.c.center());
     //Mirror the y translation because the screen y is mirrored compared to the complex plane y axis
     translation.y = -translation.y;
@@ -243,13 +223,13 @@ pub fn translate_to_center_and_render_efficiently(
     mandelbrot_model.c.translate(translation.x, 0.0);
     let columns_right = -mandelbrot_model.c.real_to_pixels(translation.x);
     dbg!(columns_right);
-    translate_and_render_complex_plane_buffer(mandelbrot_model, 0, columns_right.into(), coloring_function);
+    translate_and_render_complex_plane_buffer(mandelbrot_model, 0, columns_right.into());
 
     //Translate y, up
     mandelbrot_model.c.translate(0.0, translation.y);
     let rows_up = -mandelbrot_model.c.imaginary_to_pixels(translation.y);
     dbg!(rows_up);
-    translate_and_render_complex_plane_buffer(mandelbrot_model, rows_up.into(), 0, coloring_function);
+    translate_and_render_complex_plane_buffer(mandelbrot_model, rows_up.into(), 0);
 }
 
 fn benchmark_start() -> Instant {

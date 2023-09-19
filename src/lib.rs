@@ -40,6 +40,7 @@ pub use controller::config::Config;
 use controller::key_bindings::KeyBindings;
 use controller::user_input::{ask, pick_option};
 use model::complex_plane::{ComplexPlane, View};
+use model::mandelbrot_model::ColoringFunction;
 pub use model::mandelbrot_model::MandelbrotModel;
 use model::{pixel_buffer, pixel_plane, rendering};
 use pixel_buffer::PixelBuffer;
@@ -48,7 +49,6 @@ use view::coloring::ColorChannelMapping;
 use view::coloring::TrueColor;
 
 //Coloring function
-type ColoringFunction = fn(iterations: u32, max_iterations: u32) -> TrueColor;
 static COLORING_FUNCTION: ColoringFunction = TrueColor::new_from_bernstein_polynomials;
 
 //Color channel mapping
@@ -128,7 +128,7 @@ impl Default for InteractionVariables {
 }
 
 // Handle any key events
-fn handle_key_events(window: &Window, k: &KeyBindings, coloring_function: &mut ColoringFunction) {
+fn handle_key_events(window: &Window, k: &KeyBindings) {
     if let Some(key) = window.get_keys_pressed(minifb::KeyRepeat::No).first() {
         print!("\nKey pressed: ");
         k.print_key(key);
@@ -137,11 +137,11 @@ fn handle_key_events(window: &Window, k: &KeyBindings, coloring_function: &mut C
         match key {
             Key::K => k.print(),
             Key::A => {
-                *coloring_function = pick_option(&[
+                mandelbrot_model.coloring_function = pick_option(&[
                     ("HSV", TrueColor::new_from_hsv_colors),
                     ("Bernstein polynomials", TrueColor::new_from_bernstein_polynomials),
                 ]);
-                render(&mut mandelbrot_model, COLORING_FUNCTION);
+                render(&mut mandelbrot_model);
             }
             _ => (),
         }
@@ -161,13 +161,13 @@ fn handle_left_mouse_clicked(mandelbrot_model: &MandelbrotModel, x: f32, y: f32)
     println!();
 }
 
-fn handle_right_mouse_clicked(mandelbrot_model: &mut MandelbrotModel, x: f32, y: f32, coloring_function: ColoringFunction) {
+fn handle_right_mouse_clicked(mandelbrot_model: &mut MandelbrotModel, x: f32, y: f32) {
     println!("\nMouseButton::Right -> Move to ({x}, {y})");
     let new_center = mandelbrot_model.c.complex_from_pixel_plane(x.into(), y.into());
     println!("mandelbrot_model.c.center: {:?}", mandelbrot_model.c.center());
     println!("new_center: {:?}", new_center);
 
-    rendering::translate_to_center_and_render_efficiently(mandelbrot_model, &new_center, coloring_function);
+    rendering::translate_to_center_and_render_efficiently(mandelbrot_model, &new_center);
     mandelbrot_model.c.print();
     println!();
 }
@@ -199,7 +199,7 @@ impl MouseClickRecorder {
     }
 }
 
-fn handle_mouse_events(window: &Window, coloring_function: ColoringFunction) {
+fn handle_mouse_events(window: &Window) {
     let mut mandelbrot_model = MandelbrotModel::get_instance();
     static LEFT_MOUSE_RECORDER: MouseClickRecorder = MouseClickRecorder::new(MouseButton::Left); //Static variable with interior mutability to toggle mouse clicks; without such a variable, clicking the screen once would result in multiple actions
     static RIGHT_MOUSE_RECORDER: MouseClickRecorder = MouseClickRecorder::new(MouseButton::Right);
@@ -212,19 +212,20 @@ fn handle_mouse_events(window: &Window, coloring_function: ColoringFunction) {
 
         //Right mouse actions
         if RIGHT_MOUSE_RECORDER.was_clicked(window) {
-            handle_right_mouse_clicked(&mut mandelbrot_model, x, y, coloring_function);
+            handle_right_mouse_clicked(&mut mandelbrot_model, x, y);
         }
     }
 }
 
-fn render(mandelbrot_model: &mut MandelbrotModel, coloring_function: ColoringFunction) {
-    rendering::render_complex_plane_into_buffer(mandelbrot_model, coloring_function);
+fn render(mandelbrot_model: &mut MandelbrotModel) {
+    //TODO: Observer pattern view -> model to update the view, instead of rendering manually
+    rendering::render_complex_plane_into_buffer(mandelbrot_model);
     mandelbrot_model.c.print();
 }
 
 fn set_view(mandelbrot_model: &mut MandelbrotModel, view: &View) {
     mandelbrot_model.c.set_view(view);
-    render(mandelbrot_model, COLORING_FUNCTION);
+    render(mandelbrot_model);
 }
 
 ///Prints Mandelbrot ASCII art :) </br>
@@ -266,9 +267,9 @@ fn print_command_info() {
 pub fn run() -> Result<(), Box<dyn Error>> {
     let mut mandelbrot_model = MandelbrotModel::get_instance();
     //Coloring function
-    let mut coloring_function = COLORING_FUNCTION;
+    mandelbrot_model.coloring_function = COLORING_FUNCTION;
     //Color channel mapping
-    //MandelbrotModel::get_instance().p.color_channel_mapping = COLOR_CHANNEL_MAPPING;
+    mandelbrot_model.p.color_channel_mapping = COLOR_CHANNEL_MAPPING;
     // Create a new window
     let mut window = Window::new(
         "Mandelbrot set viewer",
@@ -289,31 +290,31 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::Up, "Move up translation_amount pixels", || {
         let mut mandelbrot_model = MandelbrotModel::get_instance();
         let rows = mandelbrot_model.vars.translation_amount;
-        rendering::translate_and_render_efficiently(&mut mandelbrot_model, rows.into(), 0, COLORING_FUNCTION);
+        rendering::translate_and_render_efficiently(&mut mandelbrot_model, rows.into(), 0);
         mandelbrot_model.c.print();
     });
     key_bindings.add(Key::Down, "Move down translation_amount pixels", || {
         let mut mandelbrot_model = MandelbrotModel::get_instance();
         let rows = -i16::from(mandelbrot_model.vars.translation_amount);
-        rendering::translate_and_render_efficiently(&mut mandelbrot_model, rows, 0, COLORING_FUNCTION);
+        rendering::translate_and_render_efficiently(&mut mandelbrot_model, rows, 0);
         mandelbrot_model.c.print();
     });
     key_bindings.add(Key::Left, "Move left translation_amount pixels", || {
         let mut mandelbrot_model = MandelbrotModel::get_instance();
         let columns = -i16::from(mandelbrot_model.vars.translation_amount);
-        rendering::translate_and_render_efficiently(&mut mandelbrot_model, 0, columns, COLORING_FUNCTION);
+        rendering::translate_and_render_efficiently(&mut mandelbrot_model, 0, columns);
         mandelbrot_model.c.print();
     });
     key_bindings.add(Key::Right, "Move right translation_amount pixels", || {
         let mut mandelbrot_model = MandelbrotModel::get_instance();
         let columns = mandelbrot_model.vars.translation_amount.into();
-        rendering::translate_and_render_efficiently(&mut mandelbrot_model, 0, columns, COLORING_FUNCTION);
+        rendering::translate_and_render_efficiently(&mut mandelbrot_model, 0, columns);
         mandelbrot_model.c.print();
     });
     key_bindings.add(Key::R, "Reset the Mandelbrot set view to the starting view", || {
         let mut mandelbrot_model = MandelbrotModel::get_instance();
         mandelbrot_model.c.reset();
-        render(&mut mandelbrot_model, COLORING_FUNCTION);
+        render(&mut mandelbrot_model);
     });
     key_bindings.add(Key::NumPadPlus, "Increment translation_amount", || {
         let mut mandelbrot_model = MandelbrotModel::get_instance();
@@ -346,7 +347,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         let mut mandelbrot_model = MandelbrotModel::get_instance();
         let scaling_factor = mandelbrot_model.vars.scaling_factor();
         mandelbrot_model.c.scale(scaling_factor);
-        render(&mut mandelbrot_model, COLORING_FUNCTION);
+        render(&mut mandelbrot_model);
     });
     key_bindings.add(
         Key::RightBracket,
@@ -355,7 +356,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             let mut mandelbrot_model = MandelbrotModel::get_instance();
             let inverse_scaling_factor = mandelbrot_model.vars.inverse_scaling_factor();
             mandelbrot_model.c.scale(inverse_scaling_factor);
-            render(&mut mandelbrot_model, COLORING_FUNCTION);
+            render(&mut mandelbrot_model);
         },
     );
     key_bindings.add(Key::V, "Prints the current Mandelbrot set view; the center and scale", || {
@@ -419,7 +420,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                     ComplexPlane::new(mandelbrot_model.config.image_width, mandelbrot_model.config.image_height);
                 image_p.color_channel_mapping = mandelbrot_model.p.color_channel_mapping;
                 image_c.set_view(&mandelbrot_model.c.get_view());
-                rendering::render_complex_plane_into_buffer(&mut mandelbrot_model, COLORING_FUNCTION);
+                rendering::render_complex_plane_into_buffer(&mut mandelbrot_model);
                 image_p.save_as_png(
                     &time_stamp,
                     &mandelbrot_model.c.get_view(),
@@ -432,13 +433,13 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     key_bindings.add(Key::I, "Manually input a Mandelbrot set view", || {
         let mut mandelbrot_model = MandelbrotModel::get_instance();
         mandelbrot_model.c.set_view(&View::new(ask("x"), ask("y"), ask("scale")));
-        render(&mut mandelbrot_model, COLORING_FUNCTION);
+        render(&mut mandelbrot_model);
     });
     key_bindings.add(Key::A, "Pick an algorithm to color the Mandelbrot set view", empty_closure);
     key_bindings.add(Key::M, "Change the Mandelbrot set view max_iterations", || {
         let mut mandelbrot_model = MandelbrotModel::get_instance();
         mandelbrot_model.m.max_iterations = ask("max_iterations");
-        render(&mut mandelbrot_model, COLORING_FUNCTION);
+        render(&mut mandelbrot_model);
     });
     key_bindings.add(
         Key::O,
@@ -446,7 +447,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         || {
             let mut mandelbrot_model = MandelbrotModel::get_instance();
             mandelbrot_model.p.color_channel_mapping = ask("color_channel_mapping");
-            render(&mut mandelbrot_model, COLORING_FUNCTION);
+            render(&mut mandelbrot_model);
         },
     );
     key_bindings.add(
@@ -455,7 +456,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         || {
             let mut mandelbrot_model = MandelbrotModel::get_instance();
             mandelbrot_model.config.supersampling_amount = ask::<u8>("supersampling_amount").clamp(1, 64);
-            render(&mut mandelbrot_model, COLORING_FUNCTION);
+            render(&mut mandelbrot_model);
         },
     );
     key_bindings.add(
@@ -485,16 +486,16 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     println!();
 
     println!("Rendering Mandelbrot set default view");
-    rendering::render_complex_plane_into_buffer(&mut mandelbrot_model, coloring_function);
+    rendering::render_complex_plane_into_buffer(&mut mandelbrot_model);
     drop(mandelbrot_model);
 
     // Main loop
     while window.is_open() && !window.is_key_down(Key::Escape) {
         // Handle any window events
-        handle_key_events(&window, &key_bindings, &mut coloring_function);
+        handle_key_events(&window, &key_bindings);
 
         //Handle any mouse events
-        handle_mouse_events(&window, coloring_function);
+        handle_mouse_events(&window);
 
         let mandelbrot_model = MandelbrotModel::get_instance();
         // Update the window with the new buffer
@@ -506,6 +507,10 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             )
             .unwrap();
     }
-
+    if window.is_key_down(Key::Escape) {
+        println!("Escape pressed, application exited gracefully.");
+    } else {
+        println!("Window closed, application exited gracefully.")
+    }
     Ok(())
 }
