@@ -74,12 +74,12 @@ impl KeyBindings {
     pub fn print_key(&self, key: &Key) {
         for key_action in &self.key_bindings {
             if key_action.key == *key {
-                println!("{}", key_action.to_formatted_str());
+                print!("{}", key_action.to_formatted_str());
                 return;
             }
         }
         //KeyBindings does not contain a KeyBinding x with x.key == key, unbound
-        println!("{:?}", key);
+        print!("{:?}", key);
     }
 
     pub fn run(&self, key: &Key) {

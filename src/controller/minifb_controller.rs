@@ -6,12 +6,10 @@ use crate::{
     controller::{minifb_mouse_click_recorder::MouseClickRecorder, user_input::pick_option},
     model::{
         coloring::TrueColor,
-        complex_plane::{ComplexPlane, View},
-        pixel_buffer::PixelBuffer,
-        pixel_plane::PixelPlane,
+        complex_plane::View,
         rendering::{self, render, set_view},
     },
-    view::minifb_mandelbrot_view::MandelbrotView,
+    view::{image, minifb_mandelbrot_view::MandelbrotView},
     MandelbrotModel, VIEW_0, VIEW_1, VIEW_2, VIEW_3, VIEW_4, VIEW_5, VIEW_6, VIEW_7, VIEW_8, VIEW_9,
 };
 
@@ -20,8 +18,9 @@ use super::{minifb_key_bindings::KeyBindings, user_input::ask};
 // Handle any key events
 pub fn handle_key_events(window: &Window, k: &KeyBindings) {
     if let Some(key) = window.get_keys_pressed(minifb::KeyRepeat::No).first() {
-        print!("\nKey pressed: ");
+        print!("\n{{Key pressed: ");
         k.print_key(key);
+        println!("}}");
         k.run(key);
         let mut mandelbrot_model = MandelbrotModel::get_instance();
         match key {
@@ -35,11 +34,12 @@ pub fn handle_key_events(window: &Window, k: &KeyBindings) {
             }
             _ => (),
         }
+        println!();
     }
 }
 
 pub fn handle_left_mouse_clicked(mandelbrot_model: &MandelbrotModel, x: f32, y: f32) {
-    println!("\nMouseButton::Left -> Info at ({x}, {y})");
+    println!("\n{{MouseButton::Left -> Info at ({x}, {y})}}");
     //let iterations = MandelbrotModel::get_instance().p.iterations_at_point(x as usize, y as usize, MandelbrotModel::get_instance().m.max_iterations); //TODO: fix this
     let complex = mandelbrot_model.c.complex_from_pixel_plane(x.into(), y.into());
     println!("Complex: {:?}", complex);
@@ -48,7 +48,7 @@ pub fn handle_left_mouse_clicked(mandelbrot_model: &MandelbrotModel, x: f32, y: 
 }
 
 pub fn handle_right_mouse_clicked(mandelbrot_model: &mut MandelbrotModel, x: f32, y: f32) {
-    println!("\nMouseButton::Right -> Move to ({x}, {y})");
+    println!("\n{{MouseButton::Right -> Move to ({x}, {y})}}");
     let new_center = mandelbrot_model.c.complex_from_pixel_plane(x.into(), y.into());
     println!("mandelbrot_model.c.center: {:?}", mandelbrot_model.c.center());
     println!("new_center: {:?}", new_center);
@@ -112,7 +112,6 @@ pub fn initialize_keybindings(key_bindings: &mut KeyBindings) {
         mandelbrot_model.vars.increment_translation_amount();
         println!("translation_amount: {}", mandelbrot_model.vars.translation_amount);
     });
-
     key_bindings.add(Key::NumPadMinus, "Decrement translation amount", || {
         let mut mandelbrot_model = MandelbrotModel::get_instance();
         mandelbrot_model.vars.decrement_translation_amount();
@@ -193,32 +192,8 @@ pub fn initialize_keybindings(key_bindings: &mut KeyBindings) {
         Key::S,
         "Saves the current Mandelbrot set view as an image in the saved folder",
         || {
-            let mut mandelbrot_model = MandelbrotModel::get_instance();
-            let time_stamp = chrono::Utc::now().to_string();
-            if mandelbrot_model.config.window_scale == 1.0 {
-                mandelbrot_model.p.save_as_png(
-                    &time_stamp,
-                    &mandelbrot_model.c.get_view(),
-                    &mandelbrot_model.m,
-                    mandelbrot_model.config.supersampling_amount,
-                );
-            } else {
-                let mut image_p: PixelBuffer = PixelBuffer::new(PixelPlane::new(
-                    mandelbrot_model.config.image_width,
-                    mandelbrot_model.config.image_height,
-                ));
-                let mut image_c: ComplexPlane =
-                    ComplexPlane::new(mandelbrot_model.config.image_width, mandelbrot_model.config.image_height);
-                image_p.color_channel_mapping = mandelbrot_model.p.color_channel_mapping;
-                image_c.set_view(&mandelbrot_model.c.get_view());
-                rendering::render_complex_plane_into_buffer(&mut mandelbrot_model);
-                image_p.save_as_png(
-                    &time_stamp,
-                    &mandelbrot_model.c.get_view(),
-                    &mandelbrot_model.m,
-                    mandelbrot_model.config.supersampling_amount,
-                );
-            }
+            let mandelbrot_model = MandelbrotModel::get_instance();
+            image::save(&mandelbrot_model);
         },
     );
     key_bindings.add(Key::I, "Manually input a Mandelbrot set view", || {
