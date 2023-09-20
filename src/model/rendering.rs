@@ -11,7 +11,7 @@ use std::{
 
 use rand::Rng;
 
-use crate::view::coloring::TrueColor;
+use crate::model::coloring::TrueColor;
 use crate::{model::complex::Complex, MandelbrotModel};
 
 use super::complex_plane::View;

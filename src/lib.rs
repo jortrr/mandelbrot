@@ -36,11 +36,14 @@ use std::error::Error;
 //Crate includes
 use controller::config::Config;
 use controller::minifb_controller;
+use model::coloring::ColorChannelMapping;
+use model::coloring::TrueColor;
 use model::complex_plane::View;
 use model::mandelbrot_model::ColoringFunction;
 use model::mandelbrot_model::MandelbrotModel;
-use view::coloring::ColorChannelMapping;
-use view::coloring::TrueColor;
+use view::minifb_mandelbrot_view::MandelbrotView;
+use view::terminal::print_banner;
+use view::terminal::print_command_info;
 
 //Coloring function
 static COLORING_FUNCTION: ColoringFunction = TrueColor::new_from_bernstein_polynomials;
@@ -70,6 +73,16 @@ static VERSION: &str = "1.4";
 /// # Errors
 /// Currently does not return any Errors
 pub fn run() -> Result<(), Box<dyn Error>> {
-    minifb_controller::run()?;
+    let mandelbrot_model = MandelbrotModel::get_instance();
+
+    //Print the banner
+    print_banner(VERSION);
+    //Print command info
+    print_command_info();
+    //Create the view
+    let mut mandelbrot_view = MandelbrotView::new(&mandelbrot_model);
+    //Run the controller
+    drop(mandelbrot_model); //TODO: Get rid of MandelbrotModel mutex, as this can cause deadlocks
+    minifb_controller::run(&mut mandelbrot_view)?;
     Ok(())
 }

@@ -1,7 +1,7 @@
 use std::{fs::File, io::BufWriter, path::Path};
 
+use crate::model::coloring::{ColorChannelMapping, TrueColor};
 use crate::model::{complex_plane::View, mandelbrot_function::MandelbrotFunction, pixel_plane::PixelPlane};
-use crate::view::coloring::{ColorChannelMapping, TrueColor};
 
 #[derive(Clone)]
 pub struct PixelBuffer {

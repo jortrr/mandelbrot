@@ -1,6 +1,5 @@
 use std::fmt;
 
-use chrono::format::format;
 use minifb::Key;
 
 static KEY_BINDING_DESCRIPTION_OFFSET: usize = 20;
@@ -22,6 +21,14 @@ impl KeyBinding {
     ///Run self.action
     pub fn run(&self) {
         (self.action)();
+    }
+
+    pub fn to_formatted_str(&self) -> String {
+        let mut key_binding_formatted = format!("{:?}", self);
+        while key_binding_formatted.contains("  ") {
+            key_binding_formatted = key_binding_formatted.replace("  ", " ");
+        }
+        key_binding_formatted
     }
 }
 
@@ -67,7 +74,7 @@ impl KeyBindings {
     pub fn print_key(&self, key: &Key) {
         for key_action in &self.key_bindings {
             if key_action.key == *key {
-                println!("{:?}", key_action);
+                println!("{}", key_action.to_formatted_str());
                 return;
             }
         }
@@ -88,8 +95,8 @@ impl KeyBindings {
 impl fmt::Debug for KeyBindings {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "KeyBindings {{")?;
-        for key_action in &self.key_bindings {
-            writeln!(f, "    {:?},", key_action)?;
+        for key_binding in &self.key_bindings {
+            writeln!(f, "    {:?},", key_binding)?;
         }
         write!(f, "}}")
     }

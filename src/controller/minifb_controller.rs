@@ -1,24 +1,21 @@
 use std::error::Error;
 
-use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
+use minifb::{Key, MouseButton, MouseMode, Window};
 
 use crate::{
-    controller::{mouse_click_recorder::MouseClickRecorder, user_input::pick_option},
+    controller::{minifb_mouse_click_recorder::MouseClickRecorder, user_input::pick_option},
     model::{
+        coloring::TrueColor,
         complex_plane::{ComplexPlane, View},
         pixel_buffer::PixelBuffer,
         pixel_plane::PixelPlane,
         rendering::{self, render, set_view},
     },
-    view::{
-        coloring::TrueColor,
-        terminal::{print_banner, print_command_info},
-    },
-    MandelbrotModel, COLORING_FUNCTION, COLOR_CHANNEL_MAPPING, VERSION, VIEW_0, VIEW_1, VIEW_2, VIEW_3, VIEW_4, VIEW_5, VIEW_6, VIEW_7,
-    VIEW_8, VIEW_9,
+    view::minifb_mandelbrot_view::MandelbrotView,
+    MandelbrotModel, VIEW_0, VIEW_1, VIEW_2, VIEW_3, VIEW_4, VIEW_5, VIEW_6, VIEW_7, VIEW_8, VIEW_9,
 };
 
-use super::{key_bindings::KeyBindings, user_input::ask};
+use super::{minifb_key_bindings::KeyBindings, user_input::ask};
 
 // Handle any key events
 pub fn handle_key_events(window: &Window, k: &KeyBindings) {
@@ -263,73 +260,30 @@ pub fn initialize_keybindings(key_bindings: &mut KeyBindings) {
     });
 }
 
-pub fn run() -> Result<(), Box<dyn Error>> {
+pub fn run(mandelbrot_view: &mut MandelbrotView) -> Result<(), Box<dyn Error>> {
     let mut mandelbrot_model = MandelbrotModel::get_instance();
-    //Coloring function
-    mandelbrot_model.coloring_function = COLORING_FUNCTION;
-    //Color channel mapping
-    mandelbrot_model.p.color_channel_mapping = COLOR_CHANNEL_MAPPING;
-    // Create a new window
-    let mut window = Window::new(
-        "Mandelbrot set viewer",
-        mandelbrot_model.config.window_width,
-        mandelbrot_model.config.window_height,
-        WindowOptions::default(),
-    )
-    .unwrap_or_else(|e| {
-        panic!("{}", e);
-    });
-    //Print the banner
-    print_banner(VERSION);
-    //Print command info
-    print_command_info();
     //Initialize keybindings
     let mut key_bindings: KeyBindings = KeyBindings::new(Vec::new()); //TODO: Make KeyBindings a singleton
     initialize_keybindings(&mut key_bindings);
     key_bindings.print();
 
-    mandelbrot_model.p.pixel_plane.print();
-    mandelbrot_model.c.print();
-    println!(
-        "Mandelbrot set parameters: max. iterations is {} and orbit radius is {}",
-        mandelbrot_model.config.max_iterations, mandelbrot_model.config.orbit_radius
-    );
-    println!(
-        "Amount of CPU threads that will be used for rendering: {}",
-        mandelbrot_model.amount_of_threads
-    );
-    println!(
-        "Supersampling amount used for rendering: {}x",
-        mandelbrot_model.config.supersampling_amount
-    );
-    println!();
-
-    println!("Rendering Mandelbrot set default view");
-    rendering::render_complex_plane_into_buffer(&mut mandelbrot_model);
+    println!("\nRendering Mandelbrot set starting view");
+    render(&mut mandelbrot_model);
     drop(mandelbrot_model);
 
     // Main loop
-    while window.is_open() && !window.is_key_down(Key::Escape) {
+    while mandelbrot_view.window.is_open() && !mandelbrot_view.window.is_key_down(Key::Escape) {
         // Handle any window events
-        handle_key_events(&window, &key_bindings);
+        handle_key_events(&mandelbrot_view.window, &key_bindings);
 
         //Handle any mouse events
-        handle_mouse_events(&window);
+        handle_mouse_events(&mandelbrot_view.window);
 
-        let mandelbrot_model = MandelbrotModel::get_instance();
         // Update the window with the new buffer
-        window
-            .update_with_buffer(
-                &mandelbrot_model.p.pixels,
-                mandelbrot_model.config.window_width,
-                mandelbrot_model.config.window_height,
-            )
-            .unwrap();
+        let mandelbrot_model = MandelbrotModel::get_instance();
+        mandelbrot_view.update(&mandelbrot_model);
     }
-    if window.is_key_down(Key::Escape) {
-        println!("Escape pressed, application exited gracefully.");
-    } else {
-        println!("Window closed, application exited gracefully.")
-    }
+
+    mandelbrot_view.exit();
     Ok(())
 }

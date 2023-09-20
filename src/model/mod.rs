@@ -1,3 +1,4 @@
+pub mod coloring;
 pub mod complex;
 pub mod complex_plane;
 pub mod mandelbrot_function;

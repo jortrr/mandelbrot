@@ -4,7 +4,9 @@ use std::{
     sync::{Mutex, MutexGuard},
 };
 
-use crate::{controller::interaction_variables::InteractionVariables, view::coloring::TrueColor, Config};
+use crate::{
+    controller::interaction_variables::InteractionVariables, model::coloring::TrueColor, Config, COLORING_FUNCTION, COLOR_CHANNEL_MAPPING,
+};
 
 use super::{complex_plane::ComplexPlane, mandelbrot_function::MandelbrotFunction, pixel_buffer::PixelBuffer, pixel_plane::PixelPlane};
 
@@ -30,15 +32,20 @@ impl MandelbrotModel {
             eprintln!("Problem parsing arguments: {}", err);
             process::exit(1);
         });
-        MandelbrotModel {
+
+        let mut result = MandelbrotModel {
             config: config.clone(),
             c: ComplexPlane::new(config.window_width, config.window_height),
             p: PixelBuffer::new(PixelPlane::new(config.window_width, config.window_height)),
             vars: InteractionVariables::default(),
             amount_of_threads: num_cpus::get(),
             m: MandelbrotFunction::new(config.max_iterations, config.orbit_radius),
-            coloring_function: TrueColor::new_from_bernstein_polynomials,
-        }
+            coloring_function: COLORING_FUNCTION,
+        };
+        //Color channel mapping
+        result.p.color_channel_mapping = COLOR_CHANNEL_MAPPING;
+
+        result
     }
 
     /// Returns the singleton MandelbrotModel instance.
