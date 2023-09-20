@@ -1,4 +1,4 @@
-use crate::complex::Complex;
+use crate::model::complex::Complex;
 
 /// # Complex plane
 /// In mathematics, the complex plane is the plane formed by the complex numbers, with a Cartesian coordinate system such that the x-axis, called the real axis, is formed by the real numbers, and the y-axis, called the imaginary axis, is formed by the imaginary numbers.
@@ -88,11 +88,7 @@ impl ComplexPlane {
     pub fn print(&self) {
         println!("Complex plane:\tR ∈ [{},{}]", self.min_x, self.max_x);
         println!("\t\tC ∈ [{},{}]", self.min_y, self.max_y);
-        println!(
-            "\t\tCenter is {:?} and scale is {}",
-            self.center(),
-            self.get_scale()
-        );
+        println!("\t\tCenter is {:?} and scale is {}", self.center(), self.get_scale());
     }
 
     /// Resets the total translation and scaling applied to the Complex plane by the translate() and scale() functions
@@ -135,10 +131,10 @@ impl ComplexPlane {
         let old = self.center();
         let mut translation = center.subtract(&old);
         translation.y = -translation.y; //Negate because the Complex plane and pixel plane are flipped
-        /*println!("DEBUG set_center():");
-        println!("\tcenter: {:?}", center);
-        println!("\told: {:?}", old);
-        println!("\ttranslation: {:?}", translation);*/
+                                        /*println!("DEBUG set_center():");
+                                        println!("\tcenter: {:?}", center);
+                                        println!("\told: {:?}", old);
+                                        println!("\ttranslation: {:?}", translation);*/
         self.translate(translation.x, translation.y);
         translation
     }
@@ -151,13 +147,12 @@ impl ComplexPlane {
     }
 
     /// Set the Complex plane at Center (x,y) at the given scale, where scale == 1 => max_x-min_x=2.5
-    pub fn set_view(&mut self, view: &View)
-    {
+    pub fn set_view(&mut self, view: &View) {
         self.set_view_separated(view.x, view.y, view.scale);
     }
 
     pub fn pixels_to_imaginary(&self, amount: u8) -> f64 {
-        f64::from(amount) * self.increment_y 
+        f64::from(amount) * self.increment_y
     }
 
     pub fn pixels_to_real(&self, amount: u8) -> f64 {
@@ -182,12 +177,12 @@ impl ComplexPlane {
 pub struct View {
     x: f64,
     y: f64,
-    scale: f64
+    scale: f64,
 }
 
 impl View {
     pub const fn new(x: f64, y: f64, scale: f64) -> View {
-        View {x,y,scale}
+        View { x, y, scale }
     }
 }
 

@@ -2,9 +2,9 @@ use std::{fmt, str::FromStr};
 
 use angular_units::Deg;
 use num::traits::Pow;
-use prisma::{Hsv, Rgb, FromColor};
+use prisma::{FromColor, Hsv, Rgb};
 
-#[derive(Debug,Clone,Copy)]
+#[derive(Debug, Clone, Copy)]
 ///A mapping from ColorChannelMapping -> RGB, the first character denotes the new red channel, the second character the new green channel,
 /// the third character the new blue channel. </br>
 /// E.g: Ok(ColorChannelMapping::BGR) means that red will get the value of blue, green the value of green, and blue the value of red:
@@ -40,7 +40,7 @@ pub enum ColorChannelMapping {
 }
 
 impl ColorChannelMapping {
-    pub fn new(r_g_b: &str) -> Result<ColorChannelMapping,String> {
+    pub fn new(r_g_b: &str) -> Result<ColorChannelMapping, String> {
         match &r_g_b.to_uppercase()[..] {
             "BBB" => Ok(ColorChannelMapping::BBB),
             "BBG" => Ok(ColorChannelMapping::BBG),
@@ -69,13 +69,15 @@ impl ColorChannelMapping {
             "RRG" => Ok(ColorChannelMapping::RRG),
             "RRR" => Ok(ColorChannelMapping::RRR),
             "RGB" => Ok(ColorChannelMapping::RGB),
-            _ => Err(String::from("Invalid r_g_b string, should be a string of length three with characters 'R', 'G' or 'B'"))
+            _ => Err(String::from(
+                "Invalid r_g_b string, should be a string of length three with characters 'R', 'G' or 'B'",
+            )),
         }
     }
     ///Returns (x,y,z) where x,y,z ∈ {'R', 'G', 'B'}
-    pub fn get_r_g_b_mapping(&self) -> (char,char,char) {
+    pub fn get_r_g_b_mapping(&self) -> (char, char, char) {
         let r_g_b = self.to_string().chars().collect::<Vec<char>>();
-        (r_g_b[0],r_g_b[1],r_g_b[2])
+        (r_g_b[0], r_g_b[1], r_g_b[2])
     }
 }
 
@@ -97,12 +99,12 @@ impl FromStr for ColorChannelMapping {
 pub struct TrueColor {
     pub red: u8,
     pub green: u8,
-    pub blue: u8
+    pub blue: u8,
 }
 
 impl TrueColor {
-    pub fn new(red: u8, green: u8, blue: u8) -> TrueColor { 
-        TrueColor { red, green, blue } 
+    pub fn new(red: u8, green: u8, blue: u8) -> TrueColor {
+        TrueColor { red, green, blue }
     }
 
     /// Creates a 32-bit color. The encoding for each pixel is `0RGB`:
@@ -110,12 +112,20 @@ impl TrueColor {
     /// afterwards for the green channel, and the lower 8-bits for the blue channel.
     pub fn to_32_bit(&self, mapping: &ColorChannelMapping) -> u32 {
         let (r_map, g_map, b_map) = mapping.get_r_g_b_mapping();
-        let (r, g, b) = (u32::from(self.get_color(r_map)), u32::from(self.get_color(g_map)), u32::from(self.get_color(b_map)));
+        let (r, g, b) = (
+            u32::from(self.get_color(r_map)),
+            u32::from(self.get_color(g_map)),
+            u32::from(self.get_color(b_map)),
+        );
         (r << 16) | (g << 8) | b
     }
 
     pub fn get_color(&self, color: char) -> u8 {
-        assert!(color == 'R' || color == 'G' || color == 'B', "Error: color should be equal to R, G, or B, color = {}",color);
+        assert!(
+            color == 'R' || color == 'G' || color == 'B',
+            "Error: color should be equal to R, G, or B, color = {}",
+            color
+        );
         match color {
             'R' => self.red,
             'G' => self.green,
@@ -130,11 +140,15 @@ impl TrueColor {
     /// Source: [Bernstein polynomial coloring](https://solarianprogrammer.com/2013/02/28/mandelbrot-set-cpp-11/)
     fn new_from_bernstein_polynomials_normalized(t: f64) -> TrueColor {
         let t = t.abs().min(0.999);
-        let one_minus_t = 1.0-t;
+        let one_minus_t = 1.0 - t;
         let red: f64 = 9.0 * one_minus_t * t.pow(3) * 255.0;
         let green: f64 = 15.0 * one_minus_t * t.pow(2) * 255.0;
         let blue: f64 = 8.5 * one_minus_t * t * 255.0;
-        TrueColor { red: red as u8, green: green as u8, blue: blue as u8 }
+        TrueColor {
+            red: red as u8,
+            green: green as u8,
+            blue: blue as u8,
+        }
     }
 
     ///A `coloring_function`
@@ -150,10 +164,10 @@ impl TrueColor {
     ///A `coloring_function`
     pub fn new_from_hsv_colors(iterations: u32, max_iterations: u32) -> TrueColor {
         let hue = 0.3 * f64::from(iterations);
-        let saturation = 1.0;//0.8;
-        let value: f64 = if iterations < max_iterations {1.0} else {0.0};
+        let saturation = 1.0; //0.8;
+        let value: f64 = if iterations < max_iterations { 1.0 } else { 0.0 };
         let hue_degree = Deg(hue % 359.999);
-        let hsv = Hsv::new(hue_degree,saturation,value);
+        let hsv = Hsv::new(hue_degree, saturation, value);
         let rgb = Rgb::from_color(&hsv);
         let red = normalized_to_byte(rgb.red());
         let green = normalized_to_byte(rgb.green());
@@ -181,12 +195,11 @@ impl TrueColor {
         let green = green as u8;
         TrueColor { red, green, blue }
     }
-
 }
 
 ///Maps a number t ∈ [0.0, 1.0] to a byte b ∈ [0, 255]
 fn normalized_to_byte(t: f64) -> u8 {
     let t = t.abs().min(1.0);
     let byte = (t * 255.0) as i16;
-    byte.unsigned_abs() as u8 
+    byte.unsigned_abs() as u8
 }
