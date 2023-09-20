@@ -14,6 +14,8 @@ use rand::Rng;
 use crate::view::coloring::TrueColor;
 use crate::{model::complex::Complex, MandelbrotModel};
 
+use super::complex_plane::View;
+
 ///A box representing the area to render by rendering functions
 #[derive(Clone, Copy)]
 pub struct RenderBox {
@@ -249,4 +251,15 @@ fn print_progress_bar(current_progress: u8, max_progress: u8) {
     }
     print!("]");
     io::stdout().flush().unwrap();
+}
+
+pub fn render(mandelbrot_model: &mut MandelbrotModel) {
+    //TODO: Observer pattern view -> model to update the view, instead of rendering manually
+    render_complex_plane_into_buffer(mandelbrot_model);
+    mandelbrot_model.c.print();
+}
+
+pub fn set_view(mandelbrot_model: &mut MandelbrotModel, view: &View) {
+    mandelbrot_model.c.set_view(view);
+    render(mandelbrot_model);
 }

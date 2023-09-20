@@ -6,6 +6,7 @@ fn main() {
     //Turn on Rust backtrace
     env::set_var("RUST_BACKTRACE", "1");
 
+    //Run the application
     if let Err(err) = mandelbrot::run() {
         eprintln!("Application error: {}", err);
         process::exit(1);

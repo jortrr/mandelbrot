@@ -32,6 +32,7 @@ fn bench_mandelbrot_set_iterate(b: &mut Bencher) {
 #[bench]
 ///Renders a 1280x720 1x SSAA image of the Mandelbrot set default view using Bernstein polynomal coloring, 1k max_iterations
 fn bench_render_mandelbrot_set_default_view_720p_1x_ssaa(b: &mut Bencher) {
+    //TODO
     //Setup
     let mut p: PixelBuffer = PixelBuffer::new(PixelPlane::new(WIDTH, HEIGHT));
     let c: ComplexPlane = ComplexPlane::new(WIDTH, HEIGHT);

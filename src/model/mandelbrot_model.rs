@@ -4,7 +4,7 @@ use std::{
     sync::{Mutex, MutexGuard},
 };
 
-use crate::{view::coloring::TrueColor, Config, InteractionVariables};
+use crate::{controller::interaction_variables::InteractionVariables, view::coloring::TrueColor, Config};
 
 use super::{complex_plane::ComplexPlane, mandelbrot_function::MandelbrotFunction, pixel_buffer::PixelBuffer, pixel_plane::PixelPlane};
 
@@ -47,6 +47,6 @@ impl MandelbrotModel {
         if let Ok(instance) = lock {
             return instance;
         }
-        panic!("You have called the singleton twice! This should never happen. It means that within the same scope, MandelbrotModel::get_instance() was called more than once.");
+        panic!("[DEADLOCK]: You have called the singleton twice! This should never happen. It means that within the same scope, MandelbrotModel::get_instance() was called more than once.");
     }
 }
