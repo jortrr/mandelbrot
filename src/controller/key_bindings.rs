@@ -1,6 +1,10 @@
 use std::fmt;
 
+use chrono::format::format;
 use minifb::Key;
+
+static KEY_BINDING_DESCRIPTION_OFFSET: usize = 20;
+static KEY_BINDING_SEPARATOR: &str = " -> ";
 
 //https://stackoverflow.com/questions/68066875/how-to-store-a-closure-inside-rust-struct
 //https://stackoverflow.com/questions/65756096/how-can-i-store-a-closure-object-in-a-struct
@@ -23,7 +27,9 @@ impl KeyBinding {
 
 impl fmt::Debug for KeyBinding {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?} -> {}", &self.key, &self.description)
+        let key = format!("{:?}", &self.key);
+        let offset = KEY_BINDING_DESCRIPTION_OFFSET - key.len() - KEY_BINDING_SEPARATOR.len();
+        write!(f, "{}{}{}{}", key, KEY_BINDING_SEPARATOR, " ".repeat(offset), &self.description)
     }
 }
 

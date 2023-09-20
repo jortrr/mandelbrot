@@ -80,6 +80,7 @@ pub fn render_box_render_complex_plane_into_buffer(mandelbrot_model: &mut Mandel
     let time = benchmark_start();
     let supersampling_amount = mandelbrot_model.config.supersampling_amount.clamp(1, 64); //Supersampling_amount should be at least 1 and atmost 64
     render_box.print();
+    println!("View: {:?}", mandelbrot_model.c.get_view());
     println!("SSAA: {}x", supersampling_amount);
     let chunk_size = mandelbrot_model.p.pixel_plane.width;
     let chunks: Vec<Vec<TrueColor>> = mandelbrot_model.p.colors.chunks(chunk_size).map(ToOwned::to_owned).collect();

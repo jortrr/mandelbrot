@@ -33,14 +33,12 @@ pub mod view;
 
 use std::error::Error;
 
-use controller::minifb_controller;
-
 //Crate includes
 use controller::config::Config;
-
+use controller::minifb_controller;
 use model::complex_plane::View;
 use model::mandelbrot_model::ColoringFunction;
-pub use model::mandelbrot_model::MandelbrotModel;
+use model::mandelbrot_model::MandelbrotModel;
 use view::coloring::ColorChannelMapping;
 use view::coloring::TrueColor;
 
