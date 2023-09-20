@@ -1,6 +1,8 @@
-use minifb::{Key, Window, WindowOptions};
+use std::str::FromStr;
 
-use crate::model::mandelbrot_model::MandelbrotModel;
+use minifb::{Icon, Key, Window, WindowOptions};
+
+use crate::{model::mandelbrot_model::MandelbrotModel, VERSION, WINDOW_TITLE};
 
 pub struct MandelbrotView {
     pub window: Window,
@@ -9,15 +11,29 @@ pub struct MandelbrotView {
 impl MandelbrotView {
     pub fn new(mandelbrot_model: &MandelbrotModel) -> MandelbrotView {
         // Create a new window
-        let window = Window::new(
-            "Mandelbrot set viewer",
+        let mut window = Window::new(
+            &format!("{} v{}", WINDOW_TITLE, VERSION),
             mandelbrot_model.config.window_width,
             mandelbrot_model.config.window_height,
-            WindowOptions::default(),
+            WindowOptions {
+                borderless: false,
+                title: true,
+                resize: true,
+                scale: minifb::Scale::X1,
+                scale_mode: minifb::ScaleMode::Center,
+                topmost: false,
+                transparency: false,
+                none: false,
+            },
         )
         .unwrap_or_else(|e| {
             panic!("{}", e);
         });
+        //Set window background color to darkgray
+        window.set_background_color(27, 27, 27);
+
+        #[cfg(target_os = "windows")]
+        window.set_icon(Icon::from_str("icons/rust.ico").unwrap());
 
         //Print info about the MandelbrotModel
         mandelbrot_model.p.pixel_plane.print();

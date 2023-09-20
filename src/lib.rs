@@ -51,6 +51,12 @@ static COLORING_FUNCTION: ColoringFunction = TrueColor::new_from_bernstein_polyn
 //Color channel mapping
 static COLOR_CHANNEL_MAPPING: ColorChannelMapping = ColorChannelMapping::RGB;
 
+//Window title
+static WINDOW_TITLE: &str = "Mandelbrot by Jort";
+
+//Banner values
+static VERSION: &str = "1.5";
+
 //Views
 static VIEW_1: View = View::new(-0.6604166666666667, 0.4437500000000001, 0.1);
 static VIEW_2: View = View::new(-1.0591666666666668, 0.2629166666666668, 0.01);
@@ -62,9 +68,6 @@ static VIEW_7: View = View::new(-1.7862712000000047, 0.000052399999999991516, 0.
 static VIEW_8: View = View::new(-1.7862581627050718, 0.00005198056959995248, 0.000006039797760000003);
 static VIEW_9: View = View::new(-0.4687339999999999, 0.5425518958333333, 0.000010000000000000003);
 static VIEW_0: View = View::new(-0.437520465811966, 0.5632133750000006, 0.000004000000000000004);
-
-//Banner values
-static VERSION: &str = "1.4";
 
 ///Holds all the logic currently in the main function that isn't involved with setting up configuration or handling errors, to make `main` concise and
 ///easy to verify by inspection
