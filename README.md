@@ -106,23 +106,6 @@ Keys | Action
 <kbd>X</kbd> | Change the image quality of the Mandelbrot set rendering by setting the SSAA multiplier
 <kbd>ESC</kbd>, <kbd>CTRL</kbd>+<kbd>C</kbd> | Exit
 
-## Screenshots
-![1](https://github.com/jortrr/mandelbrot/assets/38651009/8a09d7a2-69e0-47b4-8e60-06392321ed08)
-![2](https://github.com/jortrr/mandelbrot/assets/38651009/e2055e8b-6e12-4d73-8257-ca800c8a2159)
-![3](https://github.com/jortrr/mandelbrot/assets/38651009/8a5fb455-f200-482e-927b-c34adbed45ca)
-![4](https://github.com/jortrr/mandelbrot/assets/38651009/7d385212-0d91-4a5c-b6d1-4b75a2acaf02)
-![5](https://github.com/jortrr/mandelbrot/assets/38651009/267ad0b1-c774-4474-816c-3de8150667c5)
-![6](https://github.com/jortrr/mandelbrot/assets/38651009/c57b035d-b3b1-4b54-a92f-c6d6952f26fb)
-![7](https://github.com/jortrr/mandelbrot/assets/38651009/3ff0c244-6055-4228-8e8d-dbb852a1d26a)
-![8](https://github.com/jortrr/mandelbrot/assets/38651009/21775d83-a455-4a0c-9002-edada7c44a25)
-![9](https://github.com/jortrr/mandelbrot/assets/38651009/f21e12b8-365b-49f7-aef0-7022afe14369)
-![10](https://github.com/jortrr/mandelbrot/assets/38651009/cff43524-f882-4181-92c9-4660f09342bf)
-![11](https://github.com/jortrr/mandelbrot/assets/38651009/e267cc25-8af3-4421-9361-59c7724b2dcb)
-![12](https://github.com/jortrr/mandelbrot/assets/38651009/32412e40-49af-483a-84e8-90f22cc7b1d1)
-![13](https://github.com/jortrr/mandelbrot/assets/38651009/c158fc1d-d376-47f2-9be0-433637e0d7e2)
-![14](https://github.com/jortrr/mandelbrot/assets/38651009/cbad0e72-420a-459d-87ab-c551dd67efbe)
-![15](https://github.com/jortrr/mandelbrot/assets/38651009/4f784846-2f1c-4af4-b841-309e6e25578d)
-
 ## Wallpapers
 ### 3440x1440
 ![2023-06-26_12-48-59 189737_UTC](https://github.com/jortrr/mandelbrot/assets/38651009/d487285e-d233-4374-bb5c-c46d84f0d83f)
