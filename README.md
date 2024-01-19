@@ -15,7 +15,6 @@
 - [Running](#running)
 - [Usage](#usage)
 - [Controls](#controls)
-- [Screenshots](#screenshots)
 - [Wallpapers](#wallpapers)
 - [Benchmarks](#benchmarks)
 ---
