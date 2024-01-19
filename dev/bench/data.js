@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1695136503573,
+  "lastUpdate": 1705698421194,
   "repoUrl": "https://github.com/jortrr/mandelbrot",
   "entries": {
     "Benchmark": [
@@ -973,6 +973,42 @@ window.BENCHMARK_DATA = {
             "name": "bench_render_mandelbrot_set_default_view_720p_1x_ssaa",
             "value": 1202533072,
             "range": "± 34290751",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jortvanwaes@protonmail.com",
+            "name": "Jort van Waes",
+            "username": "jortrr"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6a5f364e21adc8e915a4bb09ad81df9e7c87b175",
+          "message": "Update README.md, removed screenshots",
+          "timestamp": "2024-01-19T22:03:16+01:00",
+          "tree_id": "a3565e3d3f09f29d18a4adbb5c35f4b0bc60d67c",
+          "url": "https://github.com/jortrr/mandelbrot/commit/6a5f364e21adc8e915a4bb09ad81df9e7c87b175"
+        },
+        "date": 1705698419837,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "bench_mandelbrot_set_iterate",
+            "value": 45526,
+            "range": "± 139",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "bench_render_mandelbrot_set_default_view_720p_1x_ssaa",
+            "value": 391796720,
+            "range": "± 4447932",
             "unit": "ns/iter"
           }
         ]
