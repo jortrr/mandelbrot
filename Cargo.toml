@@ -19,5 +19,5 @@ num = "0.4.0"
 num_cpus = "1.15.0"
 png = "0.17.9"
 prisma = "0.1.1"
-rand = "0.8.5"
+rand = "0.8.6"
 xkbcommon = { version = "0.7", features = ["wayland"] }
